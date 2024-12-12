@@ -1,0 +1,29 @@
+services:
+  printer:
+    container_name: printer
+    image: ghcr.io/mainsail-crew/virtual-klipper-printer:master
+    volumes:
+      - ./virtual-printer:/home/printer/printer_data:delegated
+      - ./:/home/printer/cartographer-scanner-klippy:cached
+    platform: linux/amd64
+    restart: unless-stopped
+    ports:
+      - "7125:7125"
+      - "8110:8080"
+  mainsail:
+    image: ghcr.io/mainsail-crew/mainsail
+    container_name: mainsail
+    restart: unless-stopped
+    configs:
+      - source: mainsail
+        target: /usr/share/nginx/html/config.json
+    ports:
+      - "8080:80"
+
+configs:
+  mainsail:
+    content: |
+      {
+        "instancesDB": "json",
+        "instances": [{ "hostname": "localhost", "port": 7125 }]
+      }

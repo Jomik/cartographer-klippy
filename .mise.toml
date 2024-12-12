@@ -1,0 +1,10 @@
+[tools]
+python = "3.8"
+
+[env]
+_.python.venv = ".venv" # relative to this file's directory
+
+[tasks.restart]
+run = "docker compose exec printer /bin/bash -c 'systemctl stop klipper && rm ~/printer_data/comms/* ~/printer_data/logs/klippy.log && systemctl start klipper'"
+[tasks.install]
+run = "docker compose exec printer ./klippy-env/bin/pip install -U ./cartographer-scanner-klippy"

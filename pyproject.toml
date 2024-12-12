@@ -1,0 +1,32 @@
+[project]
+name = "cartographer"
+dynamic = ["version"]
+requires-python = ">= 3.8"
+license = { file = "LICENSE" }
+
+[project.urls]
+homepage = "https://github.com/Jomik/cartographer-scanner-klippy"
+repository = "https://github.com/Jomik/cartographer-scanner-klippy"
+
+[tool.pyright]
+pythonVersion = "3.8"
+reportMissingModuleSource = false # klippy imports are always missing sources
+reportMissingTypeStubs = true
+
+[tool.ruff]
+target-version = "py38"
+
+[tool.pdm.version]
+source = "scm"
+write_to = "cartographer/__version__.py"
+write_template = "__version__ = '{}'\n"
+
+[tool.pdm.build]
+excludes = ["./**/.git"]
+includes = ["cartographer"]
+editable-backend = "path"
+custom-hook = "pdm_build.py"
+
+[build-system]
+requires = ["pdm-backend==2.3.3"]
+build-backend = "pdm.backend"

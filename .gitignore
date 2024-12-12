@@ -1,0 +1,6 @@
+virtual-*/
+.venv
+*.egg-info/
+build/
+.pdm-build/
+__pycache__/
