@@ -10,6 +10,8 @@ repository = "https://github.com/Jomik/cartographer-scanner-klippy"
 
 [tool.pyright]
 pythonVersion = "3.8"
+venvPath = "./"
+venv = ".venv"
 reportMissingModuleSource = false # klippy imports are always missing sources
 reportMissingTypeStubs = true
 
