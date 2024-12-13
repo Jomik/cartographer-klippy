@@ -2,46 +2,35 @@
 import configparser
 from typing import overload
 
-from .klippy import Printer
+from klippy import Printer
 
 error = configparser.Error
 
-class sentinel:
-    pass
+class sentinel: ...
 
 class ConfigWrapper:
     error: type[configparser.Error]
     printer: Printer
-    def get_printer(self) -> Printer:
-        pass
-    def get_name(self) -> str:
-        pass
-    def getsection(self, section: str) -> ConfigWrapper:
-        pass
-    def has_section(self, section: str) -> bool:
-        pass
-    def get_prefix_sections(self, prefix: str) -> list[ConfigWrapper]:
-        pass
-    def deprecate(self, option: str, value: str | None = None) -> None:
-        pass
-
+    def get_printer(self) -> Printer: ...
+    def get_name(self) -> str: ...
+    def getsection(self, section: str) -> ConfigWrapper: ...
+    def has_section(self, section: str) -> bool: ...
+    def get_prefix_sections(self, prefix: str) -> list[ConfigWrapper]: ...
+    def deprecate(self, option: str, value: str | None = None) -> None: ...
     @overload
     def get(
         self,
         option: str,
         default: str | type[sentinel] = sentinel,
         note_valid: bool = True,
-    ) -> str:
-        pass
+    ) -> str: ...
     @overload
     def get(
         self,
         option: str,
         default: None,
         note_valid: bool = True,
-    ) -> str | None:
-        pass
-
+    ) -> str | None: ...
     @overload
     def getint(
         self,
@@ -50,8 +39,7 @@ class ConfigWrapper:
         minval: int | None = None,
         maxval: int | None = None,
         note_valid: bool = True,
-    ) -> int:
-        pass
+    ) -> int: ...
     @overload
     def getint(
         self,
@@ -60,9 +48,7 @@ class ConfigWrapper:
         minval: int | None = None,
         maxval: int | None = None,
         note_valid: bool = True,
-    ) -> int | None:
-        pass
-
+    ) -> int | None: ...
     @overload
     def getfloat(
         self,
@@ -73,8 +59,7 @@ class ConfigWrapper:
         above: float | None = None,
         below: float | None = None,
         note_valid: bool = True,
-    ) -> float:
-        pass
+    ) -> float: ...
     @overload
     def getfloat(
         self,
@@ -85,26 +70,21 @@ class ConfigWrapper:
         above: float | None = None,
         below: float | None = None,
         note_valid: bool = True,
-    ) -> float | None:
-        pass
-
+    ) -> float | None: ...
     @overload
     def getboolean(
         self,
         option: str,
         default: bool | type[sentinel] = sentinel,
         note_valid: bool = True,
-    ) -> bool:
-        pass
+    ) -> bool: ...
     @overload
     def getboolean(
         self,
         option: str,
         default: None,
         note_valid: bool = True,
-    ) -> bool | None:
-        pass
-
+    ) -> bool | None: ...
     @overload
     def getchoice(
         self,
@@ -112,8 +92,7 @@ class ConfigWrapper:
         choices: dict[str, str],
         default: str | type[sentinel] = sentinel,
         note_valid: bool = True,
-    ) -> str:
-        pass
+    ) -> str: ...
     @overload
     def getchoice(
         self,
@@ -121,9 +100,7 @@ class ConfigWrapper:
         choices: dict[str, str],
         default: str | None,
         note_valid: bool = True,
-    ) -> str | None:
-        pass
-
+    ) -> str | None: ...
     @overload
     def getintlist(
         self,
@@ -132,9 +109,7 @@ class ConfigWrapper:
         sep: str = ",",
         count: int | None = None,
         note_valid: bool = True,
-    ) -> list[int]:
-        pass
-
+    ) -> list[int]: ...
     @overload
     def getintlist(
         self,
@@ -143,9 +118,7 @@ class ConfigWrapper:
         sep: str = ",",
         count: int | None = None,
         note_valid: bool = True,
-    ) -> list[int] | None:
-        pass
-
+    ) -> list[int] | None: ...
     @overload
     def getfloatlist(
         self,
@@ -154,8 +127,7 @@ class ConfigWrapper:
         sep: str = ",",
         count: int | None = None,
         note_valid: bool = True,
-    ) -> list[float]:
-        pass
+    ) -> list[float]: ...
     @overload
     def getfloatlist(
         self,
@@ -164,15 +136,10 @@ class ConfigWrapper:
         sep: str = ",",
         count: int | None = None,
         note_valid: bool = True,
-    ) -> list[float] | None:
-        pass
+    ) -> list[float] | None: ...
 
 class PrinterConfig:
-    def get_printer(self) -> Printer:
-        pass
-    def deprecate(self, option: str, value: str | None = None) -> None:
-        pass
-    def set(self, section: str, option: str, value: object) -> None:
-        pass
-    def remove_section(self, section: str) -> None:
-        pass
+    def get_printer(self) -> Printer: ...
+    def deprecate(self, option: str, value: str | None = None) -> None: ...
+    def set(self, section: str, option: str, value: object) -> None: ...
+    def remove_section(self, section: str) -> None: ...

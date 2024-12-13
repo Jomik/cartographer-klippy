@@ -1,6 +1,6 @@
-import logging
-from klippy import configfile
+from configfile import ConfigWrapper
+from cartographer.scanner import PrinterScanner
 
 
-def load_config(_config: configfile.ConfigWrapper):
-    logging.info("Loaded cartographer extra!")
+def load_config(config: ConfigWrapper):
+    return PrinterScanner(config)
