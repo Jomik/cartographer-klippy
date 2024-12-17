@@ -2,8 +2,8 @@
 
 set -euo pipefail
 
-FILE_NAME="scanner.py"
-PACKAGE_NAME="cartographer-scanner-klippy"
+FILE_NAME="cartographer.py"
+PACKAGE_NAME="jomik-cartographer"
 SCAFFOLDING="from cartographer.extra import *"
 
 function display_help() {
