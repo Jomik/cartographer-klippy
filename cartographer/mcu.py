@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import struct
 from enum import IntEnum
 from typing import Optional, Tuple, TypedDict, final
@@ -8,7 +9,14 @@ from configfile import ConfigWrapper
 from mcu import MCU, CommandQueryWrapper, CommandWrapper, MCU_trsync
 
 
-class _RawSample(TypedDict):
+# TODO: These probably live on the model
+TRIGGER_DISTANCE = 2.0
+TRIGGER_HYSTERESIS = 0.006
+TRIGGER_FREQ_COUNT = 33784425
+UNTRIGGER_FREQ_COUNT = int(TRIGGER_FREQ_COUNT * (1 - TRIGGER_HYSTERESIS))
+
+
+class RawSample(TypedDict):
     clock: int
     data: int
     temp: int
@@ -31,7 +39,7 @@ class ScannerMCUHelper:
     _stop_home_command: Optional[CommandWrapper] = None
     _base_read_command: Optional[CommandQueryWrapper[BaseData]] = None
 
-    _last_sample: Optional[_RawSample] = None
+    _streaming = True
 
     def __init__(self, config: ConfigWrapper):
         printer = config.get_printer()
@@ -44,13 +52,13 @@ class ScannerMCUHelper:
         printer.register_event_handler("klippy:disconnect", self._handle_disconnect)
         printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
         self._mcu.register_config_callback(self._build_config)
-        self._mcu.register_response(self._handle_data, "cartographer_data")
 
     def get_mcu(self) -> MCU:
         return self._mcu
 
     def _handle_connect(self) -> None:
         self.stop_stream()
+        self.set_threshold(TRIGGER_FREQ_COUNT, UNTRIGGER_FREQ_COUNT)
 
     def _handle_disconnect(self) -> None:
         # TODO: Cleanup streaming
@@ -81,23 +89,27 @@ class ScannerMCUHelper:
             cq=self._command_queue,
         )
 
-    def _handle_data(self, sample: _RawSample) -> None:
-        self._last_sample = sample
-        raise NotImplementedError()
-
-    def get_last_sample(self) -> Optional[_RawSample]:
-        return self._last_sample
-
     def _set_stream(self, enable: int) -> None:
         if self._stream_command is None:
             raise self._mcu.error("stream command not initialized")
         self._stream_command.send([enable])
 
     def start_stream(self) -> None:
+        if self._streaming:
+            return
+        logging.info("Starting cartographer data stream")
         self._set_stream(1)
+        self._streaming = True
 
     def stop_stream(self) -> None:
+        if not self._streaming:
+            return
+        logging.info("Stopping cartographer data stream")
         self._set_stream(0)
+        self._streaming = False
+
+    def is_streaming(self) -> bool:
+        return self._streaming
 
     def set_threshold(self, trigger: int, untrigger: int) -> None:
         if self._set_threshold_command is None:

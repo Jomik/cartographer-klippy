@@ -4,25 +4,32 @@ from typing import final
 
 from configfile import ConfigWrapper
 from extras.probe import ProbeEndstopWrapper
-from mcu import MCU, MCU_trsync, TriggerDispatch, MCU_endstop
+from mcu import MCU, MCU_endstop, MCU_trsync, TriggerDispatch
 from reactor import ReactorCompletion
 from stepper import MCU_stepper
 from typing_extensions import override
 
-from cartographer.mcu import ScannerMCUHelper
-
-# TODO: These probably live on the model
-TRIGGER_DISTANCE = 2.0
-TRIGGER_FREQ = 33784425
+from cartographer.mcu import (
+    TRIGGER_DISTANCE,
+    TRIGGER_FREQ_COUNT,
+    RawSample,
+    ScannerMCUHelper,
+)
+from cartographer.stream_handler import StreamHandler
 
 
 @final
 class ScannerEndstopWrapper(ProbeEndstopWrapper):
-    def __init__(self, config: ConfigWrapper, mcu_helper: ScannerMCUHelper):
-        self.printer = config.get_printer()
+    def __init__(
+        self,
+        config: ConfigWrapper,
+        mcu_helper: ScannerMCUHelper,
+        stream_handler: StreamHandler,
+    ):
+        self._printer = config.get_printer()
         self._mcu_helper = mcu_helper
         self._dispatch = TriggerDispatch(mcu_helper.get_mcu())
-        self._mcu_endstop = ScanEndstop(mcu_helper)
+        self._mcu_endstop = ScanEndstop(mcu_helper, stream_handler)
 
     @override
     def get_mcu(self) -> MCU:
@@ -44,7 +51,7 @@ class ScannerEndstopWrapper(ProbeEndstopWrapper):
         sample_count: int,
         rest_time: float,
         triggered: bool = True,
-    ) -> ReactorCompletion:
+    ) -> ReactorCompletion[bool]:
         return self._mcu_endstop.home_start(
             print_time, sample_time, sample_count, rest_time, triggered
         )
@@ -67,7 +74,7 @@ class ScannerEndstopWrapper(ProbeEndstopWrapper):
 
     @override
     def probing_move(self, pos: "list[float]", speed: float) -> "list[float]":
-        phoming = self.printer.lookup_object("homing")
+        phoming = self._printer.lookup_object("homing")
         return phoming.probing_move(self, pos, speed)
 
     @override
@@ -85,10 +92,11 @@ class ScannerEndstopWrapper(ProbeEndstopWrapper):
 
 @final
 class ScanEndstop(MCU_endstop):
-    def __init__(self, mcu_helper: ScannerMCUHelper):
+    def __init__(self, mcu_helper: ScannerMCUHelper, stream_handler: StreamHandler):
         self._mcu_helper = mcu_helper
-        self._dispatch = TriggerDispatch(mcu_helper.get_mcu())
+        self._stream_handler = stream_handler
         self._mcu = mcu_helper.get_mcu()
+        self._dispatch = TriggerDispatch(self._mcu)
 
     @override
     def get_mcu(self) -> MCU:
@@ -110,8 +118,10 @@ class ScanEndstop(MCU_endstop):
         sample_count: int,
         rest_time: float,
         triggered: bool = True,
-    ) -> ReactorCompletion:
-        # TODO: Set threshold
+    ) -> ReactorCompletion[bool]:
+        self._mcu_helper.set_threshold(
+            self._model.distance_to_frequency(TRIGGER_DISTANCE)
+        )
         trigger_completion = self._dispatch.start(print_time)
         self._mcu.get_printer().lookup_object("toolhead").wait_moves()
         self._mcu_helper.home_scan(self._dispatch.get_oid())
@@ -136,10 +146,19 @@ class ScanEndstop(MCU_endstop):
     @override
     def query_endstop(self, print_time: float) -> int:
         # TODO: Use a query state command for actual state
-        sample = self._mcu_helper.get_last_sample()
+        sample = None
+
+        def callback(data: RawSample) -> bool:
+            nonlocal sample
+            sample = data
+            return True
+
+        with self._stream_handler.session(callback) as session:
+            session.wait()
+
         if sample is None:
             return 0
         # TODO: Read trigger frequency from model
-        if sample["data"] > TRIGGER_FREQ:
+        if sample["data"] > TRIGGER_FREQ_COUNT:
             return 1
         return 0

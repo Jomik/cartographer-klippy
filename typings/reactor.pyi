@@ -1,20 +1,21 @@
 # https://github.com/Klipper3d/klipper/blob/master/klippy/reactor.py
 
-from typing import Callable
+from typing import Any, Callable, overload
 
 class ReactorTimer: ...
 
 _NOW: float
 _NEVER: float
 
-class ReactorCompletion:
+class ReactorCompletion[T = Any]:
     class sentinel: ...
 
     def test(self) -> bool: ...
-    def complete(self, result: object) -> None: ...
-    def wait(
-        self, waketime: float = _NEVER, waketime_result: object = None
-    ) -> object: ...
+    def complete(self, result: T) -> None: ...
+    @overload
+    def wait(self, waketime: float, waketime_result: T) -> T: ...
+    @overload
+    def wait(self) -> T | None: ...
 
 class Reactor:
     NOW: float
