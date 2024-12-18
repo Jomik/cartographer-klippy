@@ -59,23 +59,24 @@ class ScannerEndstopWrapper(ProbeEndstopWrapper):
 
     @override
     def multi_probe_begin(self) -> None:
-        raise NotImplementedError()
+        return
 
     @override
     def multi_probe_end(self) -> None:
-        raise NotImplementedError()
+        return
 
     @override
     def probing_move(self, pos: "list[float]", speed: float) -> "list[float]":
-        raise NotImplementedError()
+        phoming = self.printer.lookup_object("homing")
+        return phoming.probing_move(self, pos, speed)
 
     @override
     def probe_prepare(self, hmove: float) -> None:
-        raise NotImplementedError()
+        pass
 
     @override
     def probe_finish(self, hmove: float) -> None:
-        raise NotImplementedError()
+        pass
 
     @override
     def get_position_endstop(self) -> float:
