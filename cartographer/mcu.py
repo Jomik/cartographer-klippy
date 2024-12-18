@@ -42,7 +42,7 @@ class ScannerMCUHelper:
 
         printer.register_event_handler("klippy:connect", self._handle_connect)
         printer.register_event_handler("klippy:disconnect", self._handle_disconnect)
-        printer.register_event_handler("klippy:mcu_identify", self._handle_mcu_identify)
+        printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
         self._mcu.register_config_callback(self._build_config)
         self._mcu.register_response(self._handle_data, "cartographer_data")
 
@@ -50,13 +50,15 @@ class ScannerMCUHelper:
         return self._mcu
 
     def _handle_connect(self) -> None:
-        raise NotImplementedError()
+        self.stop_stream()
 
     def _handle_disconnect(self) -> None:
-        raise NotImplementedError()
+        # TODO: Cleanup streaming
+        pass
 
-    def _handle_mcu_identify(self) -> None:
-        raise NotImplementedError()
+    def _handle_shutdown(self) -> None:
+        # TODO: Cleanup streaming
+        pass
 
     def _build_config(self) -> None:
         self._stream_command = self._mcu.lookup_command(
@@ -86,17 +88,23 @@ class ScannerMCUHelper:
     def get_last_sample(self) -> Optional[_RawSample]:
         return self._last_sample
 
-    def toggle_stream(self, enable: bool) -> None:
+    def _set_stream(self, enable: int) -> None:
         if self._stream_command is None:
             raise self._mcu.error("stream command not initialized")
-        self._stream_command.send([1 if enable else 0])
+        self._stream_command.send([enable])
+
+    def start_stream(self) -> None:
+        self._set_stream(1)
+
+    def stop_stream(self) -> None:
+        self._set_stream(0)
 
     def set_threshold(self, trigger: int, untrigger: int) -> None:
         if self._set_threshold_command is None:
             raise self._mcu.error("set threshold command not initialized")
         self._set_threshold_command.send([trigger, untrigger])
 
-    def start_home(
+    def _start_home(
         self,
         trsync_oid: int,
         threshold: int,
@@ -117,6 +125,12 @@ class ScannerMCUHelper:
                 trigger_method,
             ]
         )
+
+    def home_scan(
+        self,
+        trsync_oid: int,
+    ) -> None:
+        self._start_home(trsync_oid, 0, TriggerMethod.SCAN)
 
     def stop_home(self) -> None:
         if self._stop_home_command is None:
