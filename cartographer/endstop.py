@@ -11,6 +11,10 @@ from typing_extensions import override
 
 from cartographer.mcu import ScannerMCUHelper
 
+# TODO: These probably live on the model
+TRIGGER_DISTANCE = 2.0
+TRIGGER_FREQ = 33784425
+
 
 @final
 class ScannerEndstopWrapper(ProbeEndstopWrapper):
@@ -75,7 +79,7 @@ class ScannerEndstopWrapper(ProbeEndstopWrapper):
 
     @override
     def get_position_endstop(self) -> float:
-        raise NotImplementedError()
+        return TRIGGER_DISTANCE
 
 
 @final
@@ -87,7 +91,7 @@ class ScanEndstop(MCU_endstop):
 
     @override
     def get_mcu(self) -> MCU:
-        return self._mcu_helper.get_mcu()
+        return self._mcu
 
     @override
     def add_stepper(self, stepper: MCU_stepper) -> None:
@@ -135,7 +139,6 @@ class ScanEndstop(MCU_endstop):
         if sample is None:
             return 0
         # TODO: Read trigger frequency from model
-        trigger_freq = 33784425
-        if sample["freq"] > trigger_freq:
+        if sample["data"] > TRIGGER_FREQ:
             return 1
         return 0

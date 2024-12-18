@@ -10,7 +10,7 @@ from mcu import MCU, CommandQueryWrapper, CommandWrapper, MCU_trsync
 
 class _RawSample(TypedDict):
     clock: int
-    freq: int
+    data: int
     temp: int
 
 
