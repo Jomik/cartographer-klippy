@@ -10,7 +10,7 @@ from typing import Callable, Optional, Type, final
 from klippy import Printer
 from reactor import Reactor
 
-from cartographer.mcu import RawSample, ScannerMCUHelper
+from cartographer.mcu_helper import RawSample, ScannerMCUHelper
 
 BUFFER_LIMIT_DEFAULT = 100
 TIMEOUT = 2.0

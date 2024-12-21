@@ -9,7 +9,7 @@ from gcode import GCodeCommand
 from typing_extensions import override
 
 from cartographer.endstop import ScannerEndstopWrapper
-from cartographer.mcu import ScannerMCUHelper
+from cartographer.mcu_helper import ScannerMCUHelper
 from cartographer.stream_handler import StreamHandler
 
 

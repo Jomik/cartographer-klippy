@@ -9,7 +9,7 @@ from reactor import ReactorCompletion
 from stepper import MCU_stepper
 from typing_extensions import override
 
-from cartographer.mcu import (
+from cartographer.mcu_helper import (
     TRIGGER_DISTANCE,
     TRIGGER_FREQ_COUNT,
     RawSample,
