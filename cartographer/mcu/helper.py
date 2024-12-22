@@ -13,7 +13,8 @@ TRIGGER_HYSTERESIS = 0.006
 
 
 class RawSample(TypedDict):
-    clock: int
+    clock32: int
+    clock64: int
     data: int
     temp: int
 

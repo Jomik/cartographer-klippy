@@ -2,11 +2,12 @@
 from typing import Callable, Literal, TypeVar, overload
 
 import configfile
+from configfile import ConfigWrapper, PrinterConfig, sentinel
 from extras.bed_mesh import BedMesh
 from extras.heaters import PrinterHeaters
 from extras.homing import Homing, PrinterHoming
+from extras.motion_report import PrinterMotionReport
 from extras.probe import PrinterProbe
-from configfile import ConfigWrapper, PrinterConfig, sentinel
 from gcode import CommandError, GCodeDispatch
 from pins import PrinterPins
 from reactor import Reactor
@@ -75,6 +76,8 @@ class Printer:
     def lookup_object(self, name: Literal["gcode"]) -> GCodeDispatch: ...
     @overload
     def lookup_object(self, name: Literal["homing"]) -> PrinterHoming: ...
+    @overload
+    def lookup_object(self, name: Literal["motion_report"]) -> PrinterMotionReport: ...
     @overload
     def lookup_object(self, name: Literal["pins"]) -> PrinterPins: ...
     @overload

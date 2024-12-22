@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import logging
-from queue import Queue
 import queue
+from queue import Queue
 from threading import Event
 from types import TracebackType
 from typing import Callable, Optional, Type, final
@@ -10,7 +10,7 @@ from typing import Callable, Optional, Type, final
 from klippy import Printer
 from reactor import Reactor
 
-from .helper import RawSample, McuHelper
+from .helper import McuHelper, RawSample
 
 BUFFER_LIMIT_DEFAULT = 100
 TIMEOUT = 2.0
@@ -120,7 +120,9 @@ class StreamHandler:
                 return updated_timer
 
     def _flush_message(self, sample: RawSample) -> None:
-        sample["clock"] = self._mcu_helper.get_mcu().clock32_to_clock64(sample["clock"])
+        sample["clock64"] = self._mcu_helper.get_mcu().clock32_to_clock64(
+            sample["clock32"]
+        )
         for session in self._sessions:
             session.handle(sample)
 
