@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import final
+from typing import Optional, final
 
 from configfile import ConfigWrapper
 from extras.probe import ProbeEndstopWrapper
@@ -150,10 +150,8 @@ class ScanEndstop(MCU_endstop):
         # TODO: Use a query state command for actual end time
         return home_end_time
 
-    @override
-    def query_endstop(self, print_time: float) -> int:
-        # TODO: Use a query state command for actual state
-        sample = None
+    def _get_sample(self) -> Optional[RawSample]:
+        sample: Optional[RawSample] = None
 
         def callback(data: RawSample) -> bool:
             nonlocal sample
@@ -163,8 +161,16 @@ class ScanEndstop(MCU_endstop):
         with self._stream_handler.session(callback) as session:
             session.wait()
 
+        return sample
+
+    @override
+    def query_endstop(self, print_time: float) -> int:
+        # TODO: Use a query state command for actual state
+        sample = self._get_sample()
+
         if sample is None:
             return 0
+
         if (
             self._model.frequency_to_distance(
                 self._mcu_helper.count_to_frequency(sample["data"])
