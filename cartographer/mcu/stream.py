@@ -10,7 +10,7 @@ from typing import Callable, Optional, Type, final
 from klippy import Printer
 from reactor import Reactor
 
-from cartographer.mcu_helper import RawSample, ScannerMCUHelper
+from .helper import RawSample, McuHelper
 
 BUFFER_LIMIT_DEFAULT = 100
 TIMEOUT = 2.0
@@ -24,7 +24,7 @@ class StreamHandler:
     _flush_event = Event()
     _sessions: list[StreamSession] = []
 
-    def __init__(self, printer: Printer, mcu_helper: ScannerMCUHelper) -> None:
+    def __init__(self, printer: Printer, mcu_helper: McuHelper) -> None:
         self._printer = printer
         self._reactor = printer.get_reactor()
         self._mcu_helper = mcu_helper

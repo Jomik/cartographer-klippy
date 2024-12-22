@@ -9,8 +9,6 @@ from configfile import ConfigWrapper
 from mcu import MCU, CommandQueryWrapper, CommandWrapper, MCU_trsync
 
 
-# TODO: These probably live on the model
-TRIGGER_DISTANCE = 2.0
 TRIGGER_HYSTERESIS = 0.006
 
 
@@ -30,7 +28,7 @@ class _BaseData(TypedDict):
 
 
 @final
-class ScannerMCUHelper:
+class McuHelper:
     _stream_command: Optional[CommandWrapper] = None
     _set_threshold_command: Optional[CommandWrapper] = None
     _start_home_command: Optional[CommandWrapper] = None
@@ -88,7 +86,6 @@ class ScannerMCUHelper:
         )
 
         clock_frequency = self._mcu.get_constant_float("CLOCK_FREQ")
-        logging.info(f"Cartographer clock frequency: {clock_frequency:e}")
         self._sensor_frequency = self._clock_to_sensor_frequency(clock_frequency)
 
     def _clock_to_sensor_frequency(self, clock_frequency: float) -> float:

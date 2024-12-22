@@ -13,8 +13,6 @@ from reactor import Reactor
 from stepper import PrinterRail
 from toolhead import ToolHead
 
-from cartographer.scanner import PrinterScanner
-
 T = TypeVar("T")
 
 class Printer:
@@ -79,8 +77,6 @@ class Printer:
     def lookup_object(self, name: Literal["homing"]) -> PrinterHoming: ...
     @overload
     def lookup_object(self, name: Literal["pins"]) -> PrinterPins: ...
-    @overload
-    def lookup_object(self, name: Literal["scanner"]) -> PrinterScanner: ...
     @overload
     def lookup_object(self, name: Literal["toolhead"]) -> ToolHead: ...
     @overload

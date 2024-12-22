@@ -1,6 +1,6 @@
 from configfile import ConfigWrapper
-from cartographer.scanner import PrinterScanner
+from cartographer import PrinterCartographer
 
 
 def load_config(config: ConfigWrapper):
-    return PrinterScanner(config)
+    return PrinterCartographer(config)

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import logging
 from typing import Optional, final
 
 from configfile import ConfigWrapper
@@ -8,28 +7,27 @@ from extras import probe
 from gcode import GCodeCommand
 from typing_extensions import override
 
-from cartographer.endstop import ScannerEndstopWrapper
-from cartographer.mcu_helper import ScannerMCUHelper
-from cartographer.model import CalibrationModel
-from cartographer.stream_handler import StreamHandler
+from cartographer.endstop.scan import ScanEndstop
+from cartographer.endstop.wrapper import EndstopWrapper
+from cartographer.mcu.helper import McuHelper
+from cartographer.endstop.scan import ScanModel
 
 
 @final
-class PrinterScanner:
+class PrinterCartographer:
     def __init__(self, config: ConfigWrapper):
         printer = config.get_printer()
-        mcu_helper = ScannerMCUHelper(config)
-        model = CalibrationModel.load(config, "default")
-        stream_handler = StreamHandler(printer, mcu_helper)
-        endstop = ScannerEndstopWrapper(config, mcu_helper, stream_handler, model)
-        probe_interface = ScannerProbe(config, endstop)
+        mcu_helper = McuHelper(config)
+        model = ScanModel.load(config, "default")
+        endstop = ScanEndstop(mcu_helper, model)
+        endstop_wrapper = EndstopWrapper(config, mcu_helper, endstop)
+        probe_interface = ProbeInterface(config, endstop_wrapper)
         printer.add_object("probe", probe_interface)
-        logging.info("Successfully added probe!")
 
 
 @final
-class ScannerProbe(probe.PrinterProbe):
-    def __init__(self, config: ConfigWrapper, endstop: ScannerEndstopWrapper):
+class ProbeInterface(probe.PrinterProbe):
+    def __init__(self, config: ConfigWrapper, endstop: EndstopWrapper):
         self.cmd_helper = probe.ProbeCommandHelper(config, self, endstop.query_endstop)
         self.probe_offsets = probe.ProbeOffsetsHelper(config)
         self.probe_session = probe.ProbeSessionHelper(config, endstop)
