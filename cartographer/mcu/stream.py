@@ -120,6 +120,7 @@ class StreamHandler:
                 return updated_timer
 
     def _flush_message(self, sample: RawSample) -> None:
+        sample["clock"] = self._mcu_helper.get_mcu().clock32_to_clock64(sample["clock"])
         for session in self._sessions:
             session.handle(sample)
 

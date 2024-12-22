@@ -1,15 +1,18 @@
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
 from typing import Optional, final
 
+import numpy as np
 from configfile import ConfigWrapper
 from configfile import error as ConfigError
+from extras.homing import Homing
 from klippy import Printer
 from mcu import MCU, MCU_endstop, MCU_trsync, TriggerDispatch
 from numpy.polynomial import Polynomial
 from reactor import ReactorCompletion
-from stepper import MCU_stepper
+from stepper import MCU_stepper, PrinterRail
 from typing_extensions import override
 
 from cartographer.mcu.helper import McuHelper, RawSample
@@ -32,8 +35,30 @@ class ScanEndstop(MCU_endstop):
             mcu_helper.get_mcu().get_printer(), mcu_helper
         )
         self._mcu = mcu_helper.get_mcu()
+        self._printer = self._mcu.get_printer()
         self._dispatch = TriggerDispatch(self._mcu)
         self._model = model
+        self._printer.register_event_handler(
+            "homing:home_rails_end", self._handle_home_rails_end
+        )
+
+    def _raw_sample_to_dist(self, sample: RawSample) -> float:
+        return self._model.frequency_to_distance(
+            self._mcu_helper.count_to_frequency(sample["data"])
+        )
+
+    def _handle_home_rails_end(
+        self, homing_state: Homing, _rails: list[PrinterRail]
+    ) -> None:
+        if 2 not in homing_state.get_axes():
+            return
+        samples = self._get_samples_synced(skip=5, count=10)
+        dist = float(
+            np.median([self._raw_sample_to_dist(sample) for sample in samples])
+        )
+        if math.isinf(dist):
+            raise self._printer.command_error("Toolhead stopped below model range")
+        homing_state.set_homed_position([None, None, dist])
 
     @override
     def get_mcu(self) -> MCU:
@@ -80,10 +105,31 @@ class ScanEndstop(MCU_endstop):
         # TODO: Use a query state command for actual end time
         return home_end_time
 
-    def _get_sample(self) -> Optional[RawSample]:
-        sample: Optional[RawSample] = None
+    def _get_samples_synced(self, skip: int = 0, count: int = 10) -> list[RawSample]:
+        move_time = self._printer.lookup_object("toolhead").get_last_move_time()
+        settle_clock = self._mcu.print_time_to_clock(move_time)
+
+        samples: list[RawSample] = []
+        total = skip + count
 
         def callback(data: RawSample) -> bool:
+            if data["clock"] < settle_clock:
+                return False
+            samples.append(data)
+            return len(samples) >= total
+
+        with self._stream_handler.session(callback) as session:
+            session.wait()
+
+        return samples[skip:]
+
+    def _get_sample(self, print_time: float) -> Optional[RawSample]:
+        sample: Optional[RawSample] = None
+        print_clock = self._mcu.print_time_to_clock(print_time)
+
+        def callback(data: RawSample) -> bool:
+            if data["clock"] < print_clock:
+                return False
             nonlocal sample
             sample = data
             return True
@@ -96,17 +142,12 @@ class ScanEndstop(MCU_endstop):
     @override
     def query_endstop(self, print_time: float) -> int:
         # TODO: Use a query state command for actual state
-        sample = self._get_sample()
+        sample = self._get_sample(print_time)
 
         if sample is None:
             return 0
 
-        if (
-            self._model.frequency_to_distance(
-                self._mcu_helper.count_to_frequency(sample["data"])
-            )
-            < TRIGGER_DISTANCE
-        ):
+        if self._raw_sample_to_dist(sample) < TRIGGER_DISTANCE:
             return 1
         return 0
 
