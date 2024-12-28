@@ -4,3 +4,4 @@ virtual-*/
 build/
 .pdm-build/
 __pycache__/
+.mise.local.toml
