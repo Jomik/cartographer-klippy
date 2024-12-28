@@ -20,10 +20,6 @@ class RichSample:
     velocity: Optional[float]
 
 
-ALPHA = 0.5
-BETA = 1e-6
-
-
 def rich_session(
     stream_handler: StreamHandler,
     mcu_helper: McuHelper,
@@ -31,7 +27,7 @@ def rich_session(
     callback: Callable[[RichSample], bool],
     completion_callback: Optional[Callable[[], None]] = None,
 ):
-    filter = AlphaBetaFilter(ALPHA, BETA)
+    filter = AlphaBetaFilter()
     mcu = mcu_helper.get_mcu()
     printer = mcu.get_printer()
     motion_report = printer.lookup_object("motion_report")
