@@ -1,29 +1,38 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 import logging
 import queue
-from queue import Queue
 from threading import Event
 from types import TracebackType
-from typing import Callable, Optional, Type, final
+from typing import Callable, Optional, Type, TypedDict, final
 
 from klippy import Printer
 from reactor import Reactor
 
-from .helper import McuHelper, RawSample
+from .helper import McuHelper
 
 BUFFER_LIMIT_DEFAULT = 100
 TIMEOUT = 2.0
 
 
 @final
-class StreamHandler:
-    _buffer: list[RawSample] = []
-    _buffer_limit = BUFFER_LIMIT_DEFAULT
-    _queue: Queue[list[RawSample]] = Queue()
-    _flush_event = Event()
-    _sessions: list[StreamSession] = []
+class _RawSample(TypedDict):
+    clock: int
+    data: int
+    temp: int
 
+
+@final
+@dataclass
+class Sample:
+    time: float
+    count: int
+    temperature: float
+
+
+@final
+class StreamHandler:
     def __init__(self, printer: Printer, mcu_helper: McuHelper) -> None:
         self._printer = printer
         self._reactor = printer.get_reactor()
@@ -33,27 +42,36 @@ class StreamHandler:
             self._handle_data, "cartographer_data"
         )
 
+        self._buffer: list[_RawSample] = []
+        self._buffer_limit = BUFFER_LIMIT_DEFAULT
+        self._queue: queue.Queue[list[_RawSample]] = queue.Queue()
+        self._flush_event = Event()
+        self._sessions: list[StreamSession] = []
+
     def session(
         self,
-        callback: Callable[[RawSample], bool],
+        callback: Callable[[Sample], bool],
         completion_callback: Optional[Callable[[], None]] = None,
+        active: bool = True,
     ) -> StreamSession:
         """
         Start a stream session to receive data
 
         :param callback: Should return True if the session is complete
         :param completion_callback: Called when the session is stopped
+        :param active: If False, the session will not start streaming
         """
         session = StreamSession(
             self._reactor,
             self._remove_session,
             callback,
             completion_callback,
+            active,
         )
         self._register_session(session)
         return session
 
-    def _handle_data(self, data: RawSample) -> None:
+    def _handle_data(self, data: _RawSample) -> None:
         self._buffer.append(data)
         self._schedule_flush()
 
@@ -68,21 +86,26 @@ class StreamHandler:
             self._printer.invoke_shutdown(msg)
         return self._reactor.NEVER
 
+    def _count_active_sessions(self) -> int:
+        return sum(1 for session in self._sessions if session.is_active())
+
     def _register_session(self, session: StreamSession) -> None:
-        if len(self._sessions) == 0:
+        self._sessions.append(session)
+        if session.is_active() and self._count_active_sessions() == 1:
             curtime = self._reactor.monotonic()
             self._reactor.update_timer(self._timeout_timer, curtime + TIMEOUT)
             self._mcu_helper.start_stream()
-        self._sessions.append(session)
 
     def _remove_session(self, session: StreamSession) -> bool:
         found = session in self._sessions
-        if found:
-            self._sessions.remove(session)
-        if not self._sessions:
+        if not found:
+            return False
+
+        self._sessions.remove(session)
+        if session.is_active() and self._count_active_sessions() == 0:
             self._mcu_helper.stop_stream()
             self._reactor.update_timer(self._timeout_timer, Reactor.NEVER)
-        return found
+        return True
 
     def _schedule_flush(self):
         if self._mcu_helper.is_streaming() and len(self._buffer) < self._buffer_limit:
@@ -104,27 +127,37 @@ class StreamHandler:
     def _flush(self) -> bool:
         self._flush_event.clear()
         updated_timer = False
+
         while True:
             try:
                 samples = self._queue.get_nowait()
-                updated_timer = False
-                for sample in samples:
-                    if not updated_timer:
-                        curtime = self._reactor.monotonic()
-                        self._reactor.update_timer(
-                            self._timeout_timer, curtime + TIMEOUT
-                        )
-                        updated_timer = True
-                    self._flush_message(sample)
-            except queue.Empty:
-                return updated_timer
 
-    def _flush_message(self, sample: RawSample) -> None:
-        sample["clock64"] = self._mcu_helper.get_mcu().clock32_to_clock64(
-            sample["clock32"]
-        )
+                if samples:
+                    curtime = self._reactor.monotonic()
+                    self._reactor.update_timer(self._timeout_timer, curtime + TIMEOUT)
+                    updated_timer = True
+
+                for sample in samples:
+                    self._process_sample(sample)
+            except queue.Empty:
+                break
+
+        return updated_timer
+
+    def _process_sample(self, raw: _RawSample) -> None:
+        sample = self._convert_sample(raw)
         for session in self._sessions:
             session.handle(sample)
+
+    def _convert_sample(self, raw: _RawSample) -> Sample:
+        clock = self._mcu_helper.get_mcu().clock32_to_clock64(raw["clock"])
+        time = self._mcu_helper.get_mcu().clock_to_print_time(clock)
+        temp = self._mcu_helper.calculate_sample_temperature(raw["temp"])
+        return Sample(
+            time=time,
+            count=raw["data"],
+            temperature=temp,
+        )
 
 
 @final
@@ -133,13 +166,15 @@ class StreamSession:
         self,
         reactor: Reactor,
         remove_session: Callable[[StreamSession], bool],
-        callback: Callable[[RawSample], bool],
-        completion_callback: Optional[Callable[[], None]] = None,
+        callback: Callable[[Sample], bool],
+        completion_callback: Optional[Callable[[], None]],
+        active: bool,
     ) -> None:
         self._callback = callback
         self._completion_callback = completion_callback
         self._completion = reactor.completion()
         self._remove_session = remove_session
+        self._active = active
 
     def __enter__(self):
         return self
@@ -152,7 +187,10 @@ class StreamSession:
     ):
         self.stop()
 
-    def handle(self, sample: RawSample) -> None:
+    def is_active(self) -> bool:
+        return self._active
+
+    def handle(self, sample: Sample) -> None:
         if self._callback(sample):
             self._completion.complete(())
 

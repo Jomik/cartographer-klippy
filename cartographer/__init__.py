@@ -7,10 +7,11 @@ from extras import probe
 from gcode import GCodeCommand
 from typing_extensions import override
 
-from cartographer.endstop.scan import ScanEndstop
-from cartographer.endstop.wrapper import EndstopWrapper
-from cartographer.mcu.helper import McuHelper
-from cartographer.endstop.scan import ScanModel
+from .endstop.model import ScanModel
+from .endstop.scan import ScanEndstop
+from .endstop.wrapper import EndstopWrapper
+from .mcu.helper import McuHelper
+from .mcu.stream import StreamHandler
 
 
 @final
@@ -19,10 +20,16 @@ class PrinterCartographer:
         printer = config.get_printer()
         mcu_helper = McuHelper(config)
         model = ScanModel.load(config, "default")
-        endstop = ScanEndstop(mcu_helper, model)
+        self._stream_handler = StreamHandler(
+            mcu_helper.get_mcu().get_printer(), mcu_helper
+        )
+        endstop = ScanEndstop(mcu_helper, model, self._stream_handler)
         endstop_wrapper = EndstopWrapper(config, mcu_helper, endstop)
         probe_interface = ProbeInterface(config, endstop_wrapper)
         printer.add_object("probe", probe_interface)
+
+    def get_stream_handler(self) -> StreamHandler:
+        return self._stream_handler
 
 
 @final

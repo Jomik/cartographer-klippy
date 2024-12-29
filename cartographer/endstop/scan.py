@@ -23,11 +23,10 @@ class ScanEndstop(MCU_endstop):
         self,
         mcu_helper: McuHelper,
         model: ScanModel,
+        stream_handler: StreamHandler,
     ):
         self._mcu_helper = mcu_helper
-        self._stream_handler = StreamHandler(
-            mcu_helper.get_mcu().get_printer(), mcu_helper
-        )
+        self._stream_handler = stream_handler
         self._mcu = mcu_helper.get_mcu()
         self._printer = self._mcu.get_printer()
         self._dispatch = TriggerDispatch(self._mcu)

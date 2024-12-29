@@ -6,17 +6,10 @@ from enum import IntEnum
 from typing import Optional, Tuple, TypedDict, final
 
 from configfile import ConfigWrapper
+from extras.thermistor import Thermistor
 from mcu import MCU, CommandQueryWrapper, CommandWrapper, MCU_trsync
 
-
 TRIGGER_HYSTERESIS = 0.006
-
-
-class RawSample(TypedDict):
-    clock32: int
-    clock64: int
-    data: int
-    temp: int
 
 
 class TriggerMethod(IntEnum):
@@ -35,7 +28,10 @@ class McuHelper:
     _start_home_command: Optional[CommandWrapper] = None
     _stop_home_command: Optional[CommandWrapper] = None
     _base_read_command: Optional[CommandQueryWrapper[_BaseData]] = None
+
     _sensor_frequency: float = 0.0
+    _inverse_adc_max: float = 0.0
+    _adc_smooth_count: int = 0
 
     _streaming = True
 
@@ -50,6 +46,13 @@ class McuHelper:
         printer.register_event_handler("klippy:disconnect", self._handle_disconnect)
         printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
         self._mcu.register_config_callback(self._build_config)
+
+        self.thermistor = Thermistor(10000.0, 0.0)
+        self.thermistor.setup_coefficients_beta(25.0, 47000.0, 4041.0)
+
+    def calculate_sample_temperature(self, raw_temp: int) -> float:
+        temp_adc = raw_temp / self._adc_smooth_count * self._inverse_adc_max
+        return self.thermistor.calc_temp(temp_adc)
 
     def get_mcu(self) -> MCU:
         return self._mcu
@@ -86,8 +89,13 @@ class McuHelper:
             cq=self._command_queue,
         )
 
-        clock_frequency = self._mcu.get_constant_float("CLOCK_FREQ")
+        constants = self._mcu.get_constants()
+
+        clock_frequency = float(constants["CLOCK_FREQ"])
         self._sensor_frequency = self._clock_to_sensor_frequency(clock_frequency)
+
+        self._inverse_adc_max = 1.0 / int(constants["ADC_MAX"])
+        self._adc_smooth_count = int(constants["CARTOGRAPHER_ADC_SMOOTH_COUNT"])
 
     def _clock_to_sensor_frequency(self, clock_frequency: float) -> float:
         if clock_frequency < 20000000:

@@ -1,5 +1,5 @@
 # https://github.com/Klipper3d/klipper/blob/master/klippy/extras/heaters.py
-from typing import TypedDict
+from typing import Callable, Protocol, TypedDict
 
 class _Status(TypedDict):
     temperature: float
@@ -9,5 +9,14 @@ class _Status(TypedDict):
 class Heater:
     def get_status(self, eventtime: float) -> _Status: ...
 
+class _Sensor(Protocol):
+    def setup_callback(
+        self, temperature_callback: Callable[[float, float], None]
+    ) -> None: ...
+    def get_report_time_delta(self) -> float: ...
+    def setup_minmax(self, min_temp: float, max_temp: float) -> None: ...
+
 class PrinterHeaters:
-    available_sensors: list[str]
+    def add_sensor_factory(
+        self, sensor_type: str, sensor_factory: type[_Sensor]
+    ) -> None: ...
