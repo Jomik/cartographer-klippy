@@ -1,8 +1,9 @@
 [project]
-name = "cartographer"
+name = "jomik-cartographer"
 dynamic = ["version"]
 requires-python = ">= 3.8"
 license = { file = "LICENSE" }
+dependencies = ["numpy ~= 1.16", "typing-extensions ~= 4.12"]
 
 [project.urls]
 homepage = "https://github.com/Jomik/cartographer-scanner-klippy"
