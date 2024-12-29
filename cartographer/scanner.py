@@ -10,6 +10,7 @@ from typing_extensions import override
 
 from cartographer.endstop import ScannerEndstopWrapper
 from cartographer.mcu_helper import ScannerMCUHelper
+from cartographer.model import CalibrationModel
 from cartographer.stream_handler import StreamHandler
 
 
@@ -18,8 +19,9 @@ class PrinterScanner:
     def __init__(self, config: ConfigWrapper):
         printer = config.get_printer()
         mcu_helper = ScannerMCUHelper(config)
+        model = CalibrationModel.load(config, "default")
         stream_handler = StreamHandler(printer, mcu_helper)
-        endstop = ScannerEndstopWrapper(config, mcu_helper, stream_handler)
+        endstop = ScannerEndstopWrapper(config, mcu_helper, stream_handler, model)
         probe_interface = ScannerProbe(config, endstop)
         printer.add_object("probe", probe_interface)
         logging.info("Successfully added probe!")

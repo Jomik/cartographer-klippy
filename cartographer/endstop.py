@@ -11,10 +11,10 @@ from typing_extensions import override
 
 from cartographer.mcu_helper import (
     TRIGGER_DISTANCE,
-    TRIGGER_FREQ_COUNT,
     RawSample,
     ScannerMCUHelper,
 )
+from cartographer.model import CalibrationModel
 from cartographer.stream_handler import StreamHandler
 
 
@@ -25,11 +25,12 @@ class ScannerEndstopWrapper(ProbeEndstopWrapper):
         config: ConfigWrapper,
         mcu_helper: ScannerMCUHelper,
         stream_handler: StreamHandler,
+        model: CalibrationModel,
     ):
         self._printer = config.get_printer()
         self._mcu_helper = mcu_helper
         self._dispatch = TriggerDispatch(mcu_helper.get_mcu())
-        self._mcu_endstop = ScanEndstop(mcu_helper, stream_handler)
+        self._mcu_endstop = ScanEndstop(mcu_helper, stream_handler, model)
 
     @override
     def get_mcu(self) -> MCU:
@@ -92,11 +93,17 @@ class ScannerEndstopWrapper(ProbeEndstopWrapper):
 
 @final
 class ScanEndstop(MCU_endstop):
-    def __init__(self, mcu_helper: ScannerMCUHelper, stream_handler: StreamHandler):
+    def __init__(
+        self,
+        mcu_helper: ScannerMCUHelper,
+        stream_handler: StreamHandler,
+        model: CalibrationModel,
+    ):
         self._mcu_helper = mcu_helper
         self._stream_handler = stream_handler
         self._mcu = mcu_helper.get_mcu()
         self._dispatch = TriggerDispatch(self._mcu)
+        self._model = model
 
     @override
     def get_mcu(self) -> MCU:
@@ -158,7 +165,11 @@ class ScanEndstop(MCU_endstop):
 
         if sample is None:
             return 0
-        # TODO: Read trigger frequency from model
-        if sample["data"] > TRIGGER_FREQ_COUNT:
+        if (
+            self._model.frequency_to_distance(
+                self._mcu_helper.count_to_frequency(sample["data"])
+            )
+            < TRIGGER_DISTANCE
+        ):
             return 1
         return 0

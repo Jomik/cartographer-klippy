@@ -12,8 +12,6 @@ from mcu import MCU, CommandQueryWrapper, CommandWrapper, MCU_trsync
 # TODO: These probably live on the model
 TRIGGER_DISTANCE = 2.0
 TRIGGER_HYSTERESIS = 0.006
-TRIGGER_FREQ_COUNT = 33784425
-UNTRIGGER_FREQ_COUNT = int(TRIGGER_FREQ_COUNT * (1 - TRIGGER_HYSTERESIS))
 
 
 class RawSample(TypedDict):
@@ -27,7 +25,7 @@ class TriggerMethod(IntEnum):
     TOUCH = 1
 
 
-class BaseData(TypedDict):
+class _BaseData(TypedDict):
     bytes: bytes
 
 
@@ -37,7 +35,8 @@ class ScannerMCUHelper:
     _set_threshold_command: Optional[CommandWrapper] = None
     _start_home_command: Optional[CommandWrapper] = None
     _stop_home_command: Optional[CommandWrapper] = None
-    _base_read_command: Optional[CommandQueryWrapper[BaseData]] = None
+    _base_read_command: Optional[CommandQueryWrapper[_BaseData]] = None
+    _sensor_frequency: float = 0.0
 
     _streaming = True
 
@@ -58,7 +57,6 @@ class ScannerMCUHelper:
 
     def _handle_connect(self) -> None:
         self.stop_stream()
-        self.set_threshold(TRIGGER_FREQ_COUNT, UNTRIGGER_FREQ_COUNT)
 
     def _handle_disconnect(self) -> None:
         # TODO: Cleanup streaming
@@ -89,6 +87,17 @@ class ScannerMCUHelper:
             cq=self._command_queue,
         )
 
+        clock_frequency = self._mcu.get_constant_float("CLOCK_FREQ")
+        logging.info(f"Cartographer clock frequency: {clock_frequency:e}")
+        self._sensor_frequency = self._clock_to_sensor_frequency(clock_frequency)
+
+    def _clock_to_sensor_frequency(self, clock_frequency: float) -> float:
+        if clock_frequency < 20000000:
+            return clock_frequency
+        elif clock_frequency < 100000000:
+            return clock_frequency / 2
+        return clock_frequency / 6
+
     def _set_stream(self, enable: int) -> None:
         if self._stream_command is None:
             raise self._mcu.error("stream command not initialized")
@@ -111,9 +120,21 @@ class ScannerMCUHelper:
     def is_streaming(self) -> bool:
         return self._streaming
 
-    def set_threshold(self, trigger: int, untrigger: int) -> None:
+    def _frequency_to_count(self, frequency: float) -> int:
+        return int(frequency * (2**28) / self._sensor_frequency)
+
+    def count_to_frequency(self, count: int):
+        return count * self._sensor_frequency / (2**28)
+
+    def set_threshold(self, trigger_frequency: float) -> None:
         if self._set_threshold_command is None:
             raise self._mcu.error("set threshold command not initialized")
+
+        trigger = self._frequency_to_count(trigger_frequency)
+        untrigger = self._frequency_to_count(
+            trigger_frequency * (1 - TRIGGER_HYSTERESIS)
+        )
+
         self._set_threshold_command.send([trigger, untrigger])
 
     def _start_home(
