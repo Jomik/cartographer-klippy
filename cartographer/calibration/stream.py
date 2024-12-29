@@ -1,29 +1,25 @@
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Callable, Optional
 
-from cartographer.calibration.model import ScanModel
 from cartographer.helpers.filter import AlphaBetaFilter
 from cartographer.mcu.helper import McuHelper
 from cartographer.mcu.stream import Sample, StreamHandler
 
 
 @dataclass
-class RichSample:
-    time: float
+class CalibrationSample:
+    position: list[float]
     frequency: float
     temperature: float
-    distance: float
-    position: Optional[list[float]]
-    velocity: Optional[float]
 
 
-def rich_session(
+def calibration_session(
     stream_handler: StreamHandler,
     mcu_helper: McuHelper,
-    model: ScanModel,
-    callback: Callable[[RichSample], bool],
+    callback: Callable[[CalibrationSample], bool],
     completion_callback: Optional[Callable[[], None]] = None,
 ):
     filter = AlphaBetaFilter()
@@ -37,19 +33,16 @@ def rich_session(
     def enrich_sample_callback(sample: Sample) -> bool:
         data_smooth = filter.update(sample.time, sample.count)
         frequency = mcu_helper.count_to_frequency(data_smooth)
-        distance = model.frequency_to_distance(frequency)
-        position, velocity = dump_trapq.get_trapq_position(sample.time)
+        position, _ = dump_trapq.get_trapq_position(sample.time)
+        if position is None:
+            logging.warning(f"No position for sample at time {sample.time}")
+            return False
 
-        # TODO: Compensate for axis twist based on position
-
-        rich_sample = RichSample(
-            time=sample.time,
+        calibration_sample = CalibrationSample(
             frequency=frequency,
-            distance=distance,
             temperature=sample.temperature,
             position=position,
-            velocity=velocity,
         )
-        return callback(rich_sample)
+        return callback(calibration_sample)
 
     return stream_handler.session(enrich_sample_callback, completion_callback)

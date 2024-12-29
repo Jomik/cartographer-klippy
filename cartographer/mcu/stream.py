@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import logging
 import queue
+from dataclasses import dataclass
 from threading import Event
 from types import TracebackType
 from typing import Callable, Optional, Type, TypedDict, final
@@ -10,7 +10,7 @@ from typing import Callable, Optional, Type, TypedDict, final
 from klippy import Printer
 from reactor import Reactor
 
-from .helper import McuHelper
+from cartographer.mcu.helper import McuHelper
 
 BUFFER_LIMIT_DEFAULT = 100
 TIMEOUT = 2.0

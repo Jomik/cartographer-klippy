@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import final
 
+from calibration.model import TRIGGER_DISTANCE
 from configfile import ConfigWrapper
 from extras.probe import ProbeEndstopWrapper
 from mcu import MCU, MCU_endstop, TriggerDispatch
@@ -10,8 +11,6 @@ from stepper import MCU_stepper
 from typing_extensions import override
 
 from cartographer.mcu.helper import McuHelper
-
-from .model import TRIGGER_DISTANCE
 
 
 @final

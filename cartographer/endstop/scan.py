@@ -10,11 +10,10 @@ from reactor import ReactorCompletion
 from stepper import MCU_stepper, PrinterRail
 from typing_extensions import override
 
+from cartographer.calibration.model import TRIGGER_DISTANCE, ScanModel
+from cartographer.endstop.rich_stream import RichSample, rich_session
 from cartographer.mcu.helper import McuHelper
 from cartographer.mcu.stream import StreamHandler
-
-from .model import TRIGGER_DISTANCE, ScanModel
-from .rich_stream import RichSample, rich_session
 
 
 @final
