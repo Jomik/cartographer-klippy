@@ -1,3 +1,4 @@
+import logging
 from typing import Callable, final
 
 from configfile import ConfigWrapper
@@ -6,11 +7,14 @@ from cartographer.mcu.stream import Sample
 
 REPORT_TIME = 0.300
 
+logger = logging.getLogger(__name__)
+
 
 @final
 class PrinterTemperatureCoil:
     def __init__(self, config: ConfigWrapper):
         self._printer = config.get_printer()
+        self._name = config.get_name()
         self._min_temp = 0.0
         self._max_temp = 0.0
         self._temperature_callback = None
@@ -39,4 +43,10 @@ class PrinterTemperatureCoil:
         if self._temperature_callback is None:
             return False
         self._temperature_callback(sample.time, sample.temperature)
+        if not (self._min_temp <= sample.temperature <= self._max_temp):
+            logger.warning(
+                f"Temperature for {self._name} at {sample.temperature} is out of range "
+                + f"({self._min_temp} - {self._max_temp})"
+            )
+
         return False
