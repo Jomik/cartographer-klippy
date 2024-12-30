@@ -2,24 +2,20 @@ from __future__ import annotations
 
 from typing import final
 
-from configfile import ConfigWrapper
 from extras.probe import ProbeEndstopWrapper
 from mcu import MCU, MCU_endstop, TriggerDispatch
 from reactor import ReactorCompletion
 from stepper import MCU_stepper
 from typing_extensions import override
 
+from cartographer.calibration.model import TRIGGER_DISTANCE
 from cartographer.mcu.helper import McuHelper
-
-from .model import TRIGGER_DISTANCE
 
 
 @final
 class EndstopWrapper(ProbeEndstopWrapper):
-    def __init__(
-        self, config: ConfigWrapper, mcu_helper: McuHelper, endstop: MCU_endstop
-    ):
-        self._printer = config.get_printer()
+    def __init__(self, mcu_helper: McuHelper, endstop: MCU_endstop):
+        self._printer = mcu_helper.get_mcu().get_printer()
         self._mcu_helper = mcu_helper
         self._dispatch = TriggerDispatch(mcu_helper.get_mcu())
         self._mcu_endstop = endstop

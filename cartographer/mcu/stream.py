@@ -1,19 +1,29 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import logging
 import queue
+from abc import ABC, abstractmethod
+from dataclasses import dataclass
 from threading import Event
 from types import TracebackType
-from typing import Callable, Optional, Type, TypedDict, final
+from typing import (
+    Callable,
+    Optional,
+    Type,
+    TypedDict,
+    final,
+)
 
 from klippy import Printer
-from reactor import Reactor
+from reactor import Reactor, ReactorCompletion
+from typing_extensions import override
 
-from .helper import McuHelper
+from cartographer.mcu.helper import McuHelper
 
 BUFFER_LIMIT_DEFAULT = 100
 TIMEOUT = 2.0
+
+logger = logging.getLogger(__name__)
 
 
 @final
@@ -26,6 +36,7 @@ class _RawSample(TypedDict):
 @final
 @dataclass
 class Sample:
+    clock: int
     time: float
     count: int
     temperature: float
@@ -82,7 +93,7 @@ class StreamHandler:
             return self._reactor.NEVER
         if not self._printer.is_shutdown():
             msg = "Cartographer stream timed out"
-            logging.error(msg)
+            logger.error(msg)
             self._printer.invoke_shutdown(msg)
         return self._reactor.NEVER
 
@@ -121,7 +132,7 @@ class StreamHandler:
         def wrapped_flush(_: float) -> None:
             _ = self._flush()
 
-        logging.info("Scheduling flush")
+        logger.info("Scheduling flush")
         self._reactor.register_async_callback(wrapped_flush)
 
     def _flush(self) -> bool:
@@ -154,10 +165,48 @@ class StreamHandler:
         time = self._mcu_helper.get_mcu().clock_to_print_time(clock)
         temp = self._mcu_helper.calculate_sample_temperature(raw["temp"])
         return Sample(
+            clock=clock,
             time=time,
             count=raw["data"],
             temperature=temp,
         )
+
+
+class StreamCondition(ABC):
+    def __init__(self, printer: Printer) -> None:
+        self._completion: ReactorCompletion[None] = printer.get_reactor().completion()
+
+    @abstractmethod
+    def update(self, sample: Sample) -> None: ...
+
+    def complete(self) -> None:
+        self._completion.complete(None)
+
+    def wait(self) -> None:
+        self._completion.wait()
+
+
+class TimeCondition(StreamCondition):
+    def __init__(self, printer: Printer, time: float) -> None:
+        super().__init__(printer)
+        self._time: float = time
+
+    @override
+    def update(self, sample: Sample) -> None:
+        if sample.time >= self._time:
+            self.complete()
+
+
+class SampleCountCondition(StreamCondition):
+    def __init__(self, printer: Printer, count: int) -> None:
+        super().__init__(printer)
+        self._count: int = count
+
+    @override
+    def update(self, sample: Sample) -> None:
+        self._count -= 1
+        if self._count <= 0:
+            self.complete()
 
 
 @final
@@ -175,6 +224,7 @@ class StreamSession:
         self._completion = reactor.completion()
         self._remove_session = remove_session
         self._active = active
+        self._conditions: list[StreamCondition] = []
 
     def __enter__(self):
         return self
@@ -191,6 +241,8 @@ class StreamSession:
         return self._active
 
     def handle(self, sample: Sample) -> None:
+        for condition in self._conditions:
+            condition.update(sample)
         if self._callback(sample):
             self._completion.complete(())
 
@@ -203,3 +255,8 @@ class StreamSession:
     def wait(self):
         _ = self._completion.wait()
         self.stop()
+
+    def wait_for(self, condition: StreamCondition):
+        self._conditions.append(condition)
+        condition.wait()
+        self._conditions.remove(condition)

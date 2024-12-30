@@ -1,7 +1,8 @@
 from typing import Callable, final
 
 from configfile import ConfigWrapper
-from .mcu.stream import Sample
+
+from cartographer.mcu.stream import Sample
 
 REPORT_TIME = 0.300
 
