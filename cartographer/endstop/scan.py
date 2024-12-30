@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import math
 from typing import final
 
@@ -14,6 +15,8 @@ from cartographer.calibration.model import TRIGGER_DISTANCE, ScanModel
 from cartographer.endstop.rich_stream import RichSample, rich_session
 from cartographer.mcu.helper import McuHelper
 from cartographer.mcu.stream import StreamHandler
+
+logger = logging.getLogger(__name__)
 
 
 @final
@@ -43,6 +46,7 @@ class ScanEndstop(MCU_endstop):
         dist = float(np.median([sample.distance for sample in samples]))
         if math.isinf(dist):
             raise self._printer.command_error("Toolhead stopped below model range")
+        logger.debug(f"Setting homed distance to {dist}")
         homing_state.set_homed_position([None, None, dist])
 
     @override

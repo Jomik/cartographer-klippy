@@ -132,7 +132,6 @@ class StreamHandler:
         def wrapped_flush(_: float) -> None:
             _ = self._flush()
 
-        logger.info("Scheduling flush")
         self._reactor.register_async_callback(wrapped_flush)
 
     def _flush(self) -> bool:
@@ -142,6 +141,7 @@ class StreamHandler:
         while True:
             try:
                 samples = self._queue.get_nowait()
+                logger.debug(f"Flushing {len(samples)} samples")
 
                 if samples:
                     curtime = self._reactor.monotonic()
@@ -180,6 +180,9 @@ class StreamCondition(ABC):
     def update(self, sample: Sample) -> None: ...
 
     def complete(self) -> None:
+        if self._completion.test():
+            return
+        logger.debug(f"{self} completed")
         self._completion.complete(None)
 
     def wait(self) -> None:
@@ -196,6 +199,10 @@ class TimeCondition(StreamCondition):
         if sample.time >= self._time:
             self.complete()
 
+    @override
+    def __str__(self) -> str:
+        return f"TimeCondition({self._time})"
+
 
 class SampleCountCondition(StreamCondition):
     def __init__(self, printer: Printer, count: int) -> None:
@@ -207,6 +214,10 @@ class SampleCountCondition(StreamCondition):
         self._count -= 1
         if self._count <= 0:
             self.complete()
+
+    @override
+    def __str__(self) -> str:
+        return f"SampleCountCondition({self._count})"
 
 
 @final
@@ -251,12 +262,15 @@ class StreamSession:
             return
         if self._completion_callback is not None:
             self._completion_callback()
+        logger.debug("Session stopped")
 
     def wait(self):
         _ = self._completion.wait()
         self.stop()
 
     def wait_for(self, condition: StreamCondition):
+        logger.debug(f"Waiting for {condition}")
         self._conditions.append(condition)
         condition.wait()
         self._conditions.remove(condition)
+        logger.debug(f"Continuing from {condition}")

@@ -8,6 +8,8 @@ from cartographer.helpers.filter import AlphaBetaFilter
 from cartographer.mcu.helper import McuHelper
 from cartographer.mcu.stream import Sample, StreamHandler
 
+logger = logging.getLogger(__name__)
+
 
 @dataclass
 class CalibrationSample:
@@ -35,7 +37,7 @@ def calibration_session(
         frequency = mcu_helper.count_to_frequency(data_smooth)
         position, _ = dump_trapq.get_trapq_position(sample.time)
         if position is None:
-            logging.warning(f"No position for sample at time {sample.time}")
+            logger.warning(f"No position for sample at time {sample.time}")
             return False
 
         calibration_sample = CalibrationSample(

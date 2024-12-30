@@ -63,6 +63,7 @@ class CalibrationHelper:
     def start_calibration(self, gcmd: GCodeCommand) -> None:
         manual_probe.verify_no_manual_probe(self._printer)
         params = self.get_calibration_params(gcmd)
+        logger.info(f"Starting calibration with params: {params}")
 
         curtime = self._printer.get_reactor().monotonic()
         kin_status = self._toolhead.get_status(curtime)
@@ -127,6 +128,7 @@ class CalibrationHelper:
                 TimeCondition(self._printer, self._toolhead.get_last_move_time())
             )
             session.wait_for(SampleCountCondition(self._printer, 50))
+        logger.debug(f"Collected {len(samples)} samples")
 
         return samples
 
@@ -140,6 +142,7 @@ class CalibrationHelper:
         _ = self._toolhead.get_last_move_time()
         pos = self._toolhead.get_position()
         pos[2] = kin_status["axis_maximum"][2] - TRIGGER_DISTANCE - params.start_height
+        logger.debug(f"Forcing Z position to {pos[2]}")
         self._toolhead.set_position(pos, homing_axes=[2])
         return True
 

@@ -11,6 +11,7 @@ from mcu import MCU, CommandQueryWrapper, CommandWrapper, MCU_trsync
 from cartographer.configuration import CommonConfiguration
 
 TRIGGER_HYSTERESIS = 0.006
+logger = logging.getLogger(__name__)
 
 
 class TriggerMethod(IntEnum):
@@ -99,6 +100,7 @@ class McuHelper:
 
         self._inverse_adc_max = 1.0 / int(constants["ADC_MAX"])
         self._adc_smooth_count = int(constants["CARTOGRAPHER_ADC_SMOOTH_COUNT"])
+        logger.debug(f"Received constants: {constants}")
 
     def _clock_to_sensor_frequency(self, clock_frequency: float) -> float:
         if clock_frequency < 20000000:
@@ -115,14 +117,14 @@ class McuHelper:
     def start_stream(self) -> None:
         if self._streaming:
             return
-        logging.info("Starting cartographer data stream")
+        logger.debug("Starting stream")
         self._set_stream(1)
         self._streaming = True
 
     def stop_stream(self) -> None:
         if not self._streaming:
             return
-        logging.info("Stopping cartographer data stream")
+        logger.debug("Stopping stream")
         self._set_stream(0)
         self._streaming = False
 
@@ -139,6 +141,7 @@ class McuHelper:
         if self._set_threshold_command is None:
             raise self._mcu.error("set threshold command not initialized")
 
+        logger.debug(f"Setting threshold to {trigger_frequency}")
         trigger = self._frequency_to_count(trigger_frequency)
         untrigger = self._frequency_to_count(
             trigger_frequency * (1 - TRIGGER_HYSTERESIS)

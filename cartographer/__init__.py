@@ -16,6 +16,8 @@ from cartographer.endstop.wrapper import EndstopWrapper
 from cartographer.mcu.helper import McuHelper
 from cartographer.mcu.stream import StreamHandler
 
+from cartographer.logging_config import apply_logging_config
+
 
 @final
 class PrinterCartographer:
@@ -37,3 +39,6 @@ class PrinterCartographer:
 
     def get_stream_handler(self) -> StreamHandler:
         return self._stream_handler
+
+
+apply_logging_config()
