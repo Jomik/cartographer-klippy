@@ -9,7 +9,7 @@ from klippy import Printer
 from numpy.polynomial import Polynomial
 
 from cartographer.calibration.stream import CalibrationSample
-from cartographer.helpers import polynomial
+from cartographer.helpers import numpy as numpy_helper
 from cartographer.helpers.console import format_macro
 
 MODEL_PREFIX = "cartographer scan_model "
@@ -49,7 +49,7 @@ class ScanModel:
         temperatures = [sample.temperature for sample in samples]
         inv_frequencies = [1 / freq for freq in frequencies]
 
-        poly = polynomial.fit(inv_frequencies, z_offsets, degrees=9)
+        poly = numpy_helper.fit(inv_frequencies, z_offsets, degrees=9)
         temp_median = float(np.median(temperatures))
 
         return ScanModel(
@@ -61,7 +61,7 @@ class ScanModel:
         section = MODEL_PREFIX + self.name
 
         try:
-            result = polynomial.to_strings(self.poly)
+            result = numpy_helper.to_strings(self.poly)
             coefficients = result["coefficients"]
             domain = result["domain"]
         except ValueError as e:
@@ -71,7 +71,7 @@ class ScanModel:
             "temperature": self.temperature,
             "coefficients": coefficients,
             "domain": domain,
-            "z_range": f"{self.min_z}, {self.max_z}",
+            "z_range": numpy_helper.array2string(np.array([self.min_z, self.max_z])),
         }
 
         for key, value in config_data.items():
@@ -79,13 +79,13 @@ class ScanModel:
 
         self.printer.lookup_object("gcode").respond_info(
             f"Calibration model {self.name} has been updated."
-            + f"Please run the {format_macro('SAVE_CONFIG')} macro to update the printer configuration and restart the printer."
+            + f"\nPlease run the {format_macro('SAVE_CONFIG')} macro to update the printer configuration and restart the printer."
         )
 
     def frequency_to_distance(self, frequency: float) -> float:
         # TODO: Temperature compensation
 
-        domain = polynomial.get_domain(self.poly)
+        domain = numpy_helper.get_domain(self.poly)
         if domain is None:
             raise self.printer.command_error("Model is missing domain")
 
@@ -97,7 +97,7 @@ class ScanModel:
         elif inverse_frequency < begin:
             return float("-inf")
 
-        return float(polynomial.evaluate(self.poly, inverse_frequency))
+        return float(numpy_helper.evaluate(self.poly, inverse_frequency))
 
     def distance_to_frequency(self, distance: float, max_e: float = 1e-8) -> float:
         if distance < self.min_z or distance > self.max_z:
@@ -107,7 +107,7 @@ class ScanModel:
 
         # TODO: Temperature compensation
 
-        domain = polynomial.get_domain(self.poly)
+        domain = numpy_helper.get_domain(self.poly)
         if domain is None:
             raise self.printer.command_error("Model is missing domain")
 
@@ -115,7 +115,7 @@ class ScanModel:
 
         for _ in range(50):
             mid = (end + begin) / 2
-            value = polynomial.evaluate(self.poly, mid)
+            value = numpy_helper.evaluate(self.poly, mid)
 
             if abs(value - distance) < max_e:
                 return float(1.0 / mid)
