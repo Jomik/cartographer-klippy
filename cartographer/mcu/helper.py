@@ -51,6 +51,9 @@ class McuHelper:
         self.thermistor.setup_coefficients_beta(25.0, 47000.0, 4041.0)
 
     def calculate_sample_temperature(self, raw_temp: int) -> float:
+        # TODO: Maybe returning 0 is not smart?
+        if self._adc_smooth_count == 0:
+            return 0.0
         temp_adc = raw_temp / self._adc_smooth_count * self._inverse_adc_max
         return self.thermistor.calc_temp(temp_adc)
 
