@@ -1,6 +1,7 @@
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
 from typing import Optional, final
+
 from extras import manual_probe
 from gcode import GCodeCommand
 from toolhead import ToolHead
@@ -120,9 +121,7 @@ class CalibrationHelper:
                 SampleCountCondition(self._printer, 50),
             )
             self._toolhead.dwell(0.250)
-            curpos = self._toolhead.get_position()
-            curpos[2] = params.end_height
-            self._toolhead.manual_move(curpos, params.speed)
+            self._toolhead.manual_move([None, None, params.end_height], params.speed)
             self._toolhead.flush_step_generation()
             session.wait_for(
                 TimeCondition(self._printer, self._toolhead.get_last_move_time())
@@ -153,22 +152,17 @@ class CalibrationHelper:
         self._toolhead.set_position(curpos)
 
     def _move_probe_to_nozzle_position(self, params: CalibrationParams) -> None:
-        curpos = self._toolhead.get_position()
-
         # TODO: Consider backlash
-        curpos[2] = params.start_height
-        self._toolhead.manual_move(curpos, params.move_speed)
+        self._toolhead.manual_move([None, None, params.start_height], params.move_speed)
 
-        curpos[0] -= params.x_offset
-        curpos[1] -= params.y_offset
-        self._toolhead.manual_move(curpos, params.move_speed)
+        curpos = self._toolhead.get_position()
+        probepos = [curpos[0] - params.x_offset, curpos[1] - params.y_offset]
+        self._toolhead.manual_move(probepos, params.move_speed)
 
         self._toolhead.wait_moves()
 
     def _move_to_start_position(
         self, origpos: "list[float]", params: CalibrationParams
     ):
-        curpos = self._toolhead.get_position()
-        curpos[2] = params.start_height
-        self._toolhead.manual_move(curpos, params.move_speed)
-        self._toolhead.manual_move(origpos, params.move_speed)
+        self._toolhead.manual_move([None, None, params.start_height], params.move_speed)
+        self._toolhead.manual_move(origpos[:2], params.move_speed)
