@@ -3,14 +3,9 @@ from typing import Sequence, TypedDict
 
 import gcode
 from kinematics.extruder import Extruder
-from kinematics.none import NoneKinematics
+from kinematics.none import NoneKinematics, _Status as KinematicsStatus  # pyright: ignore[reportPrivateUsage]
 
-class _KinematicsStatus(TypedDict):
-    homed_axes: str
-    axis_minimum: float
-    axis_maximum: float
-
-class _Status(_KinematicsStatus):
+class _Status(KinematicsStatus, TypedDict):
     print_time: float
     stalls: int
     estimated_print_time: float
@@ -36,4 +31,6 @@ class ToolHead:
     def flush_step_generation(self) -> None: ...
     def manual_move(self, coord: _Pos | list[float | None], speed: float) -> None: ...
     def get_trapq(self) -> str: ...
-    def get_last_move_time(self) -> float: ...
+    def get_last_move_time(self) -> float:
+        """Refreshes print_time and returns it"""
+    ...

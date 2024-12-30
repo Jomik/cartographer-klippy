@@ -45,4 +45,6 @@ def calibration_session(
         )
         return callback(calibration_sample)
 
-    return stream_handler.session(enrich_sample_callback, completion_callback)
+    return stream_handler.session(
+        enrich_sample_callback, completion_callback, active=True
+    )

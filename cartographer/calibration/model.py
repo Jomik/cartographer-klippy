@@ -2,12 +2,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+import numpy as np
 from configfile import ConfigWrapper
 from configfile import error as ConfigError
 from klippy import Printer
 from numpy.polynomial import Polynomial
 
+from cartographer.calibration.stream import CalibrationSample
 from cartographer.helpers import polynomial
+from cartographer.helpers.console import format_macro
 
 MODEL_PREFIX = "cartographer scan_model "
 TRIGGER_DISTANCE = 2.0
@@ -39,6 +42,20 @@ class ScanModel:
 
         return ScanModel(printer, name, poly, temperature, min_z, max_z)
 
+    @staticmethod
+    def fit(printer: Printer, name: str, samples: list[CalibrationSample]) -> ScanModel:
+        z_offsets = [sample.position[2] for sample in samples]
+        frequencies = [sample.frequency for sample in samples]
+        temperatures = [sample.temperature for sample in samples]
+        inv_frequencies = [1 / freq for freq in frequencies]
+
+        poly = polynomial.fit(inv_frequencies, z_offsets, degrees=9)
+        temp_median = float(np.median(temperatures))
+
+        return ScanModel(
+            printer, name, poly, temp_median, min(z_offsets), max(z_offsets)
+        )
+
     def save(self) -> None:
         configfile = self.printer.lookup_object("configfile")
         section = MODEL_PREFIX + self.name
@@ -59,6 +76,11 @@ class ScanModel:
 
         for key, value in config_data.items():
             configfile.set(section, key, value)
+
+        self.printer.lookup_object("gcode").respond_info(
+            f"Calibration model {self.name} has been updated."
+            + f"Please run the {format_macro('SAVE_CONFIG')} macro to update the printer configuration and restart the printer."
+        )
 
     def frequency_to_distance(self, frequency: float) -> float:
         # TODO: Temperature compensation

@@ -5,9 +5,10 @@ import struct
 from enum import IntEnum
 from typing import Optional, Tuple, TypedDict, final
 
-from configfile import ConfigWrapper
 from extras.thermistor import Thermistor
 from mcu import MCU, CommandQueryWrapper, CommandWrapper, MCU_trsync
+
+from cartographer.configuration import CommonConfiguration
 
 TRIGGER_HYSTERESIS = 0.006
 
@@ -35,11 +36,10 @@ class McuHelper:
 
     _streaming = True
 
-    def __init__(self, config: ConfigWrapper):
+    def __init__(self, config: CommonConfiguration):
         printer = config.get_printer()
 
-        mcu_name = config.get("mcu")
-        self._mcu: MCU = printer.lookup_object(f"mcu {mcu_name}")
+        self._mcu: MCU = printer.lookup_object(f"mcu {config.mcu_name}")
         self._command_queue = self._mcu.alloc_command_queue()
 
         printer.register_event_handler("klippy:connect", self._handle_connect)

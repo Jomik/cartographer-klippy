@@ -25,6 +25,7 @@ def rich_session(
     model: ScanModel,
     callback: Callable[[RichSample], bool],
     completion_callback: Optional[Callable[[], None]] = None,
+    active: bool = True,
 ):
     filter = AlphaBetaFilter()
     mcu = mcu_helper.get_mcu()
@@ -52,4 +53,4 @@ def rich_session(
         )
         return callback(rich_sample)
 
-    return stream_handler.session(enrich_sample_callback, completion_callback)
+    return stream_handler.session(enrich_sample_callback, completion_callback, active)
