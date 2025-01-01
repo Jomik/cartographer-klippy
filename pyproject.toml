@@ -33,3 +33,6 @@ custom-hook = "pdm_build.py"
 [build-system]
 requires = ["pdm-backend==2.3.3"]
 build-backend = "pdm.backend"
+
+[dependency-groups]
+dev = ["pdm-backend==2.3.3"]
