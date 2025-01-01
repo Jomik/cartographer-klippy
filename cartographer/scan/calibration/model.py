@@ -8,7 +8,7 @@ from configfile import error as ConfigError
 from klippy import Printer
 from numpy.polynomial import Polynomial
 
-from cartographer.calibration.stream import CalibrationSample
+from cartographer.scan.calibration.stream import CalibrationSample
 from cartographer.helpers import numpy as numpy_helper
 from cartographer.helpers.strings import format_macro
 
@@ -17,7 +17,7 @@ TRIGGER_DISTANCE = 2.0
 
 
 @dataclass
-class ScanModel:
+class Model:
     printer: Printer
     name: str
     poly: Polynomial
@@ -26,7 +26,7 @@ class ScanModel:
     max_z: float
 
     @staticmethod
-    def load(config: ConfigWrapper, name: str) -> ScanModel:
+    def load(config: ConfigWrapper, name: str) -> Model:
         if not config.has_section(MODEL_PREFIX + name):
             raise config.printer.command_error(f"Model {name} not found")
 
@@ -40,10 +40,10 @@ class ScanModel:
 
         poly = Polynomial(coefficients, domain)
 
-        return ScanModel(printer, name, poly, temperature, min_z, max_z)
+        return Model(printer, name, poly, temperature, min_z, max_z)
 
     @staticmethod
-    def fit(printer: Printer, name: str, samples: list[CalibrationSample]) -> ScanModel:
+    def fit(printer: Printer, name: str, samples: list[CalibrationSample]) -> Model:
         z_offsets = [sample.position[2] for sample in samples]
         frequencies = [sample.frequency for sample in samples]
         temperatures = [sample.temperature for sample in samples]
@@ -52,9 +52,7 @@ class ScanModel:
         poly = numpy_helper.fit(inv_frequencies, z_offsets, degrees=9)
         temp_median = float(np.median(temperatures))
 
-        return ScanModel(
-            printer, name, poly, temp_median, min(z_offsets), max(z_offsets)
-        )
+        return Model(printer, name, poly, temp_median, min(z_offsets), max(z_offsets))
 
     def save(self) -> None:
         configfile = self.printer.lookup_object("configfile")

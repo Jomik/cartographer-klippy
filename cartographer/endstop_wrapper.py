@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import final
+from typing import Protocol, final
 
 from extras.probe import ProbeEndstopWrapper
 from mcu import MCU, MCU_endstop
@@ -8,20 +8,20 @@ from reactor import ReactorCompletion
 from stepper import MCU_stepper
 from typing_extensions import override
 
-from cartographer.calibration.model import TRIGGER_DISTANCE
-from cartographer.mcu.helper import McuHelper
+
+class Endstop(MCU_endstop, Protocol):
+    def get_position_endstop(self) -> float: ...
 
 
 @final
 class EndstopWrapper(ProbeEndstopWrapper):
-    def __init__(self, mcu_helper: McuHelper, endstop: MCU_endstop):
-        self._mcu = mcu_helper.get_mcu()
-        self._printer = self._mcu.get_printer()
+    def __init__(self, endstop: Endstop):
+        self._printer = endstop.get_mcu().get_printer()
         self._mcu_endstop = endstop
 
     @override
     def get_mcu(self) -> MCU:
-        return self._mcu
+        return self._mcu_endstop.get_mcu()
 
     @override
     def add_stepper(self, stepper: MCU_stepper) -> None:
@@ -75,4 +75,4 @@ class EndstopWrapper(ProbeEndstopWrapper):
 
     @override
     def get_position_endstop(self) -> float:
-        return TRIGGER_DISTANCE
+        return self._mcu_endstop.get_position_endstop()

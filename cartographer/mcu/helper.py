@@ -6,6 +6,7 @@ from enum import IntEnum
 from typing import Optional, Tuple, TypedDict, final
 
 from extras.thermistor import Thermistor
+from klippy import Printer
 from mcu import MCU, CommandQueryWrapper, CommandWrapper, MCU_trsync
 
 from cartographer.configuration import CommonConfiguration
@@ -60,6 +61,9 @@ class McuHelper:
 
     def get_mcu(self) -> MCU:
         return self._mcu
+
+    def get_printer(self) -> Printer:
+        return self._mcu.get_printer()
 
     def _handle_connect(self) -> None:
         self.stop_stream()
@@ -171,10 +175,7 @@ class McuHelper:
             ]
         )
 
-    def home_scan(
-        self,
-        trsync_oid: int,
-    ) -> None:
+    def home_scan(self, trsync_oid: int) -> None:
         self._start_home(trsync_oid, 0, TriggerMethod.SCAN)
 
     def stop_home(self) -> None:

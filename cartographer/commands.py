@@ -3,7 +3,7 @@ from typing import Callable, final
 from gcode import GCodeCommand
 from klippy import Printer
 
-from cartographer.calibration.helper import CalibrationHelper
+from cartographer.scan.calibration.helper import CalibrationHelper
 from cartographer.helpers.strings import cleandoc
 
 
