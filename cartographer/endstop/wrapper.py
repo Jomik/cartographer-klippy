@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import final
 
 from extras.probe import ProbeEndstopWrapper
-from mcu import MCU, MCU_endstop, TriggerDispatch
+from mcu import MCU, MCU_endstop
 from reactor import ReactorCompletion
 from stepper import MCU_stepper
 from typing_extensions import override
@@ -15,22 +15,21 @@ from cartographer.mcu.helper import McuHelper
 @final
 class EndstopWrapper(ProbeEndstopWrapper):
     def __init__(self, mcu_helper: McuHelper, endstop: MCU_endstop):
-        self._printer = mcu_helper.get_mcu().get_printer()
-        self._mcu_helper = mcu_helper
-        self._dispatch = TriggerDispatch(mcu_helper.get_mcu())
+        self._mcu = mcu_helper.get_mcu()
+        self._printer = self._mcu.get_printer()
         self._mcu_endstop = endstop
 
     @override
     def get_mcu(self) -> MCU:
-        return self._mcu_helper.get_mcu()
+        return self._mcu
 
     @override
     def add_stepper(self, stepper: MCU_stepper) -> None:
-        return self._dispatch.add_stepper(stepper)
+        return self._mcu_endstop.add_stepper(stepper)
 
     @override
     def get_steppers(self) -> list[MCU_stepper]:
-        return self._dispatch.get_steppers()
+        return self._mcu_endstop.get_steppers()
 
     @override
     def home_start(
