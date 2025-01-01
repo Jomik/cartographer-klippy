@@ -17,6 +17,7 @@ from klippy import Printer
 from reactor import Reactor, ReactorCompletion, ReactorTimer
 from typing_extensions import override
 
+from cartographer.helpers.filter import AlphaBetaFilter
 from cartographer.mcu.helper import McuHelper
 
 BUFFER_LIMIT_DEFAULT = 100
@@ -34,9 +35,10 @@ class _RawSample(TypedDict):
 @dataclass
 class Sample:
     clock: int
-    time: float
     count: int
+    time: float
     temperature: float
+    frequency: float
 
 
 class StreamHandler:
@@ -44,6 +46,7 @@ class StreamHandler:
     _reactor: Reactor
     _mcu_helper: McuHelper
     _timeout_timer: ReactorTimer
+    _filter: AlphaBetaFilter = AlphaBetaFilter()
 
     def __init__(self, printer: Printer, mcu_helper: McuHelper) -> None:
         self._printer = printer
@@ -162,13 +165,19 @@ class StreamHandler:
             session.handle(sample)
 
     def _convert_sample(self, raw: _RawSample) -> Sample:
+        count = raw["data"]
         clock = self._mcu_helper.get_mcu().clock32_to_clock64(raw["clock"])
         time = self._mcu_helper.get_mcu().clock_to_print_time(clock)
         temp = self._mcu_helper.calculate_sample_temperature(raw["temp"])
+
+        smoothed_count = self._filter.update(time, count)
+        frequency = self._mcu_helper.count_to_frequency(smoothed_count)
+
         return Sample(
+            count=count,
             clock=clock,
+            frequency=frequency,
             time=time,
-            count=raw["data"],
             temperature=temp,
         )
 

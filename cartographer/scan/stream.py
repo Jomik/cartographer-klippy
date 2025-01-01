@@ -3,7 +3,6 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable, Optional, Protocol
 
-from cartographer.helpers.filter import AlphaBetaFilter
 from cartographer.mcu.helper import McuHelper
 from cartographer.mcu.stream import Sample as StreamSample, StreamHandler
 
@@ -30,7 +29,6 @@ def scan_session(
     completion_callback: Optional[Callable[[], None]] = None,
     active: bool = True,
 ):
-    filter = AlphaBetaFilter()
     printer = mcu_helper.get_printer()
     motion_report = printer.lookup_object("motion_report")
     dump_trapq = motion_report.trapqs.get("toolhead")
@@ -38,16 +36,14 @@ def scan_session(
         raise printer.command_error("No dump trapq for toolhead")
 
     def enrich_sample_callback(sample: StreamSample) -> bool:
-        data_smooth = filter.update(sample.time, sample.count)
-        frequency = mcu_helper.count_to_frequency(data_smooth)
-        distance = model.frequency_to_distance(frequency)
+        distance = model.frequency_to_distance(sample.frequency)
         position, velocity = dump_trapq.get_trapq_position(sample.time)
 
         # TODO: Compensate for axis twist based on position
 
         rich_sample = Sample(
             time=sample.time,
-            frequency=frequency,
+            frequency=sample.frequency,
             distance=distance,
             temperature=sample.temperature,
             position=position,
