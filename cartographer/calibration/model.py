@@ -10,7 +10,7 @@ from numpy.polynomial import Polynomial
 
 from cartographer.calibration.stream import CalibrationSample
 from cartographer.helpers import numpy as numpy_helper
-from cartographer.helpers.console import format_macro
+from cartographer.helpers.strings import format_macro
 
 MODEL_PREFIX = "cartographer scan_model "
 TRIGGER_DISTANCE = 2.0

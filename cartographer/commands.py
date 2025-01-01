@@ -4,7 +4,7 @@ from gcode import GCodeCommand
 from klippy import Printer
 
 from cartographer.calibration.helper import CalibrationHelper
-from cartographer.helpers.docstrings import cleandoc
+from cartographer.helpers.strings import cleandoc
 
 
 @final
