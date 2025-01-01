@@ -6,11 +6,11 @@ from extras import manual_probe
 from gcode import GCodeCommand
 from toolhead import ToolHead
 
-from cartographer.calibration.model import TRIGGER_DISTANCE, ScanModel
-from cartographer.calibration.stream import CalibrationSample, calibration_session
 from cartographer.configuration import CommonConfiguration
 from cartographer.mcu.helper import McuHelper
 from cartographer.mcu.stream import SampleCountCondition, StreamHandler, TimeCondition
+from cartographer.scan.calibration.model import TRIGGER_DISTANCE, Model
+from cartographer.scan.calibration.stream import CalibrationSample, calibration_session
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +97,7 @@ class CalibrationHelper:
 
         self._move_to_start_position(origpos, params)
 
-        model = ScanModel.fit(self._printer, params.model_name, samples)
+        model = Model.fit(self._printer, params.model_name, samples)
         model.save()
 
     def _run_calibration_moves(

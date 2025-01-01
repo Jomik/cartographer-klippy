@@ -11,11 +11,10 @@ from typing import (
     Optional,
     Type,
     TypedDict,
-    final,
 )
 
 from klippy import Printer
-from reactor import Reactor, ReactorCompletion
+from reactor import Reactor, ReactorCompletion, ReactorTimer
 from typing_extensions import override
 
 from cartographer.mcu.helper import McuHelper
@@ -26,14 +25,12 @@ TIMEOUT = 2.0
 logger = logging.getLogger(__name__)
 
 
-@final
 class _RawSample(TypedDict):
     clock: int
     data: int
     temp: int
 
 
-@final
 @dataclass
 class Sample:
     clock: int
@@ -42,8 +39,12 @@ class Sample:
     temperature: float
 
 
-@final
 class StreamHandler:
+    _printer: Printer
+    _reactor: Reactor
+    _mcu_helper: McuHelper
+    _timeout_timer: ReactorTimer
+
     def __init__(self, printer: Printer, mcu_helper: McuHelper) -> None:
         self._printer = printer
         self._reactor = printer.get_reactor()
@@ -54,9 +55,9 @@ class StreamHandler:
         )
 
         self._buffer: list[_RawSample] = []
-        self._buffer_limit = BUFFER_LIMIT_DEFAULT
+        self._buffer_limit: int = BUFFER_LIMIT_DEFAULT
         self._queue: queue.Queue[list[_RawSample]] = queue.Queue()
-        self._flush_event = Event()
+        self._flush_event: Event = Event()
         self._sessions: list[StreamSession] = []
 
     def session(
@@ -220,8 +221,13 @@ class SampleCountCondition(StreamCondition):
         return f"SampleCountCondition({self._count})"
 
 
-@final
 class StreamSession:
+    _remove_session: Callable[[StreamSession], bool]
+    _callback: Callable[[Sample], bool]
+    _completion_callback: Optional[Callable[[], None]]
+    _active: bool
+    _completion: ReactorCompletion[None]
+
     def __init__(
         self,
         reactor: Reactor,
@@ -255,7 +261,7 @@ class StreamSession:
         for condition in self._conditions:
             condition.update(sample)
         if self._callback(sample):
-            self._completion.complete(())
+            self._completion.complete(None)
 
     def stop(self):
         if not self._remove_session(self):
