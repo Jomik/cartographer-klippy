@@ -7,6 +7,7 @@ from extras.probe import (
     HomingViaProbeHelper,
 )
 
+from cartographer.hardware_checks import HardwareObserver
 from cartographer.scan.calibration.helper import CalibrationHelper
 from cartographer.scan.calibration.model import Model
 from cartographer.commands import CartographerCommands
@@ -35,6 +36,7 @@ class PrinterCartographer:
 
         _ = HomingViaProbeHelper(config, endstop_wrapper)
         _ = CartographerCommands(printer, calibration_helper)
+        _ = HardwareObserver(mcu_helper)
 
     def get_stream_handler(self) -> StreamHandler:
         return self._stream_handler

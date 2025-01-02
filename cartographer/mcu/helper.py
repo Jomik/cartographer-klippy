@@ -1,9 +1,10 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 import logging
 import struct
 from enum import IntEnum
-from typing import Optional, Tuple, TypedDict, final
+from typing import Optional, TypedDict, final
 
 from extras.thermistor import Thermistor
 from klippy import Printer
@@ -22,6 +23,12 @@ class TriggerMethod(IntEnum):
 
 class _BaseData(TypedDict):
     bytes: bytes
+
+
+@dataclass
+class BaseParameters:
+    f_count: int
+    adc_count: int
 
 
 @final
@@ -183,7 +190,7 @@ class McuHelper:
             raise self._mcu.error("stop home command not initialized")
         self._stop_home_command.send()
 
-    def query_base(self) -> Tuple[int, int]:
+    def query_base(self) -> BaseParameters:
         if self._base_read_command is None:
             raise self._mcu.error("base read command is not initialized")
         fixed_length = 6
@@ -198,4 +205,4 @@ class McuHelper:
         if f_count >= 0xFFFFFFFF or adc_count >= 0xFFFF:
             raise self._mcu.error("invalid f_count or adc_count")
 
-        return f_count, adc_count
+        return BaseParameters(f_count=f_count, adc_count=adc_count)
