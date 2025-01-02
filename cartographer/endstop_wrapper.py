@@ -3,14 +3,28 @@ from __future__ import annotations
 from typing import Protocol, final
 
 from extras.probe import ProbeEndstopWrapper
-from mcu import MCU, MCU_endstop
+from mcu import MCU
 from reactor import ReactorCompletion
 from stepper import MCU_stepper
 from typing_extensions import override
 
 
-class Endstop(MCU_endstop, Protocol):
+class Endstop(Protocol):
     def get_position_endstop(self) -> float: ...
+
+    def get_mcu(self) -> MCU: ...
+    def add_stepper(self, stepper: MCU_stepper) -> None: ...
+    def get_steppers(self) -> list[MCU_stepper]: ...
+    def home_start(
+        self,
+        print_time: float,
+        sample_time: float,
+        sample_count: int,
+        rest_time: float,
+        triggered: bool = True,
+    ) -> ReactorCompletion[bool]: ...
+    def home_wait(self, home_end_time: float) -> float: ...
+    def query_endstop(self, print_time: float) -> int: ...
 
 
 @final
