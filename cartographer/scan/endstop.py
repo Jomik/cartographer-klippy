@@ -5,7 +5,7 @@ import math
 from typing import Protocol, final
 
 import numpy as np
-from extras.homing import Homing
+from extras.homing import Homing, HomingMove
 from mcu import MCU, MCU_trsync, TriggerDispatch
 from reactor import ReactorCompletion
 from stepper import MCU_stepper, PrinterRail
@@ -41,10 +41,17 @@ class ScanEndstop(Endstop):
         self._printer.register_event_handler(
             "homing:home_rails_end", self._handle_home_rails_end
         )
+        self._printer.register_event_handler(
+            "homing:homing_move_end", self._handle_homing_move_end
+        )
+        self._is_homing = False
 
     def _handle_home_rails_end(
         self, homing_state: Homing, _rails: list[PrinterRail]
     ) -> None:
+        if not self._is_homing:
+            return
+
         if 2 not in homing_state.get_axes():
             return
         samples = self._get_samples_synced(skip=5, count=10)
@@ -53,6 +60,9 @@ class ScanEndstop(Endstop):
             raise self._printer.command_error("Toolhead stopped below model range")
         logger.debug(f"Setting homed distance to {dist}")
         homing_state.set_homed_position([None, None, dist])
+
+    def _handle_homing_move_end(self, _: HomingMove) -> None:
+        self._is_homing = False
 
     @override
     def get_mcu(self) -> MCU:
@@ -81,6 +91,7 @@ class ScanEndstop(Endstop):
         trigger_completion = self._dispatch.start(print_time)
         self._printer.lookup_object("toolhead").wait_moves()
         self._mcu_helper.home_scan(self._dispatch.get_oid())
+        self._is_homing = True
         return trigger_completion
 
     @override

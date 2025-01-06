@@ -5,7 +5,7 @@ import configfile
 from configfile import ConfigWrapper, PrinterConfig, sentinel
 from extras.bed_mesh import BedMesh
 from extras.heaters import PrinterHeaters
-from extras.homing import Homing, PrinterHoming
+from extras.homing import Homing, HomingMove, PrinterHoming
 from extras.motion_report import PrinterMotionReport
 from extras.probe import PrinterProbe
 from gcode import CommandError, GCodeDispatch
@@ -71,6 +71,18 @@ class Printer:
         self,
         event: Literal["homing:home_rails_end"],
         callback: Callable[[Homing, list[PrinterRail]], None],
+    ) -> None: ...
+    @overload
+    def register_event_handler(
+        self,
+        event: Literal["homing:homing_move_begin"],
+        callback: Callable[[HomingMove], None],
+    ) -> None: ...
+    @overload
+    def register_event_handler(
+        self,
+        event: Literal["homing:homing_move_end"],
+        callback: Callable[[HomingMove], None],
     ) -> None: ...
     @overload
     def lookup_object(self, name: Literal["configfile"]) -> PrinterConfig: ...
