@@ -1,20 +1,22 @@
 from __future__ import annotations
 
+import logging
 from typing import Protocol, final
 
 from extras.probe import ProbeEndstopWrapper
-from mcu import MCU
+from mcu import MCU, TriggerDispatch
 from reactor import ReactorCompletion
 from stepper import MCU_stepper
 from typing_extensions import override
 
+from cartographer.mcu.helper import McuHelper
+
+logger = logging.getLogger(__name__)
+
 
 class Endstop(Protocol):
-    def get_position_endstop(self) -> float: ...
-
-    def get_mcu(self) -> MCU: ...
-    def add_stepper(self, stepper: MCU_stepper) -> None: ...
     def get_steppers(self) -> list[MCU_stepper]: ...
+    def get_position_endstop(self) -> float: ...
     def home_start(
         self,
         print_time: float,
@@ -29,21 +31,26 @@ class Endstop(Protocol):
 
 @final
 class EndstopWrapper(ProbeEndstopWrapper):
-    def __init__(self, endstop: Endstop):
-        self._printer = endstop.get_mcu().get_printer()
+    def __init__(
+        self, mcu_helper: McuHelper, endstop: Endstop, dispatch: TriggerDispatch
+    ):
+        self._mcu_helper = mcu_helper
+        self._printer = mcu_helper.get_mcu().get_printer()
         self._mcu_endstop = endstop
+        self._dispatch = dispatch
 
     @override
     def get_mcu(self) -> MCU:
-        return self._mcu_endstop.get_mcu()
+        return self._mcu_helper.get_mcu()
 
     @override
     def add_stepper(self, stepper: MCU_stepper) -> None:
-        return self._mcu_endstop.add_stepper(stepper)
+        logger.debug("Adding stepper %s to endstop", stepper)
+        return self._dispatch.add_stepper(stepper)
 
     @override
     def get_steppers(self) -> list[MCU_stepper]:
-        return self._mcu_endstop.get_steppers()
+        return self._dispatch.get_steppers()
 
     @override
     def home_start(

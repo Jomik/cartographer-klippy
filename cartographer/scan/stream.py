@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import logging
 from typing import Callable, Optional, Protocol
 
 from cartographer.mcu.helper import McuHelper
 from cartographer.mcu.stream import Sample as StreamSample, StreamHandler
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -13,8 +16,8 @@ class Sample:
     frequency: float
     temperature: float
     distance: float
-    position: Optional[list[float]]
-    velocity: Optional[float]
+    position: list[float]
+    velocity: float
 
 
 class Model(Protocol):
@@ -38,6 +41,12 @@ def scan_session(
     def enrich_sample_callback(sample: StreamSample) -> bool:
         distance = model.frequency_to_distance(sample.frequency)
         position, velocity = dump_trapq.get_trapq_position(sample.time)
+        if position is None:
+            logger.error(f"No position for sample at time {sample.time}")
+            return False
+        if velocity is None:
+            logger.error(f"No velocity for sample at time {sample.time}")
+            return False
 
         # TODO: Compensate for axis twist based on position
 
