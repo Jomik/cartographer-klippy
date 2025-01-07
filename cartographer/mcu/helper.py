@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import logging
 import struct
+from dataclasses import dataclass
 from enum import IntEnum
 from typing import Optional, TypedDict, final
 

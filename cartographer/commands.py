@@ -6,8 +6,6 @@ from gcode import GCodeCommand
 from klippy import Printer
 
 from cartographer.helpers.strings import cleandoc
-
-
 from cartographer.scan.endstop import ScanEndstop
 
 command_registry: dict[str, Callable[[CartographerCommands, GCodeCommand], None]] = {}

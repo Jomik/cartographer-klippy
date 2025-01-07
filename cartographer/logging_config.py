@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+
 from typing_extensions import override
 
 module_name = __name__.split(".")[0]

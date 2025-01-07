@@ -8,9 +8,9 @@ from configfile import error as ConfigError
 from klippy import Printer
 from numpy.polynomial import Polynomial
 
-from cartographer.scan.calibration.stream import CalibrationSample
 from cartographer.helpers import numpy as numpy_helper
 from cartographer.helpers.strings import format_macro
+from cartographer.scan.calibration.stream import CalibrationSample
 
 MODEL_PREFIX = "cartographer scan_model "
 TRIGGER_DISTANCE = 2.0

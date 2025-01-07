@@ -4,9 +4,9 @@ import logging
 import math
 from typing import Protocol, final
 
-from gcode import GCodeCommand
 import numpy as np
 from extras.homing import Homing, HomingMove
+from gcode import GCodeCommand
 from mcu import MCU_trsync, TriggerDispatch
 from reactor import ReactorCompletion
 from stepper import MCU_stepper, PrinterRail

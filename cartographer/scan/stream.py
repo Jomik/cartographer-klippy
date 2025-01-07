@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import logging
+from dataclasses import dataclass
 from typing import Callable, Optional, Protocol
 
 from cartographer.mcu.helper import McuHelper
-from cartographer.mcu.stream import Sample as StreamSample, StreamHandler
+from cartographer.mcu.stream import Sample as StreamSample
+from cartographer.mcu.stream import StreamHandler
 
 logger = logging.getLogger(__name__)
 
