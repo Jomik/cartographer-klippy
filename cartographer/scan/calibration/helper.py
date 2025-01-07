@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
 from typing import Optional, final
@@ -81,7 +83,7 @@ class CalibrationHelper:
         self,
         params: CalibrationParams,
         forced_z: bool,
-        kin_pos: Optional["list[float]"],
+        kin_pos: Optional[list[float]],
     ) -> None:
         if kin_pos is not None:
             self._calibrate(params)
@@ -102,7 +104,7 @@ class CalibrationHelper:
 
     def _run_calibration_moves(
         self, params: CalibrationParams
-    ) -> "list[CalibrationSample]":
+    ) -> list[CalibrationSample]:
         samples: list[CalibrationSample] = []
 
         def receive_sample(sample: CalibrationSample) -> bool:
@@ -164,8 +166,6 @@ class CalibrationHelper:
 
         self._toolhead.wait_moves()
 
-    def _move_to_start_position(
-        self, origpos: "list[float]", params: CalibrationParams
-    ):
+    def _move_to_start_position(self, origpos: list[float], params: CalibrationParams):
         self._toolhead.manual_move([None, None, params.start_height], params.move_speed)
         self._toolhead.manual_move(origpos[:2], params.move_speed)

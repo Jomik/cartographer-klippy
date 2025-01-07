@@ -82,7 +82,7 @@ class EndstopWrapper(ProbeEndstopWrapper):
         return
 
     @override
-    def probing_move(self, pos: "list[float]", speed: float) -> "list[float]":
+    def probing_move(self, pos: list[float], speed: float) -> list[float]:
         phoming = self._printer.lookup_object("homing")
         return phoming.probing_move(self, pos, speed)
 
