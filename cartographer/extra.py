@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from configfile import ConfigWrapper
 
 from cartographer import PrinterCartographer
