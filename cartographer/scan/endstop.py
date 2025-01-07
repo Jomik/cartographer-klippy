@@ -170,7 +170,7 @@ class ScanEndstop(Endstop):
 
         positions: list[list[float]] = []
         while len(positions) < sample_count:
-            pos = self._probe(probe_speed, samples_count=data_count)
+            pos = self.probe(probe_speed, samples_count=data_count)
             positions.append(pos)
             self._move_to_height(start_height, lift_speed)
 
@@ -191,7 +191,7 @@ class ScanEndstop(Endstop):
             + f"average {avg_value:.6f}, median {median:.6f}, standard deviation {sigma:.6f}"
         )
 
-    def _probe(self, speed: float, samples_count: int = 10) -> list[float]:
+    def probe(self, speed: float, samples_count: int = 10) -> list[float]:
         target = self.get_position_endstop()
 
         self._move_to_height(target, speed)

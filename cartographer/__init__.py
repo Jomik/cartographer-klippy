@@ -3,12 +3,11 @@ from __future__ import annotations
 from typing import final
 
 from configfile import ConfigWrapper
-from extras.probe import (
-    HomingViaProbeHelper,
-)
+from extras.probe import HomingViaProbeHelper
 from mcu import TriggerDispatch
 
 from cartographer.hardware_checks import HardwareObserver
+from cartographer.probe import CartograherPrinterProbe
 from cartographer.scan.calibration.model import Model
 from cartographer.commands import CartographerCommands
 from cartographer.configuration import CommonConfiguration
@@ -17,6 +16,9 @@ from cartographer.endstop_wrapper import EndstopWrapper
 from cartographer.logging_config import apply_logging_config
 from cartographer.mcu.helper import McuHelper
 from cartographer.mcu.stream import StreamHandler
+
+
+apply_logging_config()
 
 
 @final
@@ -38,8 +40,8 @@ class PrinterCartographer:
         _ = CartographerCommands(printer, endstop)
         _ = HardwareObserver(mcu_helper)
 
+        probe = CartograherPrinterProbe(common_config, printer, endstop)
+        printer.add_object("probe", probe)
+
     def get_stream_handler(self) -> StreamHandler:
         return self._stream_handler
-
-
-apply_logging_config()

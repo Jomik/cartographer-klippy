@@ -51,7 +51,7 @@ class _ProbeParams(TypedDict):
     sample_retract_dist: float
     samples_tolerance: float
     samples_tolerance_retries: int
-    samples_result: float
+    samples_result: Literal["average", "median"]
 
 class ProbeSessionHelper(_ProbeSession):
     def __init__(
