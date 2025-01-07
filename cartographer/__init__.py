@@ -6,9 +6,9 @@ from configfile import ConfigWrapper
 from extras.probe import (
     HomingViaProbeHelper,
 )
+from mcu import TriggerDispatch
 
 from cartographer.hardware_checks import HardwareObserver
-from cartographer.scan.calibration.helper import CalibrationHelper
 from cartographer.scan.calibration.model import Model
 from cartographer.commands import CartographerCommands
 from cartographer.configuration import CommonConfiguration
@@ -26,16 +26,16 @@ class PrinterCartographer:
         common_config = CommonConfiguration(config)
         mcu_helper = McuHelper(common_config)
         self._stream_handler = StreamHandler(printer, mcu_helper)
-        calibration_helper = CalibrationHelper(
-            common_config, mcu_helper, self._stream_handler
-        )
 
         model = Model.load(config, "default")
-        endstop = ScanEndstop(mcu_helper, model, self._stream_handler)
-        endstop_wrapper = EndstopWrapper(endstop)
+        dispatch = TriggerDispatch(mcu_helper.get_mcu())
+        endstop = ScanEndstop(
+            common_config, mcu_helper, model, self._stream_handler, dispatch
+        )
+        endstop_wrapper = EndstopWrapper(mcu_helper, endstop, dispatch)
 
         _ = HomingViaProbeHelper(config, endstop_wrapper)
-        _ = CartographerCommands(printer, calibration_helper)
+        _ = CartographerCommands(printer, endstop)
         _ = HardwareObserver(mcu_helper)
 
     def get_stream_handler(self) -> StreamHandler:

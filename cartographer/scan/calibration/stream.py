@@ -33,7 +33,7 @@ def calibration_session(
     def enrich_sample_callback(sample: Sample) -> bool:
         position, _ = dump_trapq.get_trapq_position(sample.time)
         if position is None:
-            logger.warning(f"No position for sample at time {sample.time}")
+            logger.error(f"No position for sample at time {sample.time}")
             return False
 
         calibration_sample = CalibrationSample(
