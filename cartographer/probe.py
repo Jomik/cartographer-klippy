@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from typing import Literal, Tuple, TypedDict, final
-from klippy import Printer
-from typing_extensions import Self, override
+
 from extras.probe import PrinterProbe
 from gcode import GCodeCommand
+from klippy import Printer
+from typing_extensions import Self, override
 
 from cartographer.configuration import CommonConfiguration
 from cartographer.scan.endstop import ScanEndstop
