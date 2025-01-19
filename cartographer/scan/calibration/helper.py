@@ -88,7 +88,7 @@ class CalibrationHelper:
         if kin_pos is not None:
             self._calibrate(params)
         elif forced_z:
-            self._toolhead.get_kinematics().note_z_not_homed()
+            self._toolhead.get_kinematics().clear_homing_state((2,))
 
     def _calibrate(self, params: CalibrationParams) -> None:
         self._reset_coordinate_system(params)
