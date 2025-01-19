@@ -87,7 +87,7 @@ class GCodeDispatch:
         func: None,
         when_not_ready: bool = False,
         desc: str | None = None,
-    ) -> Callable[[GCodeCommand], None]: ...
+    ) -> Callable[[GCodeCommand], None] | None: ...
     def create_gcode_command(
         self,
         command: str,

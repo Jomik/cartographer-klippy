@@ -9,6 +9,9 @@ dependencies = ["numpy ~= 1.16", "typing-extensions ~= 4.12"]
 homepage = "https://github.com/Jomik/cartographer-scanner-klippy"
 repository = "https://github.com/Jomik/cartographer-scanner-klippy"
 
+[project.optional-dependencies]
+scipy = ["scipy>=1.9.3"]
+
 [tool.pyright]
 pythonVersion = "3.8"
 venvPath = "./"
