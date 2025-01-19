@@ -16,6 +16,7 @@ from cartographer.mcu.stream import StreamHandler
 from cartographer.probe import CartograherPrinterProbe
 from cartographer.scan.calibration.model import Model
 from cartographer.scan.endstop import ScanEndstop
+from cartographer.scan.mesh.helper import ScanMeshHelper
 
 apply_logging_config()
 
@@ -34,9 +35,12 @@ class PrinterCartographer:
             common_config, mcu_helper, model, self._stream_handler, dispatch
         )
         endstop_wrapper = EndstopWrapper(mcu_helper, endstop, dispatch)
+        mesh_helper = ScanMeshHelper(
+            config, common_config, mcu_helper, endstop, model, self._stream_handler
+        )
 
         _ = HomingViaProbeHelper(config, endstop_wrapper)
-        _ = CartographerCommands(printer, endstop)
+        _ = CartographerCommands(printer, endstop, mesh_helper)
         _ = HardwareObserver(mcu_helper)
 
         probe = CartograherPrinterProbe(common_config, printer, endstop)

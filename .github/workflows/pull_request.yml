@@ -22,7 +22,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
         run: |
-          pdm install -d
+          pdm install -dG :all
       - name: Linting
         uses: astral-sh/ruff-action@v1
       - name: Type check
