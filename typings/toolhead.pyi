@@ -3,7 +3,7 @@ from typing import Sequence, TypedDict
 
 import gcode
 from kinematics.extruder import Extruder
-from kinematics.none import NoneKinematics, _Status as KinematicsStatus  # pyright: ignore[reportPrivateUsage]
+from kinematics import Kinematics, Status as KinematicsStatus
 
 class _Status(KinematicsStatus, TypedDict):
     print_time: float
@@ -20,7 +20,7 @@ type _Pos = list[float]
 
 class ToolHead:
     Coord: type[gcode.Coord]
-    def get_kinematics(self) -> NoneKinematics: ...
+    def get_kinematics(self) -> Kinematics: ...
     def get_extruder(self) -> Extruder: ...
     def get_status(self, eventtime: float) -> _Status: ...
     def get_position(self) -> _Pos: ...
