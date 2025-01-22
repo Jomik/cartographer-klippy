@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Optional, final
+from typing import final
 
 from cartographer.mcu.helper import McuHelper
 from cartographer.mcu.stream import Sample
@@ -14,7 +14,7 @@ FREQUENCY_RANGE_PERCENT = 1.35
 
 @final
 class HardwareObserver:
-    __min_frequency: Optional[float] = None
+    __min_frequency: float | None = None
 
     @property
     def _min_frequency(self) -> float:

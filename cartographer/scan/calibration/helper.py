@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Optional, final
+from typing import final
 
 from extras import manual_probe
 from gcode import GCodeCommand
@@ -32,7 +32,7 @@ class CalibrationParams:
 
 @final
 class CalibrationHelper:
-    __toolhead: Optional[ToolHead] = None
+    __toolhead: ToolHead | None = None
 
     @property
     def _toolhead(self) -> ToolHead:
@@ -83,7 +83,7 @@ class CalibrationHelper:
         self,
         params: CalibrationParams,
         forced_z: bool,
-        kin_pos: Optional[list[float]],
+        kin_pos: list[float] | None,
     ) -> None:
         if kin_pos is not None:
             self._calibrate(params)

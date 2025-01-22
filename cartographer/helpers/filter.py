@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Optional, final
+from typing import final
 
 _ALPHA = 0.5
 _BETA = 1e-6
@@ -8,9 +8,9 @@ _BETA = 1e-6
 
 @final
 class AlphaBetaFilter:
-    _estimated_position: Optional[int] = None
+    _estimated_position: int | None = None
     _estimated_velocity: float = 0.0
-    _previous_time: Optional[float] = None
+    _previous_time: float | None = None
 
     """
     Implements an Alpha-Beta filter for smoothing and predicting measurements.

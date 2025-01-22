@@ -1,10 +1,9 @@
 from __future__ import annotations
 
 import inspect
-from typing import Optional
 
 
-def cleandoc(doc: Optional[str]) -> Optional[str]:
+def cleandoc(doc: str | None) -> str | None:
     if doc is None:
         return None
     return inspect.cleandoc(doc)

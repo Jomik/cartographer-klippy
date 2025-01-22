@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Callable, Optional, Protocol
+from typing import Callable, Protocol
 
 from cartographer.mcu.helper import McuHelper
 from cartographer.mcu.stream import Sample as StreamSample
@@ -30,7 +30,7 @@ def scan_session(
     mcu_helper: McuHelper,
     model: Model,
     callback: Callable[[Sample], bool],
-    completion_callback: Optional[Callable[[], None]] = None,
+    completion_callback: Callable[[], None] | None = None,
     active: bool = True,
 ):
     printer = mcu_helper.get_printer()
