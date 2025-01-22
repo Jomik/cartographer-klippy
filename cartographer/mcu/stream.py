@@ -8,7 +8,6 @@ from threading import Event
 from types import TracebackType
 from typing import (
     Callable,
-    Optional,
     Type,
     TypedDict,
 )
@@ -73,7 +72,7 @@ class StreamHandler:
     def session(
         self,
         callback: Callable[[Sample], bool],
-        completion_callback: Optional[Callable[[], None]] = None,
+        completion_callback: Callable[[], None] | None = None,
         active: bool = True,
     ) -> StreamSession:
         """
@@ -240,7 +239,7 @@ class SampleCountCondition(StreamCondition):
 class StreamSession:
     _remove_session: Callable[[StreamSession], bool]
     _callback: Callable[[Sample], bool]
-    _completion_callback: Optional[Callable[[], None]]
+    _completion_callback: Callable[[], None] | None
     _active: bool
     _completion: ReactorCompletion[Exception | None]
 
@@ -249,7 +248,7 @@ class StreamSession:
         reactor: Reactor,
         remove_session: Callable[[StreamSession], bool],
         callback: Callable[[Sample], bool],
-        completion_callback: Optional[Callable[[], None]],
+        completion_callback: Callable[[], None] | None,
         active: bool,
     ) -> None:
         self._callback = callback

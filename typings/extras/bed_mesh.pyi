@@ -1,5 +1,5 @@
 # https://github.com/Klipper3d/klipper/blob/master/klippy/extras/bed_mesh.py
-from typing import Iterator, Literal, Optional, Tuple, TypedDict
+from typing import Iterator, Literal, Tuple, TypedDict
 
 from gcode import GCodeCommand
 
@@ -24,7 +24,7 @@ class ZMesh:
 class BedMesh:
     bmc: BedMeshCalibrate
     horizontal_move_z: float
-    def set_mesh(self, mesh: Optional[ZMesh]) -> None: ...
+    def set_mesh(self, mesh: ZMesh | None) -> None: ...
 
 class BedMeshCalibrate:
     mesh_config: _Params

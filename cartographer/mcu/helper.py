@@ -4,7 +4,7 @@ import logging
 import struct
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Optional, TypedDict, final
+from typing import TypedDict, final
 
 from extras.thermistor import Thermistor
 from klippy import Printer
@@ -33,15 +33,15 @@ class BaseParameters:
 
 @final
 class McuHelper:
-    _stream_command: Optional[CommandWrapper] = None
-    _set_threshold_command: Optional[CommandWrapper] = None
-    _start_home_command: Optional[CommandWrapper] = None
-    _stop_home_command: Optional[CommandWrapper] = None
-    _base_read_command: Optional[CommandQueryWrapper[_BaseData]] = None
+    _stream_command: CommandWrapper | None = None
+    _set_threshold_command: CommandWrapper | None = None
+    _start_home_command: CommandWrapper | None = None
+    _stop_home_command: CommandWrapper | None = None
+    _base_read_command: CommandQueryWrapper[_BaseData] | None = None
 
     _sensor_frequency: float = 0.0
     _inverse_adc_max: float = 0.0
-    _adc_smooth_count: int = 0
+    _adc_smooth_count: int | None = None
 
     _streaming = True
 
@@ -60,7 +60,7 @@ class McuHelper:
 
     def calculate_sample_temperature(self, raw_temp: int) -> float:
         # TODO: Maybe returning 0 is not smart?
-        if self._adc_smooth_count == 0:
+        if self._adc_smooth_count is None:
             return 0.0
         temp_adc = raw_temp / self._adc_smooth_count * self._inverse_adc_max
         return self.thermistor.calc_temp(temp_adc)

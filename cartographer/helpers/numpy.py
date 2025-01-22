@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-from typing import Literal, Optional, cast
+from typing import Literal, cast
 
 import numpy as np
 from numpy.polynomial import Polynomial
@@ -12,8 +12,8 @@ def fit(x: list[float], y: list[float], degrees: int) -> Polynomial:
     return cast(Polynomial, Polynomial.fit(x, y, degrees))  # pyright: ignore [reportUnknownMemberType]
 
 
-def get_domain(poly: Polynomial) -> Optional[list[np.float64]]:
-    return cast(Optional[list[np.float64]], poly.domain)
+def get_domain(poly: Polynomial) -> list[np.float64] | None:
+    return cast(list[np.float64] | None, poly.domain)
 
 
 def evaluate(poly: Polynomial, x: float | np.float64) -> np.float64:
@@ -28,7 +28,7 @@ def array2string(arr: NDArray[np.float64]) -> str:
 
 def to_strings(poly: Polynomial) -> dict[Literal["coefficients", "domain"], str]:
     coef = cast(NDArray[np.float64], poly.coef)
-    domain = cast(Optional[NDArray[np.float64]], poly.domain)
+    domain = cast(NDArray[np.float64] | None, poly.domain)
     if domain is None:
         raise ValueError("Polynomial domain is None")
     coef_str = array2string(coef)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Callable, Optional
+from typing import Callable
 
 from cartographer.mcu.helper import McuHelper
 from cartographer.mcu.stream import Sample, StreamHandler
@@ -21,7 +21,7 @@ def calibration_session(
     stream_handler: StreamHandler,
     mcu_helper: McuHelper,
     callback: Callable[[CalibrationSample], bool],
-    completion_callback: Optional[Callable[[], None]] = None,
+    completion_callback: Callable[[], None] | None = None,
 ):
     mcu = mcu_helper.get_mcu()
     printer = mcu.get_printer()
