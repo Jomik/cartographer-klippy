@@ -56,12 +56,19 @@ class StreamHandler:
         self._mcu_helper.get_mcu().register_response(
             self._handle_data, "cartographer_data"
         )
+        printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
 
         self._buffer: list[_RawSample] = []
         self._buffer_limit: int = BUFFER_LIMIT_DEFAULT
         self._queue: queue.Queue[list[_RawSample]] = queue.Queue()
         self._flush_event: Event = Event()
         self._sessions: list[StreamSession] = []
+
+    def _handle_shutdown(self) -> None:
+        _ = self._flush()
+        error = self._printer.command_error("Printer shutdown")
+        for session in self._sessions:
+            session.stop(error)
 
     def session(
         self,
@@ -235,7 +242,7 @@ class StreamSession:
     _callback: Callable[[Sample], bool]
     _completion_callback: Optional[Callable[[], None]]
     _active: bool
-    _completion: ReactorCompletion[None]
+    _completion: ReactorCompletion[Exception | None]
 
     def __init__(
         self,
@@ -272,7 +279,10 @@ class StreamSession:
         if self._callback(sample):
             self._completion.complete(None)
 
-    def stop(self):
+    def stop(self, error: Exception | None = None) -> None:
+        if not self._completion.test():
+            self._completion.complete(error)
+
         if not self._remove_session(self):
             return
         if self._completion_callback is not None:
@@ -280,8 +290,10 @@ class StreamSession:
         logger.debug("Session stopped")
 
     def wait(self):
-        _ = self._completion.wait()
+        err = self._completion.wait()
         self.stop()
+        if err is not None:
+            raise err
 
     def wait_for(self, condition: StreamCondition):
         logger.debug(f"Waiting for {condition}")

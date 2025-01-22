@@ -52,7 +52,6 @@ class McuHelper:
         self._command_queue = self._mcu.alloc_command_queue()
 
         printer.register_event_handler("klippy:connect", self._handle_connect)
-        printer.register_event_handler("klippy:disconnect", self._handle_disconnect)
         printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
         self._mcu.register_config_callback(self._build_config)
 
@@ -75,13 +74,8 @@ class McuHelper:
     def _handle_connect(self) -> None:
         self.stop_stream()
 
-    def _handle_disconnect(self) -> None:
-        # TODO: Cleanup streaming
-        pass
-
     def _handle_shutdown(self) -> None:
-        # TODO: Cleanup streaming
-        pass
+        self.stop_stream()
 
     def _build_config(self) -> None:
         self._stream_command = self._mcu.lookup_command(
