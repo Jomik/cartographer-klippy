@@ -3,7 +3,15 @@ name = "jomik-cartographer"
 dynamic = ["version"]
 requires-python = ">= 3.8"
 license = { file = "LICENSE" }
-dependencies = ["numpy ~= 1.16", "typing-extensions ~= 4.12"]
+dependencies = ["numpy>=1.16, <2.0", "typing-extensions ~= 4.12"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+
+  "Environment :: 3D Printers :: Klippy",
+  "Intended Audience :: End Users/Desktop",
+
+  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+]
 
 [project.urls]
 homepage = "https://github.com/Jomik/cartographer-scanner-klippy"
@@ -38,4 +46,8 @@ requires = ["pdm-backend==2.3.3"]
 build-backend = "pdm.backend"
 
 [dependency-groups]
-dev = ["pdm-backend==2.3.3"]
+dev = [
+  "pdm-backend==2.3.3", # Keep this for type safety in pdm_build.py
+  "ruff",
+  "pyright",
+]
