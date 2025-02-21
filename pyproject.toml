@@ -14,8 +14,8 @@ classifiers = [
 ]
 
 [project.urls]
-homepage = "https://github.com/Jomik/cartographer-scanner-klippy"
-repository = "https://github.com/Jomik/cartographer-scanner-klippy"
+homepage = "https://github.com/Jomik/cartographer-klippy"
+repository = "https://github.com/Jomik/cartographer-klippy"
 
 [project.optional-dependencies]
 scipy = ["scipy>=1.9.3"]
