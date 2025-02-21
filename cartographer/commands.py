@@ -76,7 +76,7 @@ class CartographerCommands:
     @register_command("PROBE_CALIBRATE")
     def cmd_PROBE_CALIBRATE(self, gcmd: GCodeCommand) -> None:
         """
-        Calibrate the probe's z-offset and the scanner's response curve
+        Calibrate the probe's z-offset and cartographer's response curve
         """
         self._endstop.start_calibration(gcmd)
 
