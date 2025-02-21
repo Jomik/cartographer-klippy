@@ -6,3 +6,4 @@ build/
 __pycache__/
 .mise.local.toml
 .pdm-python
+__version__.py
