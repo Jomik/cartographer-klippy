@@ -49,5 +49,5 @@ build-backend = "pdm.backend"
 dev = [
   "pdm-backend==2.3.3", # Keep this for type safety in pdm_build.py
   "ruff",
-  "pyright",
+  "basedpyright",
 ]
