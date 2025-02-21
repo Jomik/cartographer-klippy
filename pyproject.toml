@@ -4,10 +4,10 @@ dynamic = ["version"]
 requires-python = ">= 3.8"
 license = { file = "LICENSE" }
 dependencies = ["numpy>=1.16, <2.0", "typing-extensions ~= 4.12"]
+keywords = ["klipper", "3D printing", "cartographer"]
 classifiers = [
   "Development Status :: 3 - Alpha",
 
-  "Environment :: 3D Printers :: Klippy",
   "Intended Audience :: End Users/Desktop",
 
   "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
