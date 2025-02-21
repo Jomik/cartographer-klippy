@@ -7,3 +7,4 @@ __pycache__/
 .mise.local.toml
 .pdm-python
 __version__.py
+dist/
