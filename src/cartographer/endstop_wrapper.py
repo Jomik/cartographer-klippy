@@ -24,7 +24,7 @@ class Endstop(Protocol):
         sample_count: int,
         rest_time: float,
         triggered: bool = True,
-    ) -> ReactorCompletion[bool]: ...
+    ) -> ReactorCompletion[int]: ...
     def home_wait(self, home_end_time: float) -> float: ...
     def query_endstop(self, print_time: float) -> int: ...
 
@@ -60,7 +60,7 @@ class EndstopWrapper(ProbeEndstopWrapper):
         sample_count: int,
         rest_time: float,
         triggered: bool = True,
-    ) -> ReactorCompletion[bool]:
+    ) -> ReactorCompletion[int]:
         return self._mcu_endstop.home_start(
             print_time, sample_time, sample_count, rest_time, triggered
         )

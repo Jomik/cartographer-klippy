@@ -82,7 +82,7 @@ class ScanEndstop(Endstop):
         sample_count: int,
         rest_time: float,
         triggered: bool = True,
-    ) -> ReactorCompletion[bool]:
+    ) -> ReactorCompletion[int]:
         self._mcu_helper.set_threshold(
             self._model.distance_to_frequency(TRIGGER_DISTANCE)
         )
