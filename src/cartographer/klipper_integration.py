@@ -17,8 +17,15 @@ from cartographer.probe import CartograherPrinterProbe
 from cartographer.scan.calibration.model import Model
 from cartographer.scan.endstop import ScanEndstop
 from cartographer.scan.mesh.helper import ScanMeshHelper
+from cartographer.temperature import PrinterTemperatureCoil
 
 apply_logging_config()
+
+
+def load_config(config: ConfigWrapper):
+    pheaters = config.get_printer().load_object(config, "heaters")
+    pheaters.add_sensor_factory("cartographer_coil", PrinterTemperatureCoil)
+    return PrinterCartographer(config)
 
 
 @final

@@ -30,6 +30,10 @@ reportMissingTypeStubs = true
 [tool.ruff]
 target-version = "py38"
 
+[tool.pytest.ini_options]
+addopts = ["--import-mode=importlib"]
+pythonpath = ["src"]
+
 [tool.pdm.version]
 source = "scm"
 write_to = "src/cartographer/__version__.py"
@@ -46,8 +50,12 @@ requires = ["pdm-backend==2.3.3"]
 build-backend = "pdm.backend"
 
 [dependency-groups]
-dev = [
-  "pdm-backend==2.3.3", # Keep this for type safety in pdm_build.py
-  "ruff",
-  "basedpyright",
+test = [
+    "pytest>=8.3.4",
+    "pytest-mock>=3.14.0",
+]
+lint = ["ruff>=0.9.7"]
+typecheck = [
+  "pdm-backend==2.3.3",   # Keep this for type safety in pdm_build.py
+  "basedpyright>=1.27.1",
 ]

@@ -1,0 +1,42 @@
+requires = ["tox>=4"]
+env_list = ["lint", "typecheck", "3.8", "3.9"]
+
+[env_run_base]
+set_env = { PDM_IGNORE_SAVED_PYTHON = "1" }
+description = "run unit tests"
+dependency_groups = ["test"]
+commands = [
+  [
+    "pytest",
+    { replace = "posargs", default = [
+      "tests",
+    ], extend = true },
+  ],
+]
+
+[env.lint]
+description = "run linters"
+skip_install = true
+dependency_groups = ["lint"]
+commands = [
+  [
+    "ruff",
+    "check",
+    { replace = "posargs", default = [
+      ".",
+    ], extend = true },
+  ],
+]
+
+[env.typecheck]
+description = "run type checks"
+dependency_groups = ["typecheck"]
+commands = [
+  [
+    "basedpyright",
+    { replace = "posargs", default = [
+      "src",
+      "tests",
+    ], extend = true },
+  ],
+]

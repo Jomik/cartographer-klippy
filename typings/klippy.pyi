@@ -14,7 +14,7 @@ from reactor import Reactor
 from stepper import PrinterRail
 from toolhead import ToolHead
 
-from cartographer import PrinterCartographer
+from cartographer.klipper_integration import PrinterCartographer
 
 T = TypeVar("T")
 
