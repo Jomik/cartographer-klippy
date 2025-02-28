@@ -37,14 +37,14 @@ def stream() -> Stream[object]:
 class TestStream:
     def test_start_session(self, stream: Stream[int]) -> None:
         with stream.start_session() as session:
-            stream.on_item(42)
+            stream.add_item(42)
         assert session.get_items() == [42]
 
     def test_start_session_with_condition(self, stream: Stream[int]) -> None:
         with stream.start_session(start_condition=lambda x: x == 2) as session:
-            stream.on_item(1)
-            stream.on_item(2)
-            stream.on_item(3)
+            stream.add_item(1)
+            stream.add_item(2)
+            stream.add_item(3)
         assert session.get_items() == [2, 3]
 
     def test_wait_for(self, stream: Stream[int]) -> None:
@@ -52,7 +52,7 @@ class TestStream:
 
         def add_items():
             for i in range(5):
-                stream.on_item(i)
+                stream.add_item(i)
                 time.sleep(0.1)
 
         # Run adding items in a separate thread

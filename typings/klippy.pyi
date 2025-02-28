@@ -38,6 +38,12 @@ class Printer:
     def load_object(
         self,
         config: ConfigWrapper,
+        section: Literal["motion_report"],
+    ) -> PrinterMotionReport: ...
+    @overload
+    def load_object(
+        self,
+        config: ConfigWrapper,
         section: str,
         default: T | type[sentinel] = sentinel,
     ) -> T: ...

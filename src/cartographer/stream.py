@@ -85,7 +85,7 @@ class Stream(ABC, Generic[T]):
         if session in self.sessions:
             self.sessions.remove(session)
 
-    def on_item(self, item: T):
+    def add_item(self, item: T):
         """Pushes the item to all active sessions."""
         for session in self.sessions:
             session.add_item(item)

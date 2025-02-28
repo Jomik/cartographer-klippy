@@ -1,4 +1,5 @@
 from __future__ import annotations
+from typing_extensions import override
 
 import pytest
 from pytest_mock import MockerFixture
@@ -25,9 +26,19 @@ def toolhead(mocker: MockerFixture):
     return mocker.Mock(spec=Toolhead, autospec=True)
 
 
+class MockModel(Model):
+    @override
+    def distance_to_frequency(self, distance: float) -> float:
+        return distance
+
+    @override
+    def frequency_to_distance(self, frequency: float) -> float:
+        return frequency
+
+
 @pytest.fixture
-def model(mocker: MockerFixture):
-    return mocker.Mock(spec=Model, autospec=True)
+def model():
+    return MockModel()
 
 
 @pytest.fixture
@@ -48,7 +59,7 @@ def test_scan_mode_sets_homed_position(
 ):
     homing_state = mocker.Mock(spec=HomingState, autospec=True)
     homed_position_spy = mocker.spy(homing_state, "set_homed_position")
-    session.get_items = mocker.Mock(return_value=[Sample(0.0, 5.0, mocker.Mock())] * 15)
+    session.get_items = mocker.Mock(return_value=[Sample(0.0, 5.0)] * 15)
 
     _ = mode.home_start(0)
     mode.on_home_end(homing_state)

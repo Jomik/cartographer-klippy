@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from typing import Literal, NamedTuple, Protocol
+from typing import Literal, Protocol, TypedDict
 
 HomingAxis = Literal["x", "y", "z"]
 
 
-class Position(NamedTuple):
+class Position(TypedDict):
     x: float
     y: float
     z: float
@@ -24,3 +24,4 @@ class HomingState(Protocol):
 class Toolhead(Protocol):
     def get_last_move_time(self) -> float: ...
     def wait_moves(self) -> None: ...
+    def get_requested_position(self, time: float) -> Position: ...

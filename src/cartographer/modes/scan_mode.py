@@ -8,7 +8,7 @@ from typing import Callable, Optional, Protocol, final
 import numpy as np
 from typing_extensions import override
 
-from cartographer.printer import HomingState, Position, Toolhead
+from cartographer.printer import HomingState, Toolhead
 from cartographer.stream import Session
 
 from .base_mode import EndstopMode
@@ -20,6 +20,7 @@ TRIGGER_DISTANCE = 2.0
 
 class Model(Protocol):
     def distance_to_frequency(self, distance: float) -> float: ...
+    def frequency_to_distance(self, frequency: float) -> float: ...
 
 
 class ScanModeError(Exception):
@@ -29,8 +30,7 @@ class ScanModeError(Exception):
 @dataclass
 class Sample:
     time: float
-    distance: float
-    requested_position: Position
+    frequency: float
 
 
 class ScanModeMcu(Protocol):
@@ -66,7 +66,8 @@ class ScanMode(EndstopMode):
         with self._mcu.start_session() as session:
             session.wait_for(lambda samples: len(samples) > 0)
         samples = session.get_items()
-        return samples[0].distance <= self.get_endstop_position()
+        distance = self._model.frequency_to_distance(samples[0].frequency)
+        return distance <= self.get_endstop_position()
 
     @override
     def get_endstop_position(self) -> float:
@@ -76,9 +77,10 @@ class ScanMode(EndstopMode):
     def home_start(self, print_time: float) -> object:
         self._is_homing = True
         self._toolhead.wait_moves()
-        return self._mcu.start_homing_scan(
-            print_time, self._model.distance_to_frequency(self.get_endstop_position())
+        trigger_frequency = self._model.distance_to_frequency(
+            self.get_endstop_position()
         )
+        return self._mcu.start_homing_scan(print_time, trigger_frequency)
 
     @override
     def on_home_end(self, homing_state: HomingState) -> None:
@@ -93,7 +95,14 @@ class ScanMode(EndstopMode):
             session.wait_for(lambda samples: len(samples) >= 15)
         samples = session.get_items()[5:]
 
-        dist = float(np.median([sample.distance for sample in samples]))
+        dist = float(
+            np.median(
+                [
+                    self._model.frequency_to_distance(sample.frequency)
+                    for sample in samples
+                ]
+            )
+        )
         if math.isinf(dist):
             raise ScanModeError("toolhead stopped below model range")
 
