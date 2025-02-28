@@ -14,8 +14,6 @@ from reactor import Reactor
 from stepper import PrinterRail
 from toolhead import ToolHead
 
-from cartographer.klipper_integration import PrinterCartographer
-
 T = TypeVar("T")
 
 class Printer:
@@ -94,8 +92,6 @@ class Printer:
     def lookup_object(self, name: Literal["bed_mesh"]) -> BedMesh: ...
     @overload
     def lookup_object(self, name: Literal["configfile"]) -> PrinterConfig: ...
-    @overload
-    def lookup_object(self, name: Literal["cartographer"]) -> PrinterCartographer: ...
     @overload
     def lookup_object(self, name: Literal["gcode"]) -> GCodeDispatch: ...
     @overload

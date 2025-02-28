@@ -4,7 +4,7 @@ set -euo pipefail
 
 FILE_NAME="cartographer.py"
 PACKAGE_NAME="jomik-cartographer"
-SCAFFOLDING="from cartographer.klipper_integration import *"
+SCAFFOLDING="from cartographer.klipper.extra import *"
 
 function display_help() {
   echo "Usage: $0 [OPTIONS]"
