@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 
-
-from cartographer.printer import HomingState, ReactorCompletion
+from cartographer.printer import HomingState
 
 
 class EndstopMode(ABC):
@@ -32,7 +31,7 @@ class EndstopMode(ABC):
         pass
 
     @abstractmethod
-    def home_start(self, print_time: float) -> ReactorCompletion[bool | int]:
+    def home_start(self, print_time: float) -> object:
         """Start the homing process"""
         pass
 

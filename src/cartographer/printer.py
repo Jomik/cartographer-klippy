@@ -1,13 +1,19 @@
 from __future__ import annotations
 
-from typing import Generic, Literal, Protocol, TypeVar, overload
+from typing import Literal, NamedTuple, Protocol
 
 HomingAxis = Literal["x", "y", "z"]
 
 
+class Position(NamedTuple):
+    x: float
+    y: float
+    z: float
+
+
 class HomingState(Protocol):
-    def get_axes(self) -> list[HomingAxis]:
-        """Get the axes currently being homed."""
+    def is_homing(self, axis: HomingAxis) -> bool:
+        """Check if axis is currently being homed."""
         ...
 
     def set_homed_position(self, axis: HomingAxis, position: float) -> None:
@@ -15,20 +21,6 @@ class HomingState(Protocol):
         ...
 
 
-T = TypeVar("T")
-
-
-class TriggerDispatch(Protocol):
-    def get_oid(self) -> int: ...
-    def start(self, print_time: float) -> ReactorCompletion[bool | int]: ...
-    def wait_end(self, end_time: float) -> None: ...
-    def stop(self) -> int: ...
-
-
-class ReactorCompletion(Protocol, Generic[T]):
-    def test(self) -> bool: ...
-    def complete(self, result: bool | int) -> None: ...
-    @overload
-    def wait(self, waketime: float, waketime_result: T) -> T: ...
-    @overload
-    def wait(self) -> T | None: ...
+class Toolhead(Protocol):
+    def get_last_move_time(self) -> float: ...
+    def wait_moves(self) -> None: ...

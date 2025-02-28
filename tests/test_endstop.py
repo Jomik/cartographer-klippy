@@ -3,13 +3,13 @@ from __future__ import annotations
 import pytest
 from pytest_mock import MockerFixture
 
-from cartographer.endstop import MCU, Endstop
+from cartographer.endstop import Endstop, EndstopMcu
 from cartographer.modes.base_mode import EndstopMode
 
 
 @pytest.fixture
 def mcu(mocker: MockerFixture):
-    return mocker.Mock(spec=MCU, autospec=True)
+    return mocker.Mock(spec=EndstopMcu, autospec=True)
 
 
 @pytest.fixture
@@ -23,7 +23,7 @@ def end_mode(mocker: MockerFixture) -> EndstopMode:
 
 
 @pytest.fixture
-def endstop(mcu: MCU, start_mode: EndstopMode):
+def endstop(mcu: EndstopMcu, start_mode: EndstopMode):
     return Endstop(mcu, start_mode)
 
 
@@ -36,7 +36,7 @@ def test_endstop_switches_mode(
 
 
 def test_endstop_calls_on_enter(
-    mocker: MockerFixture, mcu: MCU, start_mode: EndstopMode
+    mocker: MockerFixture, mcu: EndstopMcu, start_mode: EndstopMode
 ):
     spy_enter = mocker.spy(start_mode, "on_enter")
     _ = Endstop(mcu, start_mode)
