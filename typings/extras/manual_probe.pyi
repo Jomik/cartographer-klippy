@@ -1,5 +1,6 @@
 # Helper script to determine a Z height
 from typing import Callable
+
 from gcode import GCodeCommand
 from klippy import Printer
 

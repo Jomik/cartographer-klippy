@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from typing import Callable, Optional, Protocol, TypeVar, final
+from typing import TYPE_CHECKING, Callable, Protocol, TypeVar, final
 
 import greenlet
-from reactor import Reactor
 from typing_extensions import override
 
 from cartographer.stream import Condition, Session, Stream
+
+if TYPE_CHECKING:
+    from reactor import Reactor
 
 
 @final
@@ -54,7 +56,7 @@ class KlipperStream(Stream[T]):
         self,
         mcu: KlipperStreamMcu,
         reactor: Reactor,
-        smoothing_fn: Optional[Callable[[T], T]] = None,
+        smoothing_fn: Callable[[T], T] | None = None,
     ):
         self.reactor = reactor
         self.mcu = mcu
@@ -65,9 +67,7 @@ class KlipperStream(Stream[T]):
         return KlipperCondition(self.reactor)
 
     @override
-    def start_session(
-        self, start_condition: Callable[[T], bool] | None = None
-    ) -> Session[T]:
+    def start_session(self, start_condition: Callable[[T], bool] | None = None) -> Session[T]:
         if len(self.sessions) == 0:
             self.mcu.start_streaming()
         return super().start_session(start_condition)

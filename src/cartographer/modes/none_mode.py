@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import logging
-from typing import final
+from typing import TYPE_CHECKING, final
 
 from typing_extensions import override
 
-from cartographer.printer import HomingState
+from cartographer.modes.base_mode import EndstopMode
 
-from .base_mode import EndstopMode
+if TYPE_CHECKING:
+    from cartographer.printer import HomingState
 
 logger = logging.getLogger(__name__)
 
@@ -26,8 +27,10 @@ class NoneMode(EndstopMode):
 
     @override
     def home_start(self, print_time: float) -> object:
-        raise RuntimeError("Cannot home before calibration.")
+        msg = "Cannot home before calibration."
+        raise RuntimeError(msg)
 
     @override
     def on_home_end(self, homing_state: HomingState) -> None:
-        raise RuntimeError("Cannot home before calibration.")
+        msg = "Cannot home before calibration."
+        raise RuntimeError(msg)

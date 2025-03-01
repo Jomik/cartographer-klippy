@@ -1,14 +1,14 @@
 from __future__ import annotations
 
-from typing import final
-
-from configfile import ConfigWrapper
+from typing import TYPE_CHECKING, final
 
 from cartographer.endstop import Endstop
+from cartographer.klipper.endstop import EndstopWrapper
+from cartographer.klipper.mcu import KlipperCartographerMcu
 from cartographer.modes.none_mode import NoneMode
 
-from .endstop import EndstopWrapper
-from .mcu import KlipperCartographerMcu
+if TYPE_CHECKING:
+    from configfile import ConfigWrapper
 
 
 def load_config(config: ConfigWrapper):

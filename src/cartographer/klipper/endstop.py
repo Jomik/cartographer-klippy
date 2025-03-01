@@ -1,19 +1,21 @@
 from __future__ import annotations
 
 import logging
-from typing import cast, final
+from typing import TYPE_CHECKING, cast, final
 
-from extras.homing import Homing
 from extras.probe import ProbeEndstopWrapper
-from mcu import MCU
 from reactor import ReactorCompletion
-from stepper import MCU_stepper, PrinterRail
 from typing_extensions import override
 
-from cartographer.endstop import Endstop
+from cartographer.klipper.printer import KlipperHomingState
 
-from .mcu import KlipperCartographerMcu
-from .printer import KlipperHomingState
+if TYPE_CHECKING:
+    from extras.homing import Homing
+    from mcu import MCU
+    from stepper import MCU_stepper, PrinterRail
+
+    from cartographer.endstop import Endstop
+    from cartographer.klipper.mcu import KlipperCartographerMcu
 
 logger = logging.getLogger(__name__)
 
@@ -24,9 +26,7 @@ class EndstopWrapper(ProbeEndstopWrapper):
         self.printer = mcu.klipper_mcu.get_printer()
         self.mcu = mcu
         self.endstop = endstop
-        self.printer.register_event_handler(
-            "homing:home_rails_end", self.home_rails_end
-        )
+        self.printer.register_event_handler("homing:home_rails_end", self.home_rails_end)
 
     def home_rails_end(self, homing: Homing, _: list[PrinterRail]) -> None:
         self.endstop.on_home_end(KlipperHomingState(homing))

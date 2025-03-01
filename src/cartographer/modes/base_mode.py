@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING
 
-from cartographer.printer import HomingState
+if TYPE_CHECKING:
+    from cartographer.printer import HomingState
 
 
 class EndstopMode(ABC):
@@ -10,11 +12,11 @@ class EndstopMode(ABC):
 
     def on_enter(self) -> None:
         """Called when switching into this mode."""
-        pass
+        return
 
     def on_exit(self) -> None:
         """Called when switching out of this mode."""
-        pass
+        return
 
     def can_switch(self) -> bool:
         """Determine if switching to a new mode is allowed."""
@@ -23,19 +25,15 @@ class EndstopMode(ABC):
     @abstractmethod
     def query_triggered(self, print_time: float) -> bool:
         """Return true if endstop is currently triggered"""
-        pass
 
     @abstractmethod
     def get_endstop_position(self) -> float:
         """Returns the position at which the endstop is triggered"""
-        pass
 
     @abstractmethod
     def home_start(self, print_time: float) -> object:
         """Start the homing process"""
-        pass
 
     @abstractmethod
     def on_home_end(self, homing_state: HomingState) -> None:
         """Called when homing moves are done."""
-        pass

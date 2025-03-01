@@ -1,12 +1,16 @@
 from __future__ import annotations
-from typing_extensions import override
+
+from typing import TYPE_CHECKING
 
 import pytest
-from pytest_mock import MockerFixture
+from typing_extensions import override
 
-from cartographer.modes.scan_mode import Model, Sample, ScanMode, Mcu
+from cartographer.modes.scan_mode import Mcu, Model, Sample, ScanMode
 from cartographer.printer import HomingState, Toolhead
 from cartographer.stream import Session
+
+if TYPE_CHECKING:
+    from pytest_mock import MockerFixture
 
 
 @pytest.fixture
@@ -54,9 +58,7 @@ def test_do_nothing_when_not_homing(mocker: MockerFixture, mode: ScanMode):
     assert homed_position_spy.call_count == 0
 
 
-def test_scan_mode_sets_homed_position(
-    mocker: MockerFixture, mode: ScanMode, session: Session[Sample]
-):
+def test_scan_mode_sets_homed_position(mocker: MockerFixture, mode: ScanMode, session: Session[Sample]):
     homing_state = mocker.Mock(spec=HomingState, autospec=True)
     homed_position_spy = mocker.spy(homing_state, "set_homed_position")
     session.get_items = mocker.Mock(return_value=[Sample(0.0, 5.0)] * 15)

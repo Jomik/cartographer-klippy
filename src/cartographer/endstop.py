@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from typing import Protocol, final
+from typing import TYPE_CHECKING, Protocol, final
 
-from .modes.base_mode import EndstopMode
-from .printer import HomingState
+if TYPE_CHECKING:
+    from cartographer.modes.base_mode import EndstopMode
+    from cartographer.printer import HomingState
 
 
 class Mcu(Protocol):
@@ -25,7 +26,8 @@ class Endstop:
     def set_mode(self, new_mode: EndstopMode) -> None:
         """Safely switch between Scan and Touch modes."""
         if not self._mode.can_switch():
-            raise RuntimeError("mode switch not allowed")
+            msg = "mode switch not allowed"
+            raise RuntimeError(msg)
 
         self._mode.on_exit()
         self._mode = new_mode

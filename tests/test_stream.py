@@ -1,10 +1,12 @@
 from __future__ import annotations
+
 import threading
 import time
 from typing import Callable
-from typing_extensions import override
 
 import pytest
+from typing_extensions import override
+
 from cartographer.stream import Condition, Stream
 
 
@@ -69,7 +71,7 @@ class TestStream:
         worker.join()  # Ensure thread has finished before exiting
 
     def test_applies_smoothing(self, stream: Stream[int]) -> None:
-        stream.smoothing_fn = lambda number: 1
+        stream.smoothing_fn = lambda _: 1
 
         with stream.start_session() as session:
             stream.add_item(42)

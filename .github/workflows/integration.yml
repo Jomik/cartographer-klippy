@@ -27,7 +27,9 @@ jobs:
         run: uv tool install --python-preference only-managed --python 3.13 hatch
       - name: Install python
         run: uv python install --python-preference only-managed 3.13
+      - name: Install ruff
+        run: uv sync --only-group lint
       - name: Check formatting
-        run: hatch fmt --check
+        run: uv run ruff check --output-format=github
       - name: Run tests
         run: hatch test --all

@@ -1,5 +1,5 @@
 [project]
-name = "jomik-cartographer"
+name = "cartographer"
 requires-python = ">= 3.8"
 license = { file = "LICENSE" }
 dependencies = ["numpy>=1.16, <2.0", "typing-extensions ~= 4.12"]
@@ -33,8 +33,8 @@ venv = ".venv"
 reportMissingModuleSource = false # klippy imports are always missing sources
 reportMissingTypeStubs = true
 
-[tool.ruff]
-target-version = "py38"
+[tool.hatch.envs.hatch-static-analysis]
+config-path = "none"
 
 [tool.pytest.ini_options]
 addopts = ["--import-mode=importlib"]

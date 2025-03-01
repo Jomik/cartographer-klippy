@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from typing import final
+from typing import TYPE_CHECKING, final
 
-from configfile import ConfigWrapper
-from extras.homing import Homing
 from typing_extensions import override
 
 from cartographer.printer import HomingAxis, HomingState, Position, Toolhead
+
+if TYPE_CHECKING:
+    from configfile import ConfigWrapper
+    from extras.homing import Homing
 
 axis_mapping: dict[HomingAxis, int] = {
     "x": 0,
@@ -54,8 +56,10 @@ class KlipperToolhead(Toolhead):
     def get_requested_position(self, time: float) -> Position:
         trapq = self.motion_report.trapqs.get("toolhead")
         if trapq is None:
-            raise RuntimeError("No dump trapq for toolhead")
+            msg = "No dump trapq for toolhead"
+            raise RuntimeError(msg)
         position, _ = trapq.get_trapq_position(time)
         if position is None:
-            raise ValueError(f"No position for time {time}")
+            msg = f"No position for time {time}"
+            raise ValueError(msg)
         return Position(x=position[0], y=position[1], z=position[2])

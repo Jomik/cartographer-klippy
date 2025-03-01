@@ -5,7 +5,6 @@ class CommandError(Exception): ...
 
 class GCodeCommand:
     error: type[CommandError]
-    class sentinel: ...
 
     def respond_raw(self, msg: str) -> None: ...
     def respond_info(self, msg: str, log: bool = True) -> None: ...
@@ -14,7 +13,7 @@ class GCodeCommand:
     def get(
         self,
         name: str,
-        default: str | type[sentinel] = sentinel,
+        default: str = ...,
     ) -> str: ...
     @overload
     def get(
@@ -26,7 +25,7 @@ class GCodeCommand:
     def get_int(
         self,
         name: str,
-        default: int | type[sentinel] = sentinel,
+        default: int = ...,
         minval: int | None = None,
         maxval: int | None = None,
     ) -> int: ...
@@ -42,7 +41,7 @@ class GCodeCommand:
     def get_float(
         self,
         name: str,
-        default: float | type[sentinel] = sentinel,
+        default: float = ...,
         minval: float | None = None,
         maxval: float | None = None,
         above: float | None = None,

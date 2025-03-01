@@ -1,8 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from types import TracebackType
-from typing import Callable, Generic, List, Optional, Protocol, Type, TypeVar, final
+from typing import Callable, Generic, Protocol, TypeVar, final
 
 T = TypeVar("T")
 
@@ -10,8 +9,6 @@ T = TypeVar("T")
 class Condition(Protocol):
     def notify_all(self) -> None:
         """Wakes all threads waiting on this condition."""
-
-    ...
 
     def wait_for(self, predicate: Callable[[], bool]) -> None:
         """Wait until a condition evaluates to True."""
@@ -24,10 +21,10 @@ class Session(Generic[T]):
         self,
         stream: Stream[T],
         condition: Condition,
-        start_condition: Optional[Callable[[T], bool]] = None,
+        start_condition: Callable[[T], bool] | None = None,
     ):
         self.stream = stream
-        self.items: List[T] = []
+        self.items: list[T] = []
         self.start_condition = start_condition
         self._condition = condition
 
@@ -41,11 +38,11 @@ class Session(Generic[T]):
         self.items.append(item)
         self._condition.notify_all()
 
-    def wait_for(self, condition: Callable[[List[T]], bool]):
+    def wait_for(self, condition: Callable[[list[T]], bool]):
         """Waits until the given condition function returns True."""
         self._condition.wait_for(lambda: condition(self.items))
 
-    def get_items(self) -> List[T]:
+    def get_items(self) -> list[T]:
         """Returns collected items after session ends."""
         return self.items
 
@@ -54,26 +51,24 @@ class Session(Generic[T]):
 
     def __exit__(
         self,
-        exc_type: Type[BaseException],
-        exc_val: BaseException,
-        exc_tb: TracebackType,
+        exc_type: object,
+        exc_val: object,
+        exc_tb: object,
     ):
         """Automatically remove session from stream when exiting the with-block."""
         self.stream.end_session(self)
 
 
 class Stream(ABC, Generic[T]):
-    def __init__(self, smoothing_fn: Optional[Callable[[T], T]] = None):
+    def __init__(self, smoothing_fn: Callable[[T], T] | None = None):
         """Initializes a stream with optional smoothing function."""
-        self.smoothing_fn: Optional[Callable[[T], T]] = smoothing_fn
-        self.sessions: List[Session[T]] = []
+        self.smoothing_fn: Callable[[T], T] | None = smoothing_fn
+        self.sessions: list[Session[T]] = []
 
     @abstractmethod
     def condition(self) -> Condition: ...
 
-    def start_session(
-        self, start_condition: Optional[Callable[[T], bool]] = None
-    ) -> Session[T]:
+    def start_session(self, start_condition: Callable[[T], bool] | None = None) -> Session[T]:
         """Starts a session with an optional start condition.
 
         All items before the start condition will be skipped.
