@@ -63,7 +63,9 @@ class Session(Generic[T]):
 
 
 class Stream(ABC, Generic[T]):
-    def __init__(self):
+    def __init__(self, smoothing_fn: Optional[Callable[[T], T]] = None):
+        """Initializes a stream with optional smoothing function."""
+        self.smoothing_fn: Optional[Callable[[T], T]] = smoothing_fn
         self.sessions: List[Session[T]] = []
 
     @abstractmethod
@@ -87,5 +89,9 @@ class Stream(ABC, Generic[T]):
 
     def add_item(self, item: T):
         """Pushes the item to all active sessions."""
+
+        if self.smoothing_fn is not None:
+            item = self.smoothing_fn(item)
+
         for session in self.sessions:
             session.add_item(item)

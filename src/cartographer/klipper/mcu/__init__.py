@@ -44,13 +44,17 @@ class _RawData(TypedDict):
 class KlipperCartographerMcu(EndstopMcu, ScanModeMcu, KlipperStreamMcu):
     _error: str | None = None
 
-    def __init__(self, config: ConfigWrapper):
+    def __init__(
+        self,
+        config: ConfigWrapper,
+        smoothing_fn: Optional[Callable[[Sample], Sample]] = None,
+    ):
         printer = config.get_printer()
         self.klipper_mcu = mcu.get_printer_mcu(printer, config.get("mcu"))
         self._constants = KlipperCartographerConstants(self.klipper_mcu)
         self._commands = KlipperCartographerCommands(self.klipper_mcu)
         self._stream = KlipperStream[Sample](
-            self, self.klipper_mcu.get_printer().get_reactor()
+            self, self.klipper_mcu.get_printer().get_reactor(), smoothing_fn
         )
 
         self.dispatch = KlipperTriggerDispatch(self.klipper_mcu)

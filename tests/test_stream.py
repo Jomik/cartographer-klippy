@@ -67,3 +67,11 @@ class TestStream:
 
         stream.end_session(session)
         worker.join()  # Ensure thread has finished before exiting
+
+    def test_applies_smoothing(self, stream: Stream[int]) -> None:
+        stream.smoothing_fn = lambda number: 1
+
+        with stream.start_session() as session:
+            stream.add_item(42)
+
+        assert session.get_items() == [1]

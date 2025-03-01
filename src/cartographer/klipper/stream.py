@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Callable, Protocol, TypeVar, final
+from typing import Callable, Optional, Protocol, TypeVar, final
 
 import greenlet
 from reactor import Reactor
@@ -50,10 +50,15 @@ class KlipperStreamMcu(Protocol):
 
 @final
 class KlipperStream(Stream[T]):
-    def __init__(self, mcu: KlipperStreamMcu, reactor: Reactor):
+    def __init__(
+        self,
+        mcu: KlipperStreamMcu,
+        reactor: Reactor,
+        smoothing_fn: Optional[Callable[[T], T]] = None,
+    ):
         self.reactor = reactor
         self.mcu = mcu
-        super().__init__()
+        super().__init__(smoothing_fn)
 
     @override
     def condition(self) -> Condition:
