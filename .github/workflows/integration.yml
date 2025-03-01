@@ -1,0 +1,33 @@
+name: Continuous integration
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    tags-ignore: ["**"]
+  pull_request:
+
+concurrency:
+  group: check-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  checks:
+    name: Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v3
+      - name: Install Hatch
+        run: uv tool install --python-preference only-managed --python 3.13 hatch
+      - name: Install python
+        run: uv python install --python-preference only-managed 3.13
+      - name: Check formatting
+        run: hatch fmt --check
+      - name: Run tests
+        run: hatch test --all
