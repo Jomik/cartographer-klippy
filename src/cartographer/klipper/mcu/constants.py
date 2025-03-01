@@ -5,7 +5,9 @@ import struct
 from typing import TypedDict, final
 
 from extras.thermistor import Thermistor
-from mcu import MCU as KlipperMCU, CommandQueryWrapper
+
+from mcu import MCU as KlipperMCU
+from mcu import CommandQueryWrapper
 from mcu import TriggerDispatch as KlipperTriggerDispatch
 
 logger = logging.getLogger(__name__)

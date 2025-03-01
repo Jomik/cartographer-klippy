@@ -1,10 +1,38 @@
 from __future__ import annotations
+
 from typing import final
+
 from configfile import ConfigWrapper
+from extras.homing import Homing
 from typing_extensions import override
 
+from cartographer.printer import HomingAxis, HomingState, Position, Toolhead
 
-from cartographer.printer import Position, Toolhead
+axis_mapping: dict[HomingAxis, int] = {
+    "x": 0,
+    "y": 1,
+    "z": 2,
+}
+
+
+def axis_to_index(axis: HomingAxis) -> int:
+    return axis_mapping[axis]
+
+
+@final
+class KlipperHomingState(HomingState):
+    def __init__(self, homing: Homing):
+        self.homing = homing
+
+    @override
+    def is_homing(self, axis: HomingAxis) -> bool:
+        return axis_to_index(axis) in self.homing.get_axes()
+
+    @override
+    def set_homed_position(self, axis: HomingAxis, position: float) -> None:
+        coords: list[float | None] = [None, None, None]
+        coords[axis_to_index(axis)] = position
+        self.homing.set_homed_position(coords)
 
 
 @final

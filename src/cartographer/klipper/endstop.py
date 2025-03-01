@@ -1,46 +1,21 @@
 from __future__ import annotations
+
 import logging
 from typing import cast, final
+
 from extras.homing import Homing
+from extras.probe import ProbeEndstopWrapper
 from mcu import MCU
 from reactor import ReactorCompletion
 from stepper import MCU_stepper, PrinterRail
 from typing_extensions import override
 
-from extras.probe import ProbeEndstopWrapper
-
 from cartographer.endstop import Endstop
-from cartographer.klipper.mcu import KlipperCartographerMcu
-from cartographer.printer import HomingAxis, HomingState
+
+from .mcu import KlipperCartographerMcu
+from .printer import KlipperHomingState
 
 logger = logging.getLogger(__name__)
-
-
-axis_mapping: dict[HomingAxis, int] = {
-    "x": 0,
-    "y": 1,
-    "z": 2,
-}
-
-
-def axis_to_index(axis: HomingAxis) -> int:
-    return axis_mapping[axis]
-
-
-@final
-class KlipperHomingState(HomingState):
-    def __init__(self, homing: Homing):
-        self.homing = homing
-
-    @override
-    def is_homing(self, axis: HomingAxis) -> bool:
-        return axis_to_index(axis) in self.homing.get_axes()
-
-    @override
-    def set_homed_position(self, axis: HomingAxis, position: float) -> None:
-        coords: list[float | None] = [None, None, None]
-        coords[axis_to_index(axis)] = position
-        self.homing.set_homed_position(coords)
 
 
 @final

@@ -4,7 +4,7 @@ from typing_extensions import override
 import pytest
 from pytest_mock import MockerFixture
 
-from cartographer.modes.scan_mode import Model, Sample, ScanMode, ScanModeMcu
+from cartographer.modes.scan_mode import Model, Sample, ScanMode, Mcu
 from cartographer.printer import HomingState, Toolhead
 from cartographer.stream import Session
 
@@ -16,7 +16,7 @@ def session(mocker: MockerFixture) -> Session[Sample]:
 
 @pytest.fixture
 def mcu(mocker: MockerFixture, session: Session[Sample]):
-    mock = mocker.Mock(spec=ScanModeMcu, autospec=True)
+    mock = mocker.Mock(spec=Mcu, autospec=True)
     mock.start_session = mocker.Mock(return_value=session)
     return mock
 
@@ -42,7 +42,7 @@ def model():
 
 
 @pytest.fixture
-def mode(toolhead: Toolhead, mcu: ScanModeMcu, model: Model) -> ScanMode:
+def mode(toolhead: Toolhead, mcu: Mcu, model: Model) -> ScanMode:
     return ScanMode(toolhead, mcu, model)
 
 

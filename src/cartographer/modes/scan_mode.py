@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import logging
 import math
+from dataclasses import dataclass
 from typing import Callable, Optional, Protocol, final
 
 import numpy as np
@@ -23,17 +23,13 @@ class Model(Protocol):
     def frequency_to_distance(self, frequency: float) -> float: ...
 
 
-class ScanModeError(Exception):
-    pass
-
-
 @dataclass
 class Sample:
     time: float
     frequency: float
 
 
-class ScanModeMcu(Protocol):
+class Mcu(Protocol):
     def start_homing_scan(self, print_time: float, frequency: float) -> object: ...
     def start_session(
         self, start_condition: Optional[Callable[[Sample], bool]] = None
@@ -47,7 +43,7 @@ class ScanMode(EndstopMode):
     def __init__(
         self,
         toolhead: Toolhead,
-        mcu: ScanModeMcu,
+        mcu: Mcu,
         model: Model,
     ) -> None:
         self._toolhead = toolhead
@@ -104,7 +100,7 @@ class ScanMode(EndstopMode):
             )
         )
         if math.isinf(dist):
-            raise ScanModeError("toolhead stopped below model range")
+            raise RuntimeError("toolhead stopped below model range")
 
         logger.debug(f"Setting homed distance to {dist}")
         homing_state.set_homed_position("z", dist)

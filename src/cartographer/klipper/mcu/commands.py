@@ -3,7 +3,8 @@ from __future__ import annotations
 from enum import IntEnum
 from typing import NamedTuple, final
 
-from mcu import MCU as KlipperMCU, CommandWrapper
+from mcu import MCU as KlipperMCU
+from mcu import CommandWrapper
 
 
 class TriggerMethod(IntEnum):

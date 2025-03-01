@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from types import TracebackType
-from typing import List, Callable, Optional, Protocol, Type, TypeVar, Generic, final
+from typing import Callable, Generic, List, Optional, Protocol, Type, TypeVar, final
 
 T = TypeVar("T")
 
