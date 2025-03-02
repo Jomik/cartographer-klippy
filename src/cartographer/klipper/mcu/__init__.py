@@ -96,6 +96,9 @@ class KlipperCartographerMcu(EndstopMcu, ScanModeMcu, KlipperStreamMcu):
     def start_session(self, start_condition: Callable[[Sample], bool] | None = None) -> Session[Sample]:
         return self._stream.start_session(start_condition)
 
+    def register_callback(self, callback: Callable[[Sample], None]) -> None:
+        return self._stream.register_callback(callback)
+
     @override
     def start_streaming(self) -> None:
         logger.debug("Starting stream")
@@ -121,16 +124,15 @@ class KlipperCartographerMcu(EndstopMcu, ScanModeMcu, KlipperStreamMcu):
 
     def _handle_data(self, data: _RawData) -> None:
         self._validate_data(data)
-        count = data["data"]
         clock = self.klipper_mcu.clock32_to_clock64(data["clock"])
         time = self.klipper_mcu.clock_to_print_time(clock)
-        # TODO: Apply smoothing
-        frequency = self._constants.count_to_frequency(count)
 
-        sample = Sample(
-            time=time,
-            frequency=frequency,
-        )
+        # TODO: Apply smoothing
+        frequency = self._constants.count_to_frequency(data["data"])
+
+        temperature = self._constants.calculate_temperature(data["temp"])
+
+        sample = Sample(time=time, frequency=frequency, temperature=temperature)
         self._stream.add_item(sample)
 
     def _validate_data(self, data: _RawData) -> None:

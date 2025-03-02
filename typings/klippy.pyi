@@ -9,6 +9,7 @@ from reactor import Reactor
 from stepper import PrinterRail
 from toolhead import ToolHead
 
+from cartographer.klipper.extra import PrinterCartographer
 from extras.bed_mesh import BedMesh
 from extras.heaters import PrinterHeaters
 from extras.homing import Homing, HomingMove, PrinterHoming
@@ -86,3 +87,5 @@ class Printer:
     def lookup_object(self, name: Literal["pins"]) -> PrinterPins: ...
     @overload
     def lookup_object(self, name: Literal["toolhead"]) -> ToolHead: ...
+    @overload
+    def lookup_object(self, name: Literal["cartographer"]) -> PrinterCartographer: ...

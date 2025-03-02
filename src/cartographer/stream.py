@@ -63,7 +63,8 @@ class Stream(ABC, Generic[T]):
     def __init__(self, smoothing_fn: Callable[[T], T] | None = None):
         """Initializes a stream with optional smoothing function."""
         self.smoothing_fn: Callable[[T], T] | None = smoothing_fn
-        self.sessions: list[Session[T]] = []
+        self.sessions: set[Session[T]] = set()
+        self.callbacks: set[Callable[[T], None]] = set()
 
     @abstractmethod
     def condition(self) -> Condition: ...
@@ -74,13 +75,20 @@ class Stream(ABC, Generic[T]):
         All items before the start condition will be skipped.
         """
         session = Session(self, self.condition(), start_condition)
-        self.sessions.append(session)
+        self.sessions.add(session)
         return session
 
     def end_session(self, session: Session[T]):
         """Ends a session and removes it from active sessions."""
-        if session in self.sessions:
-            self.sessions.remove(session)
+        self.sessions.discard(session)
+
+    def register_callback(self, callback: Callable[[T], None]):
+        """Registers a callback to the stream."""
+        self.callbacks.add(callback)
+
+    def unregister_callback(self, callback: Callable[[T], None]):
+        """Removes the callback from the stream."""
+        self.callbacks.discard(callback)
 
     def add_item(self, item: T):
         """Pushes the item to all active sessions."""
@@ -90,3 +98,6 @@ class Stream(ABC, Generic[T]):
 
         for session in self.sessions:
             session.add_item(item)
+
+        for callback in self.callbacks:
+            callback(item)

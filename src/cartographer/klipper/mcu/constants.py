@@ -84,7 +84,7 @@ class KlipperCartographerConstants:
     def frequency_to_count(self, frequency: float) -> int:
         return int(frequency * (2**28) / self._sensor_frequency)
 
-    def calculate_sample_temperature(self, raw_temp: int) -> float:
+    def calculate_temperature(self, raw_temp: int) -> float:
         if self._adc_smooth_count is None:
             return 0.0
         temp_adc = raw_temp / self._adc_smooth_count * self._inverse_adc_max

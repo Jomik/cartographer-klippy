@@ -28,6 +28,7 @@ class Model(Protocol):
 class Sample:
     time: float
     frequency: float
+    temperature: float
 
 
 class Mcu(Protocol):

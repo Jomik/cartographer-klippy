@@ -61,7 +61,7 @@ def test_do_nothing_when_not_homing(mocker: MockerFixture, mode: ScanMode):
 def test_scan_mode_sets_homed_position(mocker: MockerFixture, mode: ScanMode, session: Session[Sample]):
     homing_state = mocker.Mock(spec=HomingState, autospec=True)
     homed_position_spy = mocker.spy(homing_state, "set_homed_position")
-    session.get_items = mocker.Mock(return_value=[Sample(0.0, 5.0)] * 15)
+    session.get_items = mocker.Mock(return_value=[Sample(0.0, 5.0, 42.0)] * 15)
 
     _ = mode.home_start(0)
     mode.on_home_end(homing_state)
