@@ -20,16 +20,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          persist-credentials: false
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@v3
-      - name: Install Hatch
-        run: uv tool install --python-preference only-managed --python 3.13 hatch
+      # - name: Install Hatch
+      #   run: uv tool install --python-preference only-managed --python 3.13 hatch
       - name: Install python
         run: uv python install --python-preference only-managed 3.13
-      - name: Install ruff
-        run: uv sync --only-group lint
+      # - name: Install ruff
+      #   run: uv sync --only-group lint
       - name: Check formatting
-        run: uv run ruff check --output-format=github
+        run: uvx ruff check --output-format=github
       - name: Run tests
-        run: hatch test --all
+        run: uvx hatch test --all --cover
+      - name: Create xml coverage
+        run: uvx coverage xml
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}

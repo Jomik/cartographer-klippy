@@ -45,9 +45,6 @@ default-groups = ["test", "lint", "typecheck"]
 
 [tool.hatch]
 
-[[tool.hatch.envs.hatch-test.matrix]]
-python = ["3.13", "3.12", "3.11", "3.10", "3.9", "3.8"]
-
 [tool.hatch.version]
 source = "vcs"
 
@@ -60,3 +57,21 @@ packages = ["src/cartographer"]
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
+
+[[tool.hatch.envs.hatch-test.matrix]]
+python = ["3.13", "3.12", "3.11", "3.10", "3.9", "3.8"]
+
+[tool.coverage.run]
+branch = true
+relative_files = true
+omit = ["tests/*"]
+
+[tool.coverage.report]
+exclude_also = [
+  "def __repr__",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if TYPE_CHECKING:",
+  'class .*\bProtocol\):',
+  '@(abc\.)?abstractmethod',
+]
