@@ -8,13 +8,13 @@ from reactor import ReactorCompletion
 from typing_extensions import override
 
 from cartographer.klipper.printer import KlipperHomingState
+from cartographer.printer import Endstop
 
 if TYPE_CHECKING:
     from extras.homing import Homing
     from mcu import MCU
     from stepper import MCU_stepper, PrinterRail
 
-    from cartographer.endstop import Endstop
     from cartographer.klipper.mcu import KlipperCartographerMcu
 
 logger = logging.getLogger(__name__)
@@ -63,7 +63,7 @@ class EndstopWrapper(ProbeEndstopWrapper):
 
     @override
     def query_endstop(self, print_time: float) -> int:
-        return self.endstop.query_triggered(print_time)
+        return self.endstop.query_is_triggered(print_time)
 
     @override
     def multi_probe_begin(self) -> None:

@@ -58,7 +58,7 @@ class ScanMode(EndstopMode):
         return not self._is_homing
 
     @override
-    def query_triggered(self, print_time: float) -> bool:
+    def query_is_triggered(self, print_time: float) -> bool:
         with self._mcu.start_session() as session:
             session.wait_for(lambda samples: len(samples) > 0)
         samples = session.get_items()

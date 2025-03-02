@@ -2,6 +2,10 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Protocol, final
 
+from typing_extensions import override
+
+from cartographer.printer import Endstop
+
 if TYPE_CHECKING:
     from cartographer.modes.base_mode import EndstopMode
     from cartographer.printer import HomingState
@@ -12,7 +16,7 @@ class Mcu(Protocol):
 
 
 @final
-class Endstop:
+class DynamicEndstop(Endstop):
     """Main Endstop class with switchable modes."""
 
     def __init__(self, mcu: Mcu, mode: EndstopMode) -> None:
@@ -33,21 +37,22 @@ class Endstop:
         self._mode = new_mode
         self._mode.on_enter()
 
-    def query_triggered(self, print_time: float) -> bool:
-        """Return true if endstop is currently triggered"""
-        return self._mode.query_triggered(print_time)
+    @override
+    def query_is_triggered(self, print_time: float) -> bool:
+        return self._mode.query_is_triggered(print_time)
 
+    @override
     def get_endstop_position(self) -> float:
-        """Returns the position at which the endstop is triggered"""
         return self._mode.get_endstop_position()
 
+    @override
     def home_start(self, print_time: float) -> object:
-        """Start the homing process"""
         return self._mode.home_start(print_time)
 
+    @override
     def home_wait(self, home_end_time: float) -> float:
-        """Wait for homing to complete"""
         return self._mcu.stop_homing(home_end_time)
 
+    @override
     def on_home_end(self, homing_state: HomingState) -> None:
         self._mode.on_home_end(homing_state)

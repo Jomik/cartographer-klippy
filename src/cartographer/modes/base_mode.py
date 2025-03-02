@@ -23,7 +23,7 @@ class EndstopMode(ABC):
         return True
 
     @abstractmethod
-    def query_triggered(self, print_time: float) -> bool:
+    def query_is_triggered(self, print_time: float) -> bool:
         """Return true if endstop is currently triggered"""
 
     @abstractmethod

@@ -18,7 +18,7 @@ class NoneMode(EndstopMode):
     """An empty mode before calibration."""
 
     @override
-    def query_triggered(self, print_time: float) -> bool:
+    def query_is_triggered(self, print_time: float) -> bool:
         return True
 
     @override

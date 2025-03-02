@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, final
 
-from cartographer.endstop import Endstop
+from cartographer.endstop import DynamicEndstop
 from cartographer.klipper.endstop import EndstopWrapper
 from cartographer.klipper.mcu import KlipperCartographerMcu
 from cartographer.klipper.temperature import PrinterTemperatureCoil
@@ -22,5 +22,5 @@ def load_config(config: ConfigWrapper):
 class PrinterCartographer:
     def __init__(self, config: ConfigWrapper) -> None:
         self.mcu = KlipperCartographerMcu(config)
-        endstop = Endstop(self.mcu, NoneMode())
+        endstop = DynamicEndstop(self.mcu, NoneMode())
         _ = EndstopWrapper(self.mcu, endstop)
