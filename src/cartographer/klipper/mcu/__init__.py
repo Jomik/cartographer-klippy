@@ -40,8 +40,6 @@ class _RawData(TypedDict):
 
 @final
 class KlipperCartographerMcu(EndstopMcu, ScanModeMcu, KlipperStreamMcu):
-    _error: str | None = None
-
     def __init__(
         self,
         config: ConfigWrapper,
@@ -135,14 +133,23 @@ class KlipperCartographerMcu(EndstopMcu, ScanModeMcu, KlipperStreamMcu):
         sample = Sample(time=time, frequency=frequency, temperature=temperature)
         self._stream.add_item(sample)
 
+    _data_error: str | None = None
+
     def _validate_data(self, data: _RawData) -> None:
         count = data["data"]
+        error: str | None = None
         if count == SHORTED_FREQUENCY_VALUE:
-            self._error = "Coil is shorted or not connected."
-            logger.error(self._error)
+            error = "Coil is shorted or not connected."
         elif count > self._constants.minimum_count * FREQUENCY_RANGE_PERCENT:
-            self._error = f"coil frequency reading exceeded max expected value, received {count}"
-            logger.error(self._error)
+            error = "Coil frequency reading exceeded max expected value, received %(data)d"
 
-        if len(self._stream.sessions) > 0 and self._error is not None:
-            self.klipper_mcu.get_printer().invoke_shutdown(self._error)
+        if self._data_error == error:
+            return
+        self._data_error = error
+
+        if error is None:
+            return
+
+        logger.error(error, data)
+        if len(self._stream.sessions) > 0:
+            self.klipper_mcu.get_printer().invoke_shutdown(error % data)
