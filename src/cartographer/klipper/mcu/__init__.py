@@ -16,7 +16,7 @@ from cartographer.klipper.mcu.constants import (
     TRIGGER_HYSTERESIS,
     KlipperCartographerConstants,
 )
-from cartographer.klipper.stream import KlipperStream, KlipperStreamMcu
+from cartographer.klipper.mcu.stream import KlipperStream, KlipperStreamMcu
 from cartographer.modes.scan_mode import Mcu as ScanModeMcu
 from cartographer.modes.scan_mode import Sample
 
