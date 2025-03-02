@@ -22,9 +22,17 @@ class HomingState(Protocol):
 
 
 class Toolhead(Protocol):
-    def get_last_move_time(self) -> float: ...
-    def wait_moves(self) -> None: ...
-    def get_requested_position(self, time: float) -> Position: ...
+    def get_last_move_time(self) -> float:
+        """Returns the last time the toolhead moved."""
+        ...
+
+    def wait_moves(self) -> None:
+        """Wait for all moves to complete."""
+        ...
+
+    def get_requested_position(self, time: float) -> Position:
+        """Get the requested position of the toolhead at the given time."""
+        ...
 
 
 class Endstop(Protocol):
