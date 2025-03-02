@@ -32,10 +32,18 @@ jobs:
       - name: Check formatting
         run: uvx ruff check --output-format=github
       - name: Run tests
-        run: uvx hatch test --all --cover
+        run: uvx hatch test --all --cover-quiet
       - name: Create xml coverage
-        run: uvx coverage xml
+        run: |
+          uvx coverage xml
+          uvx junitparser merge junit.*.xml junit.xml
       - name: Upload coverage reports to Codecov
+        if: ${{ !cancelled() }}
         uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() }}
+        uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
