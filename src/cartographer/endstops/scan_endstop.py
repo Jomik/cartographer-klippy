@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING, Callable, Protocol, final
 import numpy as np
 from typing_extensions import override
 
-from cartographer.modes.base_mode import EndstopMode
+from cartographer.printer import Endstop
 
 if TYPE_CHECKING:
     from cartographer.printer import HomingState, Toolhead
@@ -34,10 +34,11 @@ class Sample:
 class Mcu(Protocol):
     def start_homing_scan(self, print_time: float, frequency: float) -> object: ...
     def start_session(self, start_condition: Callable[[Sample], bool] | None = None) -> Session[Sample]: ...
+    def stop_homing(self, home_end_time: float) -> float: ...
 
 
 @final
-class ScanMode(EndstopMode):
+class ScanEndstop(Endstop):
     """Implementation for Scan mode."""
 
     def __init__(
@@ -52,10 +53,6 @@ class ScanMode(EndstopMode):
 
         self._trigger_distance = TRIGGER_DISTANCE
         self._is_homing = False
-
-    @override
-    def can_switch(self) -> bool:
-        return not self._is_homing
 
     @override
     def query_is_triggered(self, print_time: float) -> bool:
@@ -98,3 +95,7 @@ class ScanMode(EndstopMode):
         homing_state.set_homed_position("z", dist)
 
         self._is_homing = False
+
+    @override
+    def home_wait(self, home_end_time: float) -> float:
+        return self._mcu.stop_homing(home_end_time)

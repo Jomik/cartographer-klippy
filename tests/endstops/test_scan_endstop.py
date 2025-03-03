@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 from typing_extensions import override
 
-from cartographer.modes.scan_mode import Mcu, Model, Sample, ScanMode
+from cartographer.endstops.scan_endstop import Mcu, Model, Sample, ScanEndstop
 from cartographer.printer import HomingState, Toolhead
 from cartographer.stream import Session
 
@@ -46,23 +46,23 @@ def model():
 
 
 @pytest.fixture
-def mode(toolhead: Toolhead, mcu: Mcu, model: Model) -> ScanMode:
-    return ScanMode(toolhead, mcu, model)
+def endstop(toolhead: Toolhead, mcu: Mcu, model: Model) -> ScanEndstop:
+    return ScanEndstop(toolhead, mcu, model)
 
 
-def test_do_nothing_when_not_homing(mocker: MockerFixture, mode: ScanMode):
+def test_do_nothing_when_not_homing(mocker: MockerFixture, endstop: ScanEndstop):
     homing_state = mocker.Mock(spec=HomingState, autospec=True)
     homed_position_spy = mocker.spy(homing_state, "set_homed_position")
     homing_state.is_homing = mocker.Mock(return_value=False)
-    mode.on_home_end(homing_state)
+    endstop.on_home_end(homing_state)
     assert homed_position_spy.call_count == 0
 
 
-def test_scan_mode_sets_homed_position(mocker: MockerFixture, mode: ScanMode, session: Session[Sample]):
+def test_scan_mode_sets_homed_position(mocker: MockerFixture, endstop: ScanEndstop, session: Session[Sample]):
     homing_state = mocker.Mock(spec=HomingState, autospec=True)
     homed_position_spy = mocker.spy(homing_state, "set_homed_position")
     session.get_items = mocker.Mock(return_value=[Sample(0.0, 5.0, 42.0)] * 15)
 
-    _ = mode.home_start(0)
-    mode.on_home_end(homing_state)
+    _ = endstop.home_start(0)
+    endstop.on_home_end(homing_state)
     homed_position_spy.assert_called_once_with("z", 5)

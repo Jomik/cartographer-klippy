@@ -8,7 +8,8 @@ from mcu import MCU_trsync
 from mcu import TriggerDispatch as KlipperTriggerDispatch
 from typing_extensions import override
 
-from cartographer.endstop import Mcu as EndstopMcu
+from cartographer.endstops.scan_endstop import Mcu as ScanEndstopMcu
+from cartographer.endstops.scan_endstop import Sample
 from cartographer.klipper.mcu.commands import HomeCommand, KlipperCartographerCommands, ThresholdCommand, TriggerMethod
 from cartographer.klipper.mcu.constants import (
     FREQUENCY_RANGE_PERCENT,
@@ -17,8 +18,6 @@ from cartographer.klipper.mcu.constants import (
     KlipperCartographerConstants,
 )
 from cartographer.klipper.mcu.stream import KlipperStream, KlipperStreamMcu
-from cartographer.modes.scan_mode import Mcu as ScanModeMcu
-from cartographer.modes.scan_mode import Sample
 
 if TYPE_CHECKING:
     from configfile import ConfigWrapper
@@ -39,7 +38,7 @@ class _RawData(TypedDict):
 
 
 @final
-class KlipperCartographerMcu(EndstopMcu, ScanModeMcu, KlipperStreamMcu):
+class KlipperCartographerMcu(ScanEndstopMcu, KlipperStreamMcu):
     def __init__(
         self,
         config: ConfigWrapper,

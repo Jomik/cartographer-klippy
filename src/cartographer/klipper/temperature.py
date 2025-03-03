@@ -5,7 +5,7 @@ from typing import Callable, final
 
 from configfile import ConfigWrapper
 
-from cartographer.modes.scan_mode import Sample
+from cartographer.endstops.scan_endstop import Sample
 
 REPORT_TIME = 0.300
 
