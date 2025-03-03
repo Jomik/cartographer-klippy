@@ -14,8 +14,8 @@ permissions:
   contents: read
 
 jobs:
-  checks:
-    name: Checks
+  linting:
+    name: Linting
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,14 +23,49 @@ jobs:
           persist-credentials: false
       - name: Install the latest version of uv
         uses: astral-sh/setup-uv@v3
-      # - name: Install Hatch
-      #   run: uv tool install --python-preference only-managed --python 3.13 hatch
       - name: Install python
         run: uv python install --python-preference only-managed 3.13
-      # - name: Install ruff
-      #   run: uv sync --only-group lint
-      - name: Check formatting
+      - name: Linting
         run: uvx ruff check --output-format=github
+  formatting:
+    name: Formatting
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v3
+      - name: Install python
+        run: uv python install --python-preference only-managed 3.13
+      - name: Formatting
+        run: uvx ruff format --check
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v3
+      - name: Install python
+        run: uv python install --python-preference only-managed 3.13
+      - run: uv sync
+      - name: Check types
+        run: uvx basedpyright
+  tests:
+    name: Tests
+    runs-on: ubuntu-latest
+    needs: [typecheck]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install the latest version of uv
+        uses: astral-sh/setup-uv@v3
+      - name: Install python
+        run: uv python install --python-preference only-managed 3.13
       - name: Run tests
         run: uvx hatch test --all --cover-quiet
       - name: Create xml coverage
