@@ -1,8 +1,9 @@
 # https://github.com/Klipper3d/klipper/blob/master/klippy/kinematics/none.py
-from typing import Protocol, Sequence, TypedDict
+from collections.abc import Sequence
+from typing import Protocol, TypedDict
 
 import gcode
-from ..stepper import MCU_stepper
+from stepper import MCU_stepper
 
 # NOTE: This is a partial definition of the Kinematics class
 # This module does not exist in the real Klipper

@@ -8,3 +8,6 @@ __pycache__/
 .pdm-python
 __version__.py
 dist/
+.tox/
+.coverage*
+junit*.xml

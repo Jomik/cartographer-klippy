@@ -1,9 +1,12 @@
 # https://github.com/Klipper3d/klipper/blob/master/klippy/toolhead.py
-from typing import Sequence, TypedDict
+from collections.abc import Sequence
+from typing import TypedDict
 
 import gcode
+
+from kinematics import Kinematics
+from kinematics import Status as KinematicsStatus
 from kinematics.extruder import Extruder
-from kinematics import Kinematics, Status as KinematicsStatus
 
 class _Status(KinematicsStatus, TypedDict):
     print_time: float
@@ -31,6 +34,4 @@ class ToolHead:
     def flush_step_generation(self) -> None: ...
     def manual_move(self, coord: _Pos | list[float | None], speed: float) -> None: ...
     def get_trapq(self) -> str: ...
-    def get_last_move_time(self) -> float:
-        """Refreshes print_time and returns it"""
-    ...
+    def get_last_move_time(self) -> float: ...

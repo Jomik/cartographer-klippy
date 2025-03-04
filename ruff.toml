@@ -1,0 +1,46 @@
+line-length = 120
+
+[format]
+docstring-code-format = true
+docstring-code-line-length = 80
+
+[lint]
+select = [
+  # pycodestyle
+  "E",
+  # Pyflakes
+  "F",
+  # pyupgrade
+  "UP",
+  # flake8-future-annotations
+  "FA",
+  # flake8-bugbear
+  "B",
+  # flake8-simplify
+  "SIM",
+  # isort
+  "I",
+  # pep8-naming
+  "N",
+  # flake8-errmsg
+  "EM",
+  # flake8-logging-format
+  "G",
+  # flake8-logging
+  "LOG",
+  # flake8-tidy-imports
+  "TID",
+  # flake8-type-checking
+  "TC",
+]
+
+
+[lint.flake8-tidy-imports]
+ban-relative-imports = "all"
+
+[lint.isort]
+known-first-party = ["cartographer"]
+
+[lint.flake8-pytest-style]
+fixture-parentheses = false
+mark-parentheses = false

@@ -1,9 +1,3 @@
-[tools]
-python = "3.8"
-
-[env]
-_.python.venv = ".venv" # relative to this file's directory
-
 [vars]
 project_name = "{{ config_root | basename }}"
 # printer_host = "pi@printer.local" # Set this in mise.local.toml

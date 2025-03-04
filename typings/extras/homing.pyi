@@ -1,6 +1,7 @@
 # https://github.com/Klipper3d/klipper/blob/master/klippy/extras/homing.py
 
 from typing import Protocol
+
 from stepper import MCU_stepper
 
 type _Pos = list[float]

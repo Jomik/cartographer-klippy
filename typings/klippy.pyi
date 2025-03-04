@@ -1,22 +1,20 @@
 # https://github.com/Klipper3d/klipper/blob/master/klippy/klippy.py
-from typing import Callable, Literal, TypeVar, overload
+from typing import Callable, Literal, overload
 
 import configfile
-from configfile import ConfigWrapper, PrinterConfig, sentinel
-from extras.bed_mesh import BedMesh
-from extras.heaters import PrinterHeaters
-from extras.homing import Homing, HomingMove, PrinterHoming
-from extras.motion_report import PrinterMotionReport
-from extras.probe import PrinterProbe
+from configfile import ConfigWrapper, PrinterConfig
 from gcode import CommandError, GCodeDispatch
 from pins import PrinterPins
 from reactor import Reactor
 from stepper import PrinterRail
 from toolhead import ToolHead
 
-from cartographer import PrinterCartographer
-
-T = TypeVar("T")
+from cartographer.klipper.extra import PrinterCartographer
+from extras.bed_mesh import BedMesh
+from extras.heaters import PrinterHeaters
+from extras.homing import Homing, HomingMove, PrinterHoming
+from extras.motion_report import PrinterMotionReport
+from extras.probe import PrinterProbe
 
 class Printer:
     config_error: type[configfile.error]
@@ -38,28 +36,19 @@ class Printer:
     def load_object(
         self,
         config: ConfigWrapper,
-        section: str,
-        default: T | type[sentinel] = sentinel,
-    ) -> T: ...
+        section: Literal["motion_report"],
+    ) -> PrinterMotionReport: ...
     def is_shutdown(self) -> bool: ...
     def invoke_shutdown(self, msg: str) -> None: ...
     def get_reactor(self) -> Reactor: ...
     @overload
-    def register_event_handler(
-        self, event: Literal["klippy:connect"], callback: Callable[[], None]
-    ) -> None: ...
+    def register_event_handler(self, event: Literal["klippy:connect"], callback: Callable[[], None]) -> None: ...
     @overload
-    def register_event_handler(
-        self, event: Literal["klippy:disconnect"], callback: Callable[[], None]
-    ) -> None: ...
+    def register_event_handler(self, event: Literal["klippy:disconnect"], callback: Callable[[], None]) -> None: ...
     @overload
-    def register_event_handler(
-        self, event: Literal["klippy:shutdown"], callback: Callable[[], None]
-    ) -> None: ...
+    def register_event_handler(self, event: Literal["klippy:shutdown"], callback: Callable[[], None]) -> None: ...
     @overload
-    def register_event_handler(
-        self, event: Literal["klippy:mcu_identify"], callback: Callable[[], None]
-    ) -> None: ...
+    def register_event_handler(self, event: Literal["klippy:mcu_identify"], callback: Callable[[], None]) -> None: ...
     @overload
     def register_event_handler(
         self,
@@ -89,8 +78,6 @@ class Printer:
     @overload
     def lookup_object(self, name: Literal["configfile"]) -> PrinterConfig: ...
     @overload
-    def lookup_object(self, name: Literal["cartographer"]) -> PrinterCartographer: ...
-    @overload
     def lookup_object(self, name: Literal["gcode"]) -> GCodeDispatch: ...
     @overload
     def lookup_object(self, name: Literal["homing"]) -> PrinterHoming: ...
@@ -101,4 +88,4 @@ class Printer:
     @overload
     def lookup_object(self, name: Literal["toolhead"]) -> ToolHead: ...
     @overload
-    def lookup_object(self, name: str, default: T | type[sentinel] = sentinel) -> T: ...
+    def lookup_object(self, name: Literal["cartographer"]) -> PrinterCartographer: ...

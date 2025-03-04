@@ -1,6 +1,5 @@
 [project]
-name = "jomik-cartographer"
-dynamic = ["version"]
+name = "cartographer"
 requires-python = ">= 3.8"
 license = { file = "LICENSE" }
 dependencies = ["numpy>=1.16, <2.0", "typing-extensions ~= 4.12"]
@@ -12,6 +11,8 @@ classifiers = [
 
   "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
 ]
+description = "An extras for klipper to integrate with cartographer"
+dynamic = ["version"]
 
 [project.urls]
 homepage = "https://github.com/Jomik/cartographer-klippy"
@@ -20,6 +21,11 @@ repository = "https://github.com/Jomik/cartographer-klippy"
 [project.optional-dependencies]
 scipy = ["scipy>=1.9.3"]
 
+[dependency-groups]
+test = ["pytest>=8.3.4", "pytest-mock>=3.14.0"]
+lint = ["ruff>=0.9.7"]
+typecheck = ["basedpyright>=1.27.1"]
+
 [tool.pyright]
 pythonVersion = "3.8"
 venvPath = "./"
@@ -27,27 +33,50 @@ venv = ".venv"
 reportMissingModuleSource = false # klippy imports are always missing sources
 reportMissingTypeStubs = true
 
-[tool.ruff]
-target-version = "py38"
+[tool.pytest.ini_options]
+addopts = ["--import-mode=importlib"]
+pythonpath = ["src"]
 
-[tool.pdm.version]
-source = "scm"
-write_to = "cartographer/__version__.py"
-write_template = "__version__ = '{}'\n"
+[tool.uv]
+default-groups = ["test", "lint", "typecheck"]
 
-[tool.pdm.build]
-excludes = ["./**/.git"]
-includes = ["cartographer"]
-editable-backend = "path"
-custom-hook = "pdm_build.py"
+[tool.hatch.version]
+source = "vcs"
+
+[tool.hatch.build.hooks.vcs]
+version-file = "src/cartographer/__version__.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/cartographer"]
 
 [build-system]
-requires = ["pdm-backend==2.3.3"]
-build-backend = "pdm.backend"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
 
-[dependency-groups]
-dev = [
-  "pdm-backend==2.3.3", # Keep this for type safety in pdm_build.py
-  "ruff",
-  "basedpyright",
+[tool.coverage.run]
+branch = true
+relative_files = true
+omit = ["tests/*"]
+
+[tool.coverage.report]
+exclude_also = [
+  "def __repr__",
+  "raise AssertionError",
+  "raise NotImplementedError",
+  "if TYPE_CHECKING:",
+  'class .*\bProtocol\):',
+  '@(abc\.)?abstractmethod',
 ]
+
+[tool.hatch.envs.hatch-static-analysis]
+config-path = "none"
+
+[tool.hatch.envs.hatch-test.scripts]
+run = "pytest{env:HATCH_TEST_ARGS:} {args}"
+run-cov = "coverage run -m pytest{env:HATCH_TEST_ARGS:} --junitxml=junit.{env:HATCH_ENV_ACTIVE:}.xml {args}"
+cov-combine = "coverage combine"
+cov-report = "coverage report"
+
+[[tool.hatch.envs.hatch-test.matrix]]
+python = ["3.13", "3.12", "3.11", "3.10", "3.9", "3.8"]
+
