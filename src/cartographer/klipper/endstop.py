@@ -3,12 +3,11 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, cast, final
 
-from extras.probe import ProbeEndstopWrapper
+from mcu import MCU_endstop
 from reactor import ReactorCompletion
 from typing_extensions import override
 
 from cartographer.klipper.printer import KlipperHomingState
-from cartographer.printer import Endstop
 
 if TYPE_CHECKING:
     from extras.homing import Homing
@@ -16,12 +15,13 @@ if TYPE_CHECKING:
     from stepper import MCU_stepper, PrinterRail
 
     from cartographer.klipper.mcu import KlipperCartographerMcu
+    from cartographer.printer import Endstop
 
 logger = logging.getLogger(__name__)
 
 
 @final
-class EndstopWrapper(ProbeEndstopWrapper):
+class KlipperEndstopWrapper(MCU_endstop):
     def __init__(self, mcu: KlipperCartographerMcu, endstop: Endstop):
         self.printer = mcu.klipper_mcu.get_printer()
         self.mcu = mcu
@@ -64,28 +64,3 @@ class EndstopWrapper(ProbeEndstopWrapper):
     @override
     def query_endstop(self, print_time: float) -> int:
         return self.endstop.query_is_triggered(print_time)
-
-    @override
-    def multi_probe_begin(self) -> None:
-        pass
-
-    @override
-    def multi_probe_end(self) -> None:
-        pass
-
-    @override
-    def probing_move(self, pos: list[float], speed: float) -> list[float]:
-        phoming = self.mcu.klipper_mcu.get_printer().lookup_object("homing")
-        return phoming.probing_move(self, pos, speed)
-
-    @override
-    def probe_prepare(self, hmove: float) -> None:
-        pass
-
-    @override
-    def probe_finish(self, hmove: float) -> None:
-        pass
-
-    @override
-    def get_position_endstop(self) -> float:
-        return self.endstop.get_endstop_position()

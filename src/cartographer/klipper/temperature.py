@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import logging
-from typing import Callable, final
+from typing import TYPE_CHECKING, Callable, final
 
-from configfile import ConfigWrapper
+if TYPE_CHECKING:
+    from configfile import ConfigWrapper
 
-from cartographer.endstops.scan_endstop import Sample
+    from cartographer.endstops.scan_endstop import Sample
 
 REPORT_TIME = 0.300
 
@@ -42,8 +43,12 @@ class PrinterTemperatureCoil:
         self.temperature_callback(sample.time, sample.temperature)
         if not (self.min_temp <= sample.temperature <= self.max_temp):
             logger.warning(
-                f"Temperature for {self.name} at {sample.temperature} is out of range "
-                + f"({self.min_temp} - {self.max_temp})"
+                "temperature for %(sensor_name)s at %(temperature)s is out of range [%(min_temp)s, %(max_temp)s]",
+                dict(
+                    sensor_name=self.name,
+                    temperature=sample.temperature,
+                    min_temp=self.min_temp,
+                    max_temp=self.max_temp,
+                ),
             )
-
         return

@@ -45,7 +45,7 @@ class ScanEndstop(Endstop):
         self,
         toolhead: Toolhead,
         mcu: Mcu,
-        model: Model,
+        model: Model | None = None,
     ) -> None:
         self._toolhead = toolhead
         self._mcu = mcu
@@ -56,6 +56,9 @@ class ScanEndstop(Endstop):
 
     @override
     def query_is_triggered(self, print_time: float) -> bool:
+        if self._model is None:
+            msg = "model is required for scanning"
+            raise RuntimeError(msg)
         with self._mcu.start_session() as session:
             session.wait_for(lambda samples: len(samples) > 0)
         samples = session.get_items()
@@ -68,6 +71,9 @@ class ScanEndstop(Endstop):
 
     @override
     def home_start(self, print_time: float) -> object:
+        if self._model is None:
+            msg = "frequency model is required for homing"
+            raise RuntimeError(msg)
         self._is_homing = True
         self._toolhead.wait_moves()
         trigger_frequency = self._model.distance_to_frequency(self.get_endstop_position())
@@ -79,6 +85,9 @@ class ScanEndstop(Endstop):
             return
         if not homing_state.is_homing("z"):
             return
+        if self._model is None:
+            msg = "model is required for homing"
+            raise RuntimeError(msg)
         last_move_time = self._toolhead.get_last_move_time()
         skip = 5
         count = 10
@@ -91,7 +100,7 @@ class ScanEndstop(Endstop):
             msg = "toolhead stopped below model range"
             raise RuntimeError(msg)
 
-        logger.debug("Setting homed distance to %.2F", dist)
+        logger.debug("setting homed distance to %.2F", dist)
         homing_state.set_homed_position("z", dist)
 
         self._is_homing = False
