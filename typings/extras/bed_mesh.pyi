@@ -1,5 +1,6 @@
 # https://github.com/Klipper3d/klipper/blob/master/klippy/extras/bed_mesh.py
-from typing import Iterator, Literal, Tuple, TypedDict
+from collections.abc import Iterator
+from typing import Literal, TypedDict
 
 from gcode import GCodeCommand
 
@@ -8,8 +9,8 @@ type _Pos = list[float]
 class BedMeshError(Exception): ...
 
 class _Params(TypedDict):
-    mesh_min: Tuple[float, float]
-    mesh_max: Tuple[float, float]
+    mesh_min: tuple[float, float]
+    mesh_max: tuple[float, float]
     x_count: int
     y_count: int
     mesh_x_pps: int
@@ -31,9 +32,7 @@ class BedMeshCalibrate:
     probe_mgr: ProbeManager
     _profile_name: str
     def update_config(self, gcmd: GCodeCommand) -> None: ...
-    def probe_finalize(
-        self, offsets: list[float], positions: list[list[float]]
-    ) -> None: ...
+    def probe_finalize(self, offsets: list[float], positions: list[list[float]]) -> None: ...
 
 class ProbeManager:
-    def iter_rapid_path(self) -> Iterator[Tuple[Tuple[float, float], bool]]: ...
+    def iter_rapid_path(self) -> Iterator[tuple[tuple[float, float], bool]]: ...

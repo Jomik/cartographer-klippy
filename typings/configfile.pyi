@@ -6,8 +6,6 @@ from klippy import Printer
 
 error = configparser.Error
 
-class sentinel: ...
-
 class ConfigWrapper:
     error: type[configparser.Error]
     printer: Printer
@@ -21,7 +19,7 @@ class ConfigWrapper:
     def get(
         self,
         option: str,
-        default: str | type[sentinel] = sentinel,
+        default: str = ...,
         note_valid: bool = True,
     ) -> str: ...
     @overload
@@ -35,7 +33,7 @@ class ConfigWrapper:
     def getint(
         self,
         option: str,
-        default: int | type[sentinel] = sentinel,
+        default: int = ...,
         minval: int | None = None,
         maxval: int | None = None,
         note_valid: bool = True,
@@ -53,7 +51,7 @@ class ConfigWrapper:
     def getfloat(
         self,
         option: str,
-        default: float | type[sentinel] = sentinel,
+        default: float = ...,
         minval: float | None = None,
         maxval: float | None = None,
         above: float | None = None,
@@ -75,7 +73,7 @@ class ConfigWrapper:
     def getboolean(
         self,
         option: str,
-        default: bool | type[sentinel] = sentinel,
+        default: bool = ...,
         note_valid: bool = True,
     ) -> bool: ...
     @overload
@@ -90,7 +88,7 @@ class ConfigWrapper:
         self,
         option: str,
         choices: dict[str, str],
-        default: str | type[sentinel] = sentinel,
+        default: str = ...,
         note_valid: bool = True,
     ) -> str: ...
     @overload
@@ -105,7 +103,7 @@ class ConfigWrapper:
     def getintlist(
         self,
         option: str,
-        default: list[int] | type[sentinel] = sentinel,
+        default: list[int] = ...,
         sep: str = ",",
         count: int | None = None,
         note_valid: bool = True,
@@ -123,7 +121,7 @@ class ConfigWrapper:
     def getfloatlist(
         self,
         option: str,
-        default: list[float] | type[sentinel] = sentinel,
+        default: list[float] = ...,
         sep: str = ",",
         count: int | None = None,
         note_valid: bool = True,
