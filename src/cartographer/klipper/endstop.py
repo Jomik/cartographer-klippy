@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 @final
-class KlipperEndstopWrapper(MCU_endstop):
+class KlipperEndstop(MCU_endstop):
     def __init__(self, mcu: KlipperCartographerMcu, endstop: Endstop):
         self.printer = mcu.klipper_mcu.get_printer()
         self.mcu = mcu
