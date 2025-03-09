@@ -1,0 +1,11 @@
+component_management:
+  individual_components:
+    - component_id: cartographer
+      name: Cartographer
+      paths:
+        - "src/cartographer/**"
+        - "!src/cartographer/klipper/**"
+    - component_id: klipper_integration
+      name: Klipper Integration
+      paths:
+        - "src/cartographer/klipper/**"
