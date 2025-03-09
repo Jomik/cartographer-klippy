@@ -63,4 +63,4 @@ class KlipperEndstop(MCU_endstop):
 
     @override
     def query_endstop(self, print_time: float) -> int:
-        return self.endstop.query_is_triggered(print_time)
+        return 1 if self.endstop.query_is_triggered(print_time) else 0

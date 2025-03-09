@@ -36,7 +36,7 @@ class Toolhead(Protocol):
 
 
 class Endstop(Protocol):
-    def query_is_triggered(self, print_time: float) -> int:
+    def query_is_triggered(self, print_time: float) -> bool:
         """Return true if endstop is currently triggered"""
         ...
 
