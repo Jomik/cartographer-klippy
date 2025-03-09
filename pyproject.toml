@@ -35,7 +35,7 @@ reportMissingTypeStubs = true
 
 [tool.pytest.ini_options]
 addopts = ["--import-mode=importlib"]
-pythonpath = ["src"]
+testpaths = ["tests"]
 
 [tool.uv]
 default-groups = ["test", "lint", "typecheck"]
@@ -56,7 +56,8 @@ build-backend = "hatchling.build"
 [tool.coverage.run]
 branch = true
 relative_files = true
-omit = ["tests/*"]
+omit = ["tests"]
+source = ["src"]
 
 [tool.coverage.report]
 exclude_also = [
