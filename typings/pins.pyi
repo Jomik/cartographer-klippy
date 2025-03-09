@@ -2,6 +2,8 @@
 
 from typing import Protocol, TypedDict
 
+from mcu import MCU_endstop
+
 class error(Exception): ...
 
 class _PinParams(TypedDict):
@@ -12,7 +14,7 @@ class _PinParams(TypedDict):
     pullup: int
 
 class _Chip(Protocol):
-    def setup_pin(self, pin_type: str, pin_params: _PinParams) -> None: ...
+    def setup_pin(self, pin_type: str, pin_params: _PinParams) -> MCU_endstop: ...
 
 class PrinterPins:
     error: type[error]
