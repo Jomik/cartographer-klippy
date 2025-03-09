@@ -50,16 +50,31 @@ def endstop(toolhead: Toolhead, mcu: Mcu, model: Model) -> ScanEndstop:
     return ScanEndstop(toolhead, mcu, model)
 
 
-def test_do_nothing_when_not_homing(mocker: MockerFixture, endstop: ScanEndstop):
-    homing_state = mocker.Mock(spec=HomingState, autospec=True)
+@pytest.fixture
+def homing_state(mocker: MockerFixture, endstop: ScanEndstop) -> HomingState:
+    mock = mocker.Mock(spec=HomingState, autospec=True)
+    mock.endstops = [endstop]
+    return mock
+
+
+def test_do_nothing_when_not_homing(mocker: MockerFixture, endstop: ScanEndstop, homing_state: HomingState):
     homed_position_spy = mocker.spy(homing_state, "set_homed_position")
     homing_state.is_homing = mocker.Mock(return_value=False)
     endstop.on_home_end(homing_state)
     assert homed_position_spy.call_count == 0
 
 
-def test_scan_mode_sets_homed_position(mocker: MockerFixture, endstop: ScanEndstop, session: Session[Sample]):
-    homing_state = mocker.Mock(spec=HomingState, autospec=True)
+def test_do_nothing_when_endstop_not_homing(mocker: MockerFixture, endstop: ScanEndstop, homing_state: HomingState):
+    homed_position_spy = mocker.spy(homing_state, "set_homed_position")
+    homing_state.is_homing = mocker.Mock(return_value=True)
+    homing_state.endstops = []
+    endstop.on_home_end(homing_state)
+    assert homed_position_spy.call_count == 0
+
+
+def test_scan_mode_sets_homed_position(
+    mocker: MockerFixture, endstop: ScanEndstop, homing_state: HomingState, session: Session[Sample]
+):
     homed_position_spy = mocker.spy(homing_state, "set_homed_position")
     session.get_items = mocker.Mock(return_value=[Sample(0.0, 5.0, 42.0)] * 15)
 

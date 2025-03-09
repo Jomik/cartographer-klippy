@@ -12,6 +12,8 @@ class Position(TypedDict):
 
 
 class HomingState(Protocol):
+    endstops: list[Endstop]
+
     def is_homing(self, axis: HomingAxis) -> bool:
         """Check if axis is currently being homed."""
         ...
@@ -36,7 +38,7 @@ class Toolhead(Protocol):
 
 
 class Endstop(Protocol):
-    def query_is_triggered(self, print_time: float) -> int:
+    def query_is_triggered(self, print_time: float) -> bool:
         """Return true if endstop is currently triggered"""
         ...
 

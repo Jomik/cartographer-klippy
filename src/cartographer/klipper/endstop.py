@@ -28,8 +28,9 @@ class KlipperEndstop(MCU_endstop):
         self.endstop = endstop
         self.printer.register_event_handler("homing:home_rails_end", self.home_rails_end)
 
-    def home_rails_end(self, homing: Homing, _: list[PrinterRail]) -> None:
-        self.endstop.on_home_end(KlipperHomingState(homing))
+    def home_rails_end(self, homing: Homing, rails: list[PrinterRail]) -> None:
+        endstops = [es.endstop for rail in rails for es, _ in rail.get_endstops() if isinstance(es, KlipperEndstop)]
+        self.endstop.on_home_end(KlipperHomingState(homing, endstops))
 
     @override
     def get_mcu(self) -> MCU:
@@ -63,4 +64,4 @@ class KlipperEndstop(MCU_endstop):
 
     @override
     def query_endstop(self, print_time: float) -> int:
-        return self.endstop.query_is_triggered(print_time)
+        return 1 if self.endstop.query_is_triggered(print_time) else 0

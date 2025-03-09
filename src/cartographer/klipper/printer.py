@@ -1,14 +1,17 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING, final
 
 from typing_extensions import override
 
-from cartographer.printer import HomingAxis, HomingState, Position, Toolhead
+from cartographer.printer import Endstop, HomingAxis, HomingState, Position, Toolhead
 
 if TYPE_CHECKING:
     from configfile import ConfigWrapper
     from extras.homing import Homing
+
+logger = logging.getLogger(__name__)
 
 axis_mapping: dict[HomingAxis, int] = {
     "x": 0,
@@ -23,8 +26,9 @@ def axis_to_index(axis: HomingAxis) -> int:
 
 @final
 class KlipperHomingState(HomingState):
-    def __init__(self, homing: Homing):
+    def __init__(self, homing: Homing, endstops: list[Endstop]) -> None:
         self.homing = homing
+        self.endstops = endstops
 
     @override
     def is_homing(self, axis: HomingAxis) -> bool:
@@ -34,6 +38,7 @@ class KlipperHomingState(HomingState):
     def set_homed_position(self, axis: HomingAxis, position: float) -> None:
         coords: list[float | None] = [None, None, None]
         coords[axis_to_index(axis)] = position
+        logger.debug("setting homed distance for %s to %.2F", axis, position)
         self.homing.set_homed_position(coords)
 
 
