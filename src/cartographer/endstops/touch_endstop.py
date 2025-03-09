@@ -47,7 +47,6 @@ class TouchEndstop(Endstop):
         if not homing_state.is_homing("z"):
             return
 
-        logger.debug("setting homed distance to %.2F", 0)
         homing_state.set_homed_position("z", 0)
 
     @override
