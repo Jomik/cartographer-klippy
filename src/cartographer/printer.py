@@ -12,6 +12,8 @@ class Position(TypedDict):
 
 
 class HomingState(Protocol):
+    endstops: list[Endstop]
+
     def is_homing(self, axis: HomingAxis) -> bool:
         """Check if axis is currently being homed."""
         ...

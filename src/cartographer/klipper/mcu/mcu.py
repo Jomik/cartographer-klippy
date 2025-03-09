@@ -10,6 +10,7 @@ from typing_extensions import override
 
 from cartographer.endstops.scan_endstop import Mcu as ScanEndstopMcu
 from cartographer.endstops.scan_endstop import Sample
+from cartographer.endstops.touch_endstop import Mcu as TouchEndstopMcu
 from cartographer.klipper.mcu.commands import HomeCommand, KlipperCartographerCommands, ThresholdCommand, TriggerMethod
 from cartographer.klipper.mcu.constants import (
     FREQUENCY_RANGE_PERCENT,
@@ -38,7 +39,7 @@ class _RawData(TypedDict):
 
 
 @final
-class KlipperCartographerMcu(ScanEndstopMcu, KlipperStreamMcu):
+class KlipperCartographerMcu(ScanEndstopMcu, TouchEndstopMcu, KlipperStreamMcu):
     def __init__(
         self,
         config: ConfigWrapper,
@@ -71,6 +72,21 @@ class KlipperCartographerMcu(ScanEndstopMcu, KlipperStreamMcu):
                 trigger_invert=0,
                 threshold=0,
                 trigger_method=TriggerMethod.SCAN,
+            )
+        )
+        return completion
+
+    @override
+    def start_homing_touch(self, print_time: float, threshold: int) -> object:
+        completion = self.dispatch.start(print_time)
+
+        self._commands.send_home(
+            HomeCommand(
+                trsync_oid=self.dispatch.get_oid(),
+                trigger_reason=MCU_trsync.REASON_ENDSTOP_HIT,
+                trigger_invert=0,
+                threshold=threshold,
+                trigger_method=TriggerMethod.TOUCH,
             )
         )
         return completion

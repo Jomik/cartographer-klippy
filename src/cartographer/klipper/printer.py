@@ -4,11 +4,12 @@ from typing import TYPE_CHECKING, final
 
 from typing_extensions import override
 
-from cartographer.printer import HomingAxis, HomingState, Position, Toolhead
+from cartographer.printer import Endstop, HomingAxis, HomingState, Position, Toolhead
 
 if TYPE_CHECKING:
     from configfile import ConfigWrapper
     from extras.homing import Homing
+
 
 axis_mapping: dict[HomingAxis, int] = {
     "x": 0,
@@ -23,8 +24,9 @@ def axis_to_index(axis: HomingAxis) -> int:
 
 @final
 class KlipperHomingState(HomingState):
-    def __init__(self, homing: Homing):
+    def __init__(self, homing: Homing, endstops: list[Endstop]) -> None:
         self.homing = homing
+        self.endstops = endstops
 
     @override
     def is_homing(self, axis: HomingAxis) -> bool:
