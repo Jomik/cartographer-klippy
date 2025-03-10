@@ -24,7 +24,7 @@ scipy = ["scipy>=1.9.3"]
 [dependency-groups]
 test = ["pytest>=8.3.4", "pytest-mock>=3.14.0"]
 lint = ["ruff>=0.9.7"]
-typecheck = ["basedpyright>=1.27.1"]
+typecheck = ["basedpyright>=1.27.1", "hatchling>=1.27.0"]
 
 [tool.pyright]
 pythonVersion = "3.8"
@@ -48,6 +48,9 @@ version-file = "src/cartographer/__version__.py"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/cartographer"]
+
+[tool.hatch.build.hooks.custom]
+path = "hatch_build.py"
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]
