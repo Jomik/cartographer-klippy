@@ -11,3 +11,5 @@ dist/
 .tox/
 .coverage*
 junit*.xml
+release_info
+release_info
