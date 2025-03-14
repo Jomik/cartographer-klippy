@@ -76,7 +76,7 @@ def test_scan_mode_sets_homed_position(
     mocker: MockerFixture, endstop: ScanEndstop, homing_state: HomingState, session: Session[Sample]
 ):
     homed_position_spy = mocker.spy(homing_state, "set_homed_position")
-    session.get_items = mocker.Mock(return_value=[Sample(0.0, 5.0, 42.0)] * 15)
+    session.get_items = mocker.Mock(return_value=[Sample(time=0.0, frequency=5, temperature=10)] * 15)
 
     _ = endstop.home_start(0)
     endstop.on_home_end(homing_state)

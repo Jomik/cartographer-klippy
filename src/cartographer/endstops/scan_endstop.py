@@ -26,8 +26,8 @@ class Model(Protocol):
 
 @dataclass
 class Sample:
-    time: float
     frequency: float
+    time: float
     temperature: float
 
 
