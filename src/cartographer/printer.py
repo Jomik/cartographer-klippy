@@ -36,6 +36,14 @@ class Toolhead(Protocol):
         """Get the requested position of the toolhead at the given time."""
         ...
 
+    def manual_move(self, *, x: float = ..., y: float = ..., z: float = ..., speed: float) -> None:
+        """Move to requested position."""
+        ...
+
+    def is_homed(self, axis: HomingAxis) -> bool:
+        """Check if axis is homed."""
+        ...
+
 
 class Endstop(Protocol):
     def query_is_triggered(self, print_time: float) -> bool:

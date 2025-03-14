@@ -46,6 +46,7 @@ class KlipperHomingState(HomingState):
 class KlipperToolhead(Toolhead):
     def __init__(self, config: ConfigWrapper) -> None:
         printer = config.get_printer()
+        self.reactor = printer.get_reactor()
         self.toolhead = printer.lookup_object("toolhead")
         self.motion_report = printer.load_object(config, "motion_report")
 
@@ -68,3 +69,14 @@ class KlipperToolhead(Toolhead):
             msg = f"no position for time {time}"
             raise RuntimeError(msg)
         return Position(x=position[0], y=position[1], z=position[2])
+
+    @override
+    def manual_move(
+        self, *, x: float | None = None, y: float | None = None, z: float | None = None, speed: float
+    ) -> None:
+        self.toolhead.manual_move([x, y, z], speed=speed)
+
+    @override
+    def is_homed(self, axis: HomingAxis) -> bool:
+        time = self.reactor.monotonic()
+        return axis in self.toolhead.get_status(time)["homed_axes"]

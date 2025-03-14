@@ -9,6 +9,7 @@ from cartographer.klipper.mcu import KlipperCartographerMcu
 from cartographer.klipper.printer import KlipperToolhead
 from cartographer.klipper.temperature import PrinterTemperatureCoil
 from cartographer.model import Boundary, Model
+from cartographer.probes import ScanProbe
 
 if TYPE_CHECKING:
     from configfile import ConfigWrapper
@@ -45,7 +46,8 @@ class PrinterCartographer:
 
         self.mcu = KlipperCartographerMcu(config)
         toolhead = KlipperToolhead(config)
-        endstop = KlipperEndstop(self.mcu, ScanEndstop(toolhead, self.mcu, model))
+        scan_probe = ScanProbe(self.mcu, toolhead, model=model)
+        endstop = KlipperEndstop(self.mcu, ScanEndstop(toolhead, self.mcu, scan_probe))
         homing_chip = CartographerHomingChip(printer, endstop)
 
         config.get_printer().lookup_object("pins").register_chip("cartographer", homing_chip)
