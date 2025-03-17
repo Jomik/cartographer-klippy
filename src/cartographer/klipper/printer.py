@@ -31,24 +31,22 @@ class KlipperHomingState(HomingState):
         self.endstops = endstops
 
     @override
-    def is_homing(self, axis: HomingAxis) -> bool:
-        return axis_to_index(axis) in self.homing.get_axes()
+    def is_homing_z(self) -> bool:
+        return axis_to_index("z") in self.homing.get_axes()
 
     @override
-    def set_homed_position(self, axis: HomingAxis, position: float) -> None:
-        coords: list[float | None] = [None, None, None]
-        coords[axis_to_index(axis)] = position
-        logger.debug("setting homed distance for %s to %.2F", axis, position)
-        self.homing.set_homed_position(coords)
+    def set_z_homed_position(self, position: float) -> None:
+        logger.debug("setting homed distance for z to %.2F", position)
+        self.homing.set_homed_position([None, None, position])
 
 
 @final
 class KlipperToolhead(Toolhead):
     def __init__(self, config: ConfigWrapper) -> None:
-        printer = config.get_printer()
-        self.reactor = printer.get_reactor()
-        self.toolhead = printer.lookup_object("toolhead")
-        self.motion_report = printer.load_object(config, "motion_report")
+        self.printer = config.get_printer()
+        self.reactor = self.printer.get_reactor()
+        self.toolhead = self.printer.lookup_object("toolhead")
+        self.motion_report = self.printer.load_object(config, "motion_report")
 
     @override
     def get_last_move_time(self) -> float:
@@ -80,3 +78,8 @@ class KlipperToolhead(Toolhead):
     def is_homed(self, axis: HomingAxis) -> bool:
         time = self.reactor.monotonic()
         return axis in self.toolhead.get_status(time)["homed_axes"]
+
+    @override
+    def get_gcode_z_offset(self) -> float:
+        gcode_move = self.printer.lookup_object("gcode_move")
+        return gcode_move.get_status()["homing_origin"].z

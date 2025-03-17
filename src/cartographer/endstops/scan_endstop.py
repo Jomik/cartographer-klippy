@@ -37,7 +37,7 @@ class ScanEndstop(Endstop):
         self._trigger_distance = TRIGGER_DISTANCE
 
     @override
-    def query_is_triggered(self, print_time: float) -> bool:
+    def query_is_triggered(self, print_time: float = ...) -> bool:
         distance = self._probe.measure_distance(time=print_time)
         return distance <= self.get_endstop_position()
 
@@ -55,11 +55,11 @@ class ScanEndstop(Endstop):
     def on_home_end(self, homing_state: HomingState) -> None:
         if self not in homing_state.endstops:
             return
-        if not homing_state.is_homing("z"):
+        if not homing_state.is_homing_z():
             return
         distance = self._probe.measure_distance()
 
-        homing_state.set_homed_position("z", distance)
+        homing_state.set_z_homed_position(distance)
 
     @override
     def home_wait(self, home_end_time: float) -> float:

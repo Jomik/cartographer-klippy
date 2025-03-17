@@ -38,14 +38,14 @@ class ScanProbe(Generic[S]):
     ) -> None:
         self._toolhead: Toolhead = toolhead
         self.model: Model | None = model
-        self._probe_height: float = probe_height
+        self.probe_height: float = probe_height
         self._mcu: Mcu[S] = mcu
 
     def probe(self, *, speed: float) -> float:
         if not self._toolhead.is_homed("z"):
             msg = "Z axis must be homed before probing"
             raise RuntimeError(msg)
-        self._toolhead.manual_move(z=self._probe_height, speed=speed)
+        self._toolhead.manual_move(z=self.probe_height, speed=speed)
         self._toolhead.wait_moves()
         return self.measure_distance()
 

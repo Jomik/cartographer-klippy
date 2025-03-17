@@ -8,6 +8,8 @@ from cartographer.klipper.homing import CartographerHomingChip
 from cartographer.klipper.mcu import KlipperCartographerMcu
 from cartographer.klipper.printer import KlipperToolhead
 from cartographer.klipper.temperature import PrinterTemperatureCoil
+from cartographer.macros import Macro, ProbeAccuracyMacro, ProbeMacro
+from cartographer.macros.probe import QueryProbe, ZOffsetApplyProbe
 from cartographer.model import Boundary, Model
 from cartographer.probes import ScanProbe
 
@@ -47,7 +49,18 @@ class PrinterCartographer:
         self.mcu = KlipperCartographerMcu(config)
         toolhead = KlipperToolhead(config)
         scan_probe = ScanProbe(self.mcu, toolhead, model=model)
-        endstop = KlipperEndstop(self.mcu, ScanEndstop(toolhead, self.mcu, scan_probe))
+        scan_endstop = ScanEndstop(toolhead, self.mcu, scan_probe)
+
+        endstop = KlipperEndstop(self.mcu, scan_endstop)
         homing_chip = CartographerHomingChip(printer, endstop)
 
         config.get_printer().lookup_object("pins").register_chip("cartographer", homing_chip)
+
+        self.gcode = printer.lookup_object("gcode")
+        self._register_macro(ProbeMacro(scan_probe))
+        self._register_macro(ProbeAccuracyMacro(scan_probe, toolhead))
+        self._register_macro(QueryProbe(scan_endstop, toolhead))
+        self._register_macro(ZOffsetApplyProbe(toolhead))
+
+    def _register_macro(self, macro: Macro) -> None:
+        self.gcode.register_command(macro.name, macro.run, desc=macro.description)

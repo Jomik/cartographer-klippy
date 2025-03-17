@@ -89,3 +89,26 @@ def test_converts_distance_to_frequency(probe: ScanProbe[Sample], model: Model):
     frequency = probe.distance_to_frequency(1.0)
 
     assert frequency == 42
+
+
+def test_probe_errors_when_not_homed(probe: ScanProbe[Sample], toolhead: Toolhead):
+    toolhead.is_homed = lambda axis: False
+
+    with pytest.raises(RuntimeError):
+        _ = probe.probe(speed=1.0)
+
+
+def test_probe_returns_distance(probe: ScanProbe[Sample], session: Session[Sample]):
+    session.get_items = lambda: [Sample(time=0.0, frequency=42) for _ in range(11)]
+
+    distance = probe.probe(speed=1.0)
+
+    assert distance == 42
+
+
+def test_probe_errors_outside_range(probe: ScanProbe[Sample], session: Session[Sample], model: Model):
+    session.get_items = lambda: [Sample(time=0.0, frequency=42) for _ in range(11)]
+    model.frequency_to_distance = lambda frequency: float("inf")
+
+    with pytest.raises(RuntimeError):
+        _ = probe.probe(speed=1.0)

@@ -4,6 +4,7 @@ from typing import Callable, Literal, overload
 import configfile
 from configfile import ConfigWrapper, PrinterConfig
 from gcode import CommandError, GCodeDispatch
+from gcode_move import GCodeMove
 from pins import PrinterPins
 from reactor import Reactor
 from stepper import PrinterRail
@@ -79,6 +80,8 @@ class Printer:
     def lookup_object(self, name: Literal["configfile"]) -> PrinterConfig: ...
     @overload
     def lookup_object(self, name: Literal["gcode"]) -> GCodeDispatch: ...
+    @overload
+    def lookup_object(self, name: Literal["gcode_move"]) -> GCodeMove: ...
     @overload
     def lookup_object(self, name: Literal["homing"]) -> PrinterHoming: ...
     @overload
