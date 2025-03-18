@@ -25,7 +25,7 @@ jobs:
         with:
           enable-cache: true
       - name: Linting
-        run: uvx ruff check --output-format=github
+        run: uv run --only-group lint ruff check --output-format=github
   formatting:
     name: Formatting
     runs-on: ubuntu-latest
@@ -37,7 +37,7 @@ jobs:
         with:
           enable-cache: true
       - name: Formatting
-        run: uvx ruff format --check
+        run: uv run --only-group lint ruff format --check
   typecheck:
     name: Typecheck
     runs-on: ubuntu-latest
@@ -48,9 +48,8 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
-      - run: uv sync
       - name: Check types
-        run: uvx basedpyright
+        run: uv run basedpyright
   tests:
     name: Tests
     runs-on: ubuntu-latest
