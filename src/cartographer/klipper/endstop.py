@@ -4,7 +4,6 @@ import logging
 from typing import TYPE_CHECKING, cast, final
 
 from mcu import MCU_endstop
-from reactor import ReactorCompletion
 from typing_extensions import override
 
 from cartographer.klipper.printer import KlipperHomingState
@@ -12,6 +11,7 @@ from cartographer.klipper.printer import KlipperHomingState
 if TYPE_CHECKING:
     from extras.homing import Homing
     from mcu import MCU
+    from reactor import ReactorCompletion
     from stepper import MCU_stepper, PrinterRail
 
     from cartographer.klipper.mcu import KlipperCartographerMcu
@@ -56,7 +56,7 @@ class KlipperEndstop(MCU_endstop):
     ) -> ReactorCompletion[int]:
         completion = self.endstop.home_start(print_time)
         # TODO: Consider making Endstop generic so that the home_start return type can be specified
-        return cast(ReactorCompletion[int], completion)
+        return cast("ReactorCompletion[int]", completion)
 
     @override
     def home_wait(self, home_end_time: float) -> float:
