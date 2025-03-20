@@ -55,6 +55,7 @@ def model(poly: Polynomial, z_range: Boundary) -> Model:
     return Model(poly, z_range)
 
 
+@pytest.mark.filterwarnings("ignore:The fit may be poorly conditioned")
 def test_fit(toolhead: Toolhead, samples: list[Sample]) -> None:
     def get_requested_position(time: float) -> Position:
         return Position(x=0, y=0, z=time)
