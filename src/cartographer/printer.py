@@ -14,12 +14,12 @@ class Position(TypedDict):
 class HomingState(Protocol):
     endstops: list[Endstop]
 
-    def is_homing(self, axis: HomingAxis) -> bool:
-        """Check if axis is currently being homed."""
+    def is_homing_z(self) -> bool:
+        """Check if the z axis is currently being homed."""
         ...
 
-    def set_homed_position(self, axis: HomingAxis, position: float) -> None:
-        """Set the homed position for the given axis."""
+    def set_z_homed_position(self, position: float) -> None:
+        """Set the homed position for the z axis."""
         ...
 
 
@@ -34,6 +34,18 @@ class Toolhead(Protocol):
 
     def get_requested_position(self, time: float) -> Position:
         """Get the requested position of the toolhead at the given time."""
+        ...
+
+    def manual_move(self, *, x: float = ..., y: float = ..., z: float = ..., speed: float) -> None:
+        """Move to requested position."""
+        ...
+
+    def is_homed(self, axis: HomingAxis) -> bool:
+        """Check if axis is homed."""
+        ...
+
+    def get_gcode_z_offset(self) -> float:
+        """Returns currently applied gcode offset for the z axis."""
         ...
 
 

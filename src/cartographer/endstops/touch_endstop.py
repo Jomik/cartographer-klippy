@@ -44,10 +44,10 @@ class TouchEndstop(Endstop):
     def on_home_end(self, homing_state: HomingState) -> None:
         if self not in homing_state.endstops:
             return
-        if not homing_state.is_homing("z"):
+        if not homing_state.is_homing_z():
             return
 
-        homing_state.set_homed_position("z", 0)
+        homing_state.set_z_homed_position(0)
 
     @override
     def home_wait(self, home_end_time: float) -> float:
