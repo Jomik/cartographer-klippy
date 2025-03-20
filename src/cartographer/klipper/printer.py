@@ -8,6 +8,8 @@ from typing_extensions import override
 from cartographer.printer import Endstop, HomingAxis, HomingState, Position, Toolhead
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from configfile import ConfigWrapper
     from extras.homing import Homing
 
@@ -26,7 +28,7 @@ def axis_to_index(axis: HomingAxis) -> int:
 
 @final
 class KlipperHomingState(HomingState):
-    def __init__(self, homing: Homing, endstops: list[Endstop]) -> None:
+    def __init__(self, homing: Homing, endstops: Sequence[Endstop[object]]) -> None:
         self.homing = homing
         self.endstops = endstops
 

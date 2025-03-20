@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, cast, final
+from typing import TYPE_CHECKING, final
 
 from mcu import MCU_endstop
 from typing_extensions import override
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 @final
 class KlipperEndstop(MCU_endstop):
-    def __init__(self, mcu: KlipperCartographerMcu, endstop: Endstop):
+    def __init__(self, mcu: KlipperCartographerMcu, endstop: Endstop[ReactorCompletion[int]]):
         self.printer = mcu.klipper_mcu.get_printer()
         self.mcu = mcu
         self.endstop = endstop
@@ -54,9 +54,8 @@ class KlipperEndstop(MCU_endstop):
         rest_time: float,
         triggered: bool = True,
     ) -> ReactorCompletion[int]:
-        completion = self.endstop.home_start(print_time)
         # TODO: Consider making Endstop generic so that the home_start return type can be specified
-        return cast("ReactorCompletion[int]", completion)
+        return self.endstop.home_start(print_time)
 
     @override
     def home_wait(self, home_end_time: float) -> float:

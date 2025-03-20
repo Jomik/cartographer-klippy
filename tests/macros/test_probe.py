@@ -27,7 +27,7 @@ def toolhead(mocker: MockerFixture) -> Toolhead:
 
 
 @pytest.fixture
-def endstop(mocker: MockerFixture) -> ScanEndstop:
+def endstop(mocker: MockerFixture) -> ScanEndstop[object]:
     return mocker.Mock(spec=ScanEndstop, autospec=True)
 
 
@@ -120,7 +120,7 @@ def test_probe_accuracy_macro_sample_count(
 
 def test_query_probe_macro_triggered_output(
     caplog: LogCaptureFixture,
-    endstop: ScanEndstop,
+    endstop: ScanEndstop[object],
     toolhead: Toolhead,
     params: MacroParams,
 ):
@@ -135,7 +135,7 @@ def test_query_probe_macro_triggered_output(
 
 def test_query_probe_macro_open_output(
     caplog: LogCaptureFixture,
-    endstop: ScanEndstop,
+    endstop: ScanEndstop[object],
     toolhead: Toolhead,
     params: MacroParams,
 ):

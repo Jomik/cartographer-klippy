@@ -1,25 +1,25 @@
 from __future__ import annotations
 
 import logging
-from typing import Protocol, final
+from typing import Generic, Protocol, final
 
 from typing_extensions import override
 
-from cartographer.printer import Endstop, HomingState, Toolhead
+from cartographer.printer import C, Endstop, HomingState, Toolhead
 
 logger = logging.getLogger(__name__)
 
 
-class Mcu(Protocol):
-    def start_homing_touch(self, print_time: float, threshold: int) -> object: ...
+class Mcu(Protocol, Generic[C]):
+    def start_homing_touch(self, print_time: float, threshold: int) -> C: ...
     def stop_homing(self, home_end_time: float) -> float: ...
 
 
 @final
-class TouchEndstop(Endstop):
+class TouchEndstop(Endstop[C]):
     """Implementation for Survey Touch."""
 
-    def __init__(self, toolhead: Toolhead, mcu: Mcu, threshold: int) -> None:
+    def __init__(self, toolhead: Toolhead, mcu: Mcu[C], threshold: int) -> None:
         self._toolhead = toolhead
         self._mcu = mcu
         self.threshold = threshold
@@ -34,7 +34,7 @@ class TouchEndstop(Endstop):
         return 0
 
     @override
-    def home_start(self, print_time: float) -> object:
+    def home_start(self, print_time: float) -> C:
         if self.threshold <= 0:
             msg = "Threshold must be greater than 0"
             raise RuntimeError(msg)
