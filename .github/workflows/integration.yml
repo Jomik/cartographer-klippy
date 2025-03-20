@@ -51,10 +51,15 @@ jobs:
       - name: Check types
         run: uv run basedpyright
   tests:
-    name: Tests
+    name: Test on Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
     needs:
+      - linting
+      - formatting
       - typecheck
+    strategy:
+      matrix:
+        python-version: ["3.13", "3.12", "3.11", "3.10", "3.9", "3.8"]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -62,19 +67,41 @@ jobs:
       - uses: astral-sh/setup-uv@v5
         with:
           enable-cache: true
+          python-version: ${{ matrix.python-version }}
       - name: Run tests
-        run: uvx hatch test --all --cover-quiet
-      - name: Create xml coverage
         run: |
-          uvx coverage xml
-          uvx junitparser merge junit.*.xml junit.xml
-      - name: Upload coverage reports to Codecov
-        if: ${{ !cancelled() }}
+          uv run --frozen pytest --cov --cov-report=xml --junitxml=junit.${{ matrix.python-version }}.xml \
+          && mv coverage.xml coverage.${{ matrix.python-version }}.xml
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.python-version }}
+          path: coverage.${{ matrix.python-version }}.xml
+      - name: Upload test results artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-${{ matrix.python-version }}
+          path: junit.${{ matrix.python-version }}.xml
+
+  coverage:
+    name: Merge and Upload Coverage
+    runs-on: ubuntu-latest
+    needs: tests
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: coverage-*
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: junit-*
+          merge-multiple: true
+      - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
       - name: Upload test results to Codecov
-        if: ${{ !cancelled() }}
         uses: codecov/test-results-action@v1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
