@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Callable, TypedDict, final
 import mcu
 from mcu import MCU_trsync
 from mcu import TriggerDispatch as KlipperTriggerDispatch
+from reactor import ReactorCompletion
 from typing_extensions import override
 
 from cartographer.endstops.scan_endstop import Mcu as ScanEndstopMcu
@@ -48,7 +49,12 @@ class Sample(ScanSample):
 
 
 @final
-class KlipperCartographerMcu(ScanProbeMcu[Sample], ScanEndstopMcu, TouchEndstopMcu, KlipperStreamMcu):
+class KlipperCartographerMcu(
+    ScanProbeMcu[Sample],
+    ScanEndstopMcu[ReactorCompletion[int]],
+    TouchEndstopMcu[ReactorCompletion[int]],
+    KlipperStreamMcu,
+):
     def __init__(
         self,
         config: ConfigWrapper,
@@ -70,7 +76,7 @@ class KlipperCartographerMcu(ScanProbeMcu[Sample], ScanEndstopMcu, TouchEndstopM
         self.klipper_mcu.register_response(self._handle_data, "cartographer_data")
 
     @override
-    def start_homing_scan(self, print_time: float, frequency: float) -> object:
+    def start_homing_scan(self, print_time: float, frequency: float) -> ReactorCompletion[int]:
         self._set_threshold(frequency)
         completion = self.dispatch.start(print_time)
 
@@ -86,7 +92,7 @@ class KlipperCartographerMcu(ScanProbeMcu[Sample], ScanEndstopMcu, TouchEndstopM
         return completion
 
     @override
-    def start_homing_touch(self, print_time: float, threshold: int) -> object:
+    def start_homing_touch(self, print_time: float, threshold: int) -> ReactorCompletion[int]:
         completion = self.dispatch.start(print_time)
 
         self._commands.send_home(

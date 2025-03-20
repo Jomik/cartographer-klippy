@@ -78,7 +78,7 @@ class QueryProbe(Macro):
     name = "QUERY_PROBE"
     description = "Return the status of the z-probe"
 
-    def __init__(self, scan_endstop: ScanEndstop, toolhead: Toolhead) -> None:
+    def __init__(self, scan_endstop: ScanEndstop[object], toolhead: Toolhead) -> None:
         self._scan_endstop = scan_endstop
         self._toolhead = toolhead
 

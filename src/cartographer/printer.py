@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from typing import Literal, Protocol, TypedDict
+from typing import TYPE_CHECKING, Generic, Literal, Protocol, TypedDict, TypeVar
+
+if TYPE_CHECKING:
+    from collections.abc import Sequence
 
 HomingAxis = Literal["x", "y", "z"]
 
@@ -12,7 +15,7 @@ class Position(TypedDict):
 
 
 class HomingState(Protocol):
-    endstops: list[Endstop]
+    endstops: Sequence[Endstop[object]]
 
     def is_homing_z(self) -> bool:
         """Check if the z axis is currently being homed."""
@@ -49,12 +52,15 @@ class Toolhead(Protocol):
         ...
 
 
-class Endstop(Protocol):
+C = TypeVar("C", covariant=True)
+
+
+class Endstop(Protocol, Generic[C]):
     def query_is_triggered(self, print_time: float) -> bool:
         """Return true if endstop is currently triggered"""
         ...
 
-    def home_start(self, print_time: float) -> object:
+    def home_start(self, print_time: float) -> C:
         """Start the homing process"""
         ...
 

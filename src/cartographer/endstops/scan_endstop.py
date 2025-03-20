@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Protocol, final
+from typing import TYPE_CHECKING, Generic, Protocol, final
 
 from typing_extensions import override
 
-from cartographer.printer import Endstop
+from cartographer.printer import C, Endstop
 
 if TYPE_CHECKING:
     from cartographer.printer import HomingState, Toolhead
@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 TRIGGER_DISTANCE = 2.0
 
 
-class Mcu(Protocol):
-    def start_homing_scan(self, print_time: float, frequency: float) -> object: ...
+class Mcu(Protocol, Generic[C]):
+    def start_homing_scan(self, print_time: float, frequency: float) -> C: ...
     def stop_homing(self, home_end_time: float) -> float: ...
 
 
@@ -26,10 +26,10 @@ class Probe(Protocol):
 
 
 @final
-class ScanEndstop(Endstop):
+class ScanEndstop(Endstop[C]):
     """Implementation for Scan mode."""
 
-    def __init__(self, toolhead: Toolhead, mcu: Mcu, probe: Probe) -> None:
+    def __init__(self, toolhead: Toolhead, mcu: Mcu[C], probe: Probe) -> None:
         self._toolhead = toolhead
         self._mcu = mcu
         self._probe = probe
@@ -46,7 +46,7 @@ class ScanEndstop(Endstop):
         return self._trigger_distance
 
     @override
-    def home_start(self, print_time: float) -> object:
+    def home_start(self, print_time: float) -> C:
         self._toolhead.wait_moves()
         trigger_frequency = self._probe.distance_to_frequency(self.get_endstop_position())
         return self._mcu.start_homing_scan(print_time, trigger_frequency)
