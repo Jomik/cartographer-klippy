@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 @final
 class KlipperEndstop(MCU_endstop):
-    def __init__(self, mcu: KlipperCartographerMcu, endstop: Endstop[ReactorCompletion[int]]):
+    def __init__(self, mcu: KlipperCartographerMcu, endstop: Endstop[ReactorCompletion]):
         self.printer = mcu.klipper_mcu.get_printer()
         self.mcu = mcu
         self.endstop = endstop
@@ -38,7 +38,7 @@ class KlipperEndstop(MCU_endstop):
 
     @override
     def add_stepper(self, stepper: MCU_stepper) -> None:
-        logger.debug("Adding stepper %s to endstop", stepper)
+        logger.debug("Adding stepper %s to endstop", stepper.get_name())
         return self.mcu.dispatch.add_stepper(stepper)
 
     @override
@@ -53,8 +53,7 @@ class KlipperEndstop(MCU_endstop):
         sample_count: int,
         rest_time: float,
         triggered: bool = True,
-    ) -> ReactorCompletion[int]:
-        # TODO: Consider making Endstop generic so that the home_start return type can be specified
+    ) -> ReactorCompletion:
         return self.endstop.home_start(print_time)
 
     @override
@@ -64,3 +63,7 @@ class KlipperEndstop(MCU_endstop):
     @override
     def query_endstop(self, print_time: float) -> int:
         return 1 if self.endstop.query_is_triggered(print_time) else 0
+
+    @override
+    def get_position_endstop(self) -> float:
+        return self.endstop.get_endstop_position()

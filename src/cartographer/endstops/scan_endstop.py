@@ -8,7 +8,7 @@ from typing_extensions import override
 from cartographer.printer import C, Endstop
 
 if TYPE_CHECKING:
-    from cartographer.printer import HomingState, Toolhead
+    from cartographer.printer import HomingState
 
 logger = logging.getLogger(__name__)
 
@@ -29,8 +29,7 @@ class Probe(Protocol):
 class ScanEndstop(Endstop[C]):
     """Implementation for Scan mode."""
 
-    def __init__(self, toolhead: Toolhead, mcu: Mcu[C], probe: Probe) -> None:
-        self._toolhead = toolhead
+    def __init__(self, mcu: Mcu[C], probe: Probe) -> None:
         self._mcu = mcu
         self._probe = probe
 
@@ -47,7 +46,6 @@ class ScanEndstop(Endstop[C]):
 
     @override
     def home_start(self, print_time: float) -> C:
-        self._toolhead.wait_moves()
         trigger_frequency = self._probe.distance_to_frequency(self.get_endstop_position())
         return self._mcu.start_homing_scan(print_time, trigger_frequency)
 

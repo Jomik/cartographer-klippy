@@ -12,6 +12,7 @@ if TYPE_CHECKING:
 
     from configfile import ConfigWrapper
     from extras.homing import Homing
+    from toolhead import ToolHead as KlippyToolhead
 
 logger = logging.getLogger(__name__)
 
@@ -44,10 +45,17 @@ class KlipperHomingState(HomingState):
 
 @final
 class KlipperToolhead(Toolhead):
+    __toolhead: KlippyToolhead | None = None
+
+    @property
+    def toolhead(self) -> KlippyToolhead:
+        if self.__toolhead is None:
+            self.__toolhead = self.printer.lookup_object("toolhead")
+        return self.__toolhead
+
     def __init__(self, config: ConfigWrapper) -> None:
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
-        self.toolhead = self.printer.lookup_object("toolhead")
         self.motion_report = self.printer.load_object(config, "motion_report")
 
     @override
