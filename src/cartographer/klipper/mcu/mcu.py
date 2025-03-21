@@ -51,8 +51,8 @@ class Sample(ScanSample):
 @final
 class KlipperCartographerMcu(
     ScanProbeMcu[Sample],
-    ScanEndstopMcu[ReactorCompletion[int]],
-    TouchEndstopMcu[ReactorCompletion[int]],
+    ScanEndstopMcu[ReactorCompletion],
+    TouchEndstopMcu[ReactorCompletion],
     KlipperStreamMcu,
 ):
     def __init__(
@@ -76,7 +76,7 @@ class KlipperCartographerMcu(
         self.klipper_mcu.register_response(self._handle_data, "cartographer_data")
 
     @override
-    def start_homing_scan(self, print_time: float, frequency: float) -> ReactorCompletion[int]:
+    def start_homing_scan(self, print_time: float, frequency: float) -> ReactorCompletion:
         self._set_threshold(frequency)
         completion = self.dispatch.start(print_time)
 
@@ -92,7 +92,7 @@ class KlipperCartographerMcu(
         return completion
 
     @override
-    def start_homing_touch(self, print_time: float, threshold: int) -> ReactorCompletion[int]:
+    def start_homing_touch(self, print_time: float, threshold: int) -> ReactorCompletion:
         completion = self.dispatch.start(print_time)
 
         self._commands.send_home(
@@ -111,6 +111,7 @@ class KlipperCartographerMcu(
         self.dispatch.wait_end(home_end_time)
         self._commands.send_stop_home()
         result = self.dispatch.stop()
+        logger.debug("Stop homing result: %d", result)
         if result >= MCU_trsync.REASON_COMMS_TIMEOUT:
             msg = "communication timeout during homing"
             raise self.klipper_mcu.error(msg)
@@ -130,16 +131,13 @@ class KlipperCartographerMcu(
 
     @override
     def start_streaming(self) -> None:
-        logger.debug("Starting stream")
         self._commands.send_stream_state(enable=True)
 
     @override
     def stop_streaming(self) -> None:
-        logger.debug("Stopping stream")
         self._commands.send_stream_state(enable=False)
 
     def _set_threshold(self, trigger_frequency: float) -> None:
-        logger.debug("Setting threshold to %d", trigger_frequency)
         trigger = self._constants.frequency_to_count(trigger_frequency)
         untrigger = self._constants.frequency_to_count(trigger_frequency * (1 - TRIGGER_HYSTERESIS))
 
@@ -149,6 +147,7 @@ class KlipperCartographerMcu(
         kin = self.printer.lookup_object("toolhead").get_kinematics()
         for stepper in kin.get_steppers():
             if stepper.is_active_axis("z"):
+                logger.debug("Adding stepper %s to dispatch", stepper.get_name())
                 self.dispatch.add_stepper(stepper)
 
     def _handle_connect(self) -> None:

@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from cartographer.endstops.scan_endstop import Mcu, Probe, ScanEndstop
-from cartographer.printer import HomingState, Toolhead
+from cartographer.printer import HomingState
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -17,18 +17,13 @@ def mcu(mocker: MockerFixture) -> Mcu[object]:
 
 
 @pytest.fixture
-def toolhead(mocker: MockerFixture) -> Toolhead:
-    return mocker.Mock(spec=Toolhead, autospec=True)
-
-
-@pytest.fixture
 def probe(mocker: MockerFixture) -> Probe:
     return mocker.Mock(spec=Probe, autospec=True)
 
 
 @pytest.fixture
-def endstop(toolhead: Toolhead, mcu: Mcu[object], probe: Probe) -> ScanEndstop[object]:
-    return ScanEndstop(toolhead, mcu, probe)
+def endstop(mcu: Mcu[object], probe: Probe) -> ScanEndstop[object]:
+    return ScanEndstop(mcu, probe)
 
 
 @pytest.fixture

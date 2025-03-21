@@ -1,10 +1,13 @@
 from __future__ import annotations
 
+import logging
 from enum import IntEnum
 from typing import TYPE_CHECKING, NamedTuple, final
 
 if TYPE_CHECKING:
     from mcu import MCU, CommandWrapper
+
+logger = logging.getLogger(__name__)
 
 
 class TriggerMethod(IntEnum):
@@ -55,16 +58,20 @@ class KlipperCartographerCommands:
 
     def send_stream_state(self, *, enable: bool) -> None:
         command = self._ensure_initialized(self._stream_command, "stream command")
+        logger.debug("%s stream", "Starting" if enable else "Stopping")
         command.send([1 if enable else 0])
 
     def send_threshold(self, command: ThresholdCommand) -> None:
         cmd = self._ensure_initialized(self._set_threshold_command, "set threshold command")
+        logger.debug("Sending trigger frequency threshold command %s", list(command))
         cmd.send(list(command))
 
     def send_home(self, command: HomeCommand) -> None:
         cmd = self._ensure_initialized(self._start_home_command, "start home command")
+        logger.debug("Sending home command %s", list(command))
         cmd.send(list(command))
 
     def send_stop_home(self) -> None:
         cmd = self._ensure_initialized(self._stop_home_command, "stop home command")
+        logger.debug("Sending stop home command")
         cmd.send()
