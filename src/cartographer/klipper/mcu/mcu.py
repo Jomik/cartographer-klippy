@@ -10,8 +10,6 @@ from mcu import TriggerDispatch as KlipperTriggerDispatch
 from reactor import ReactorCompletion
 from typing_extensions import override
 
-from cartographer.endstops.scan_endstop import Mcu as ScanEndstopMcu
-from cartographer.endstops.touch_endstop import Mcu as TouchEndstopMcu
 from cartographer.klipper.mcu.commands import HomeCommand, KlipperCartographerCommands, ThresholdCommand, TriggerMethod
 from cartographer.klipper.mcu.constants import (
     FREQUENCY_RANGE_PERCENT,
@@ -20,8 +18,8 @@ from cartographer.klipper.mcu.constants import (
     KlipperCartographerConstants,
 )
 from cartographer.klipper.mcu.stream import KlipperStream, KlipperStreamMcu
-from cartographer.probes.scan_probe import Mcu as ScanProbeMcu
-from cartographer.probes.scan_probe import Sample as ScanSample
+from cartographer.printer_interface import Mcu
+from cartographer.printer_interface import Sample as CartographerSample
 
 if TYPE_CHECKING:
     from configfile import ConfigWrapper
@@ -42,19 +40,14 @@ class _RawData(TypedDict):
 
 
 @dataclass
-class Sample(ScanSample):
+class Sample(CartographerSample):
     time: float
     frequency: float
     temperature: float
 
 
 @final
-class KlipperCartographerMcu(
-    ScanProbeMcu[Sample],
-    ScanEndstopMcu[ReactorCompletion],
-    TouchEndstopMcu[ReactorCompletion],
-    KlipperStreamMcu,
-):
+class KlipperCartographerMcu(Mcu[ReactorCompletion, Sample], KlipperStreamMcu):
     def __init__(
         self,
         config: ConfigWrapper,

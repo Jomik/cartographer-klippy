@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, final
 
 from typing_extensions import override
 
-from cartographer.printer import Endstop, HomingAxis, HomingState, Position, Toolhead
+from cartographer.printer_interface import Endstop, HomingAxis, HomingState, Position, Toolhead
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

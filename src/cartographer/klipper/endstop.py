@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from stepper import MCU_stepper, PrinterRail
 
     from cartographer.klipper.mcu import KlipperCartographerMcu
-    from cartographer.printer import Endstop
+    from cartographer.printer_interface import Endstop
 
 logger = logging.getLogger(__name__)
 

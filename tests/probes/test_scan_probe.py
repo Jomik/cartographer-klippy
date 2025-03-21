@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 import pytest
 from typing_extensions import override
 
-from cartographer.printer import Toolhead
-from cartographer.probes.scan_probe import Mcu, Model, ScanProbe
+from cartographer.printer_interface import Mcu, Toolhead
+from cartographer.probes.scan_probe import Model, ScanProbe
 from cartographer.stream import Session
 
 if TYPE_CHECKING:
@@ -41,7 +41,7 @@ def session(mocker: MockerFixture) -> Session[Sample]:
 
 
 @pytest.fixture
-def mcu(mocker: MockerFixture, session: Session[Sample]) -> Mcu[Sample]:
+def mcu(mocker: MockerFixture, session: Session[Sample]) -> Mcu[object, Sample]:
     mock = mocker.Mock(spec=Mcu, autospec=True)
     mock.start_session = mocker.Mock(return_value=session)
     return mock
@@ -53,7 +53,7 @@ def model() -> Model:
 
 
 @pytest.fixture
-def probe(mcu: Mcu[Sample], toolhead: Toolhead, model: Model) -> ScanProbe[Sample]:
+def probe(mcu: Mcu[object, Sample], toolhead: Toolhead, model: Model) -> ScanProbe[Sample]:
     return ScanProbe(mcu, toolhead, model=model)
 
 

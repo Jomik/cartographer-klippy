@@ -1,25 +1,20 @@
 from __future__ import annotations
 
 import logging
-from typing import Generic, Protocol, final
+from typing import Generic, final
 
 from typing_extensions import override
 
-from cartographer.printer import C, Endstop, HomingState, Toolhead
+from cartographer.printer_interface import C, Endstop, HomingState, Mcu, S, Toolhead
 
 logger = logging.getLogger(__name__)
 
 
-class Mcu(Protocol, Generic[C]):
-    def start_homing_touch(self, print_time: float, threshold: int) -> C: ...
-    def stop_homing(self, home_end_time: float) -> float: ...
-
-
 @final
-class TouchEndstop(Endstop[C]):
+class TouchEndstop(Endstop[C], Generic[C, S]):
     """Implementation for Survey Touch."""
 
-    def __init__(self, toolhead: Toolhead, mcu: Mcu[C], threshold: int) -> None:
+    def __init__(self, toolhead: Toolhead, mcu: Mcu[C, S], threshold: int) -> None:
         self._toolhead = toolhead
         self._mcu = mcu
         self.threshold = threshold

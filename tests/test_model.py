@@ -8,7 +8,7 @@ import pytest
 from numpy.polynomial import Polynomial
 
 from cartographer.model import Boundary, Model, Sample
-from cartographer.printer import Position, Toolhead
+from cartographer.printer_interface import Position, Toolhead
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture

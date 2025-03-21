@@ -10,13 +10,15 @@ from cartographer.klipper.logging import GCodeConsoleFormatter, GCodeConsoleHand
 from cartographer.klipper.mcu import KlipperCartographerMcu
 from cartographer.klipper.printer import KlipperToolhead
 from cartographer.klipper.temperature import PrinterTemperatureCoil
-from cartographer.macros import Macro, ProbeAccuracyMacro, ProbeMacro
+from cartographer.macros import ProbeAccuracyMacro, ProbeMacro
 from cartographer.macros.probe import QueryProbe, ZOffsetApplyProbe
 from cartographer.model import Boundary, Model
 from cartographer.probes import ScanProbe
 
 if TYPE_CHECKING:
     from configfile import ConfigWrapper
+
+    from cartographer.printer_interface import Macro
 
 logger = logging.getLogger(__name__)
 

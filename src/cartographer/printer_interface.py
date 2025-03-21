@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Generic, Literal, Protocol, TypedDict, TypeVar
+from typing import TYPE_CHECKING, Callable, Generic, Literal, Protocol, TypedDict, TypeVar
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
+
+    from cartographer.stream import Session
 
 HomingAxis = Literal["x", "y", "z"]
 
@@ -75,3 +77,31 @@ class Endstop(Protocol, Generic[C]):
     def get_endstop_position(self) -> float:
         """The position of the endstop on the rail"""
         ...
+
+
+class Sample(Protocol):
+    frequency: float
+    time: float
+
+
+S = TypeVar("S", bound=Sample)
+
+
+class Mcu(Protocol, Generic[C, S]):
+    def start_homing_scan(self, print_time: float, frequency: float) -> C: ...
+    def start_homing_touch(self, print_time: float, threshold: int) -> C: ...
+    def stop_homing(self, home_end_time: float) -> float: ...
+    def start_session(self, start_condition: Callable[[S], bool] | None = None) -> Session[S]: ...
+
+
+class MacroParams(Protocol):
+    def get(self, name: str, default: str = ...) -> str: ...
+    def get_float(self, name: str, default: float = ..., *, above: int = ...) -> float: ...
+    def get_int(self, name: str, default: int = ..., *, minval: int = ...) -> int: ...
+
+
+class Macro(Protocol):
+    name: str
+    description: str
+
+    def run(self, params: MacroParams) -> None: ...
