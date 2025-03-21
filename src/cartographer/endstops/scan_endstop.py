@@ -5,19 +5,14 @@ from typing import TYPE_CHECKING, Generic, Protocol, final
 
 from typing_extensions import override
 
-from cartographer.printer import C, Endstop
+from cartographer.printer_interface import C, Endstop, Mcu, S
 
 if TYPE_CHECKING:
-    from cartographer.printer import HomingState
+    from cartographer.printer_interface import HomingState
 
 logger = logging.getLogger(__name__)
 
 TRIGGER_DISTANCE = 2.0
-
-
-class Mcu(Protocol, Generic[C]):
-    def start_homing_scan(self, print_time: float, frequency: float) -> C: ...
-    def stop_homing(self, home_end_time: float) -> float: ...
 
 
 class Probe(Protocol):
@@ -26,10 +21,10 @@ class Probe(Protocol):
 
 
 @final
-class ScanEndstop(Endstop[C]):
+class ScanEndstop(Endstop[C], Generic[C, S]):
     """Implementation for Scan mode."""
 
-    def __init__(self, mcu: Mcu[C], probe: Probe) -> None:
+    def __init__(self, mcu: Mcu[C, S], probe: Probe) -> None:
         self._mcu = mcu
         self._probe = probe
 

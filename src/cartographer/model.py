@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Callable, NamedTuple, Protocol
 from numpy.polynomial import Polynomial
 
 if TYPE_CHECKING:
-    from cartographer.printer import Toolhead
+    from cartographer.printer_interface import Toolhead
 
 
 class Sample(Protocol):

@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Callable, Generic, Protocol, TypeVar
+from typing import TYPE_CHECKING, Generic, Protocol
 
 import numpy as np
 
+from cartographer.printer_interface import S
+
 if TYPE_CHECKING:
-    from cartographer.printer import Toolhead
-    from cartographer.stream import Session
+    from cartographer.printer_interface import Mcu, Toolhead
 
 
 class Model(Protocol):
@@ -15,22 +16,10 @@ class Model(Protocol):
     def frequency_to_distance(self, frequency: float) -> float: ...
 
 
-class Sample(Protocol):
-    frequency: float
-    time: float
-
-
-S = TypeVar("S", bound=Sample)
-
-
-class Mcu(Protocol, Generic[S]):
-    def start_session(self, start_condition: Callable[[S], bool] | None = None) -> Session[S]: ...
-
-
 class ScanProbe(Generic[S]):
     def __init__(
         self,
-        mcu: Mcu[S],
+        mcu: Mcu[object, S],
         toolhead: Toolhead,
         *,
         model: Model | None = None,
@@ -39,7 +28,7 @@ class ScanProbe(Generic[S]):
         self._toolhead: Toolhead = toolhead
         self.model: Model | None = model
         self.probe_height: float = probe_height
-        self._mcu: Mcu[S] = mcu
+        self._mcu: Mcu[object, S] = mcu
 
     def probe(self, *, speed: float) -> float:
         if not self._toolhead.is_homed("z"):

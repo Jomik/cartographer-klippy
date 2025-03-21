@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING, final
 import numpy as np
 from typing_extensions import override
 
-from cartographer.macros.interface import Macro, MacroParams
+from cartographer.printer_interface import Macro, MacroParams
 
 if TYPE_CHECKING:
     from cartographer.endstops.scan_endstop import ScanEndstop
-    from cartographer.printer import Toolhead
-    from cartographer.probes.scan_probe import S, ScanProbe
+    from cartographer.printer_interface import C, S, Toolhead
+    from cartographer.probes.scan_probe import ScanProbe
 
 logger = logging.getLogger(__name__)
 
@@ -78,7 +78,7 @@ class QueryProbe(Macro):
     name = "QUERY_PROBE"
     description = "Return the status of the z-probe"
 
-    def __init__(self, scan_endstop: ScanEndstop[object], toolhead: Toolhead) -> None:
+    def __init__(self, scan_endstop: ScanEndstop[C, S], toolhead: Toolhead) -> None:
         self._scan_endstop = scan_endstop
         self._toolhead = toolhead
 

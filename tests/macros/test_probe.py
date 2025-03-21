@@ -6,10 +6,9 @@ from typing import TYPE_CHECKING
 import pytest
 
 from cartographer.endstops.scan_endstop import ScanEndstop
-from cartographer.macros.interface import MacroParams
 from cartographer.macros.probe import ProbeAccuracyMacro, ProbeMacro, QueryProbe, ZOffsetApplyProbe
-from cartographer.printer import Toolhead
-from cartographer.probes.scan_probe import Sample, ScanProbe
+from cartographer.printer_interface import MacroParams, Sample, Toolhead
+from cartographer.probes.scan_probe import ScanProbe
 
 if TYPE_CHECKING:
     from pytest import LogCaptureFixture
@@ -27,7 +26,7 @@ def toolhead(mocker: MockerFixture) -> Toolhead:
 
 
 @pytest.fixture
-def endstop(mocker: MockerFixture) -> ScanEndstop[object]:
+def endstop(mocker: MockerFixture) -> ScanEndstop[object, Sample]:
     return mocker.Mock(spec=ScanEndstop, autospec=True)
 
 
@@ -120,7 +119,7 @@ def test_probe_accuracy_macro_sample_count(
 
 def test_query_probe_macro_triggered_output(
     caplog: LogCaptureFixture,
-    endstop: ScanEndstop[object],
+    endstop: ScanEndstop[object, Sample],
     toolhead: Toolhead,
     params: MacroParams,
 ):
@@ -135,7 +134,7 @@ def test_query_probe_macro_triggered_output(
 
 def test_query_probe_macro_open_output(
     caplog: LogCaptureFixture,
-    endstop: ScanEndstop[object],
+    endstop: ScanEndstop[object, Sample],
     toolhead: Toolhead,
     params: MacroParams,
 ):
