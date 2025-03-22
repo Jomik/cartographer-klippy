@@ -67,6 +67,11 @@ class KlipperToolhead(Toolhead):
         self.toolhead.wait_moves()
 
     @override
+    def get_position(self) -> Position:
+        pos = self.toolhead.get_position()
+        return Position(x=pos[0], y=pos[1], z=pos[2])
+
+    @override
     def get_requested_position(self, time: float) -> Position:
         trapq = self.motion_report.trapqs.get("toolhead")
         if trapq is None:
