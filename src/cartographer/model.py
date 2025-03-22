@@ -36,7 +36,7 @@ class Model:
 
     @staticmethod
     def fit(toolhead: Toolhead, samples: list[Sample]) -> Model:
-        z_offsets = [toolhead.get_requested_position(sample.time)["z"] for sample in samples]
+        z_offsets = [toolhead.get_requested_position(sample.time).z for sample in samples]
         inverse_frequencies = [1 / sample.frequency for sample in samples]
 
         poly = polynomial_fit(inverse_frequencies, z_offsets, DEGREES)

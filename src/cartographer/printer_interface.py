@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, Generic, Literal, Protocol, TypedDict, TypeVar
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Callable, Generic, Literal, Protocol, TypeVar
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -10,7 +11,8 @@ if TYPE_CHECKING:
 HomingAxis = Literal["x", "y", "z"]
 
 
-class Position(TypedDict):
+@dataclass
+class Position:
     x: float
     y: float
     z: float
@@ -35,6 +37,10 @@ class Toolhead(Protocol):
 
     def wait_moves(self) -> None:
         """Wait for all moves to complete."""
+        ...
+
+    def get_position(self) -> Position:
+        """Get the currently commanded position of the toolhead."""
         ...
 
     def get_requested_position(self, time: float) -> Position:

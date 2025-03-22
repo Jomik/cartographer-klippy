@@ -7,7 +7,7 @@ import pytest
 
 from cartographer.endstops.scan_endstop import ScanEndstop
 from cartographer.macros.probe import ProbeAccuracyMacro, ProbeMacro, QueryProbe, ZOffsetApplyProbe
-from cartographer.printer_interface import MacroParams, Sample, Toolhead
+from cartographer.printer_interface import MacroParams, Position, Sample, Toolhead
 from cartographer.probes.scan_probe import ScanProbe
 
 if TYPE_CHECKING:
@@ -63,6 +63,8 @@ def test_probe_accuracy_macro_output(
     macro = ProbeAccuracyMacro(probe, toolhead)
     probe.probe_height = 2
     params.get_int = mocker.Mock(return_value=10)
+    toolhead.get_position = lambda: Position(0, 0, 0)
+    params.get_float = mocker.Mock(return_value=1)
     i = -1
     measurements: list[float] = [50 + i * 10 for i in range(10)]
 
@@ -95,6 +97,8 @@ def test_probe_accuracy_macro_sample_count(
     macro = ProbeAccuracyMacro(probe, toolhead)
     probe.probe_height = 2
     params.get_int = mocker.Mock(return_value=1)
+    toolhead.get_position = lambda: Position(0, 0, 0)
+    params.get_float = mocker.Mock(return_value=1)
     i = -1
     measurements: list[float] = [50 + i * 10 for i in range(10)]
 

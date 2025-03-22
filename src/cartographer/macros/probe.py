@@ -46,14 +46,25 @@ class ProbeAccuracyMacro(Macro):
     def run(self, params: MacroParams) -> None:
         speed = params.get_float("speed", 3.0, above=0)
         sample_count = params.get_int("samples", 10, minval=1)
+        position = self._toolhead.get_position()
 
         probe_height = self._scan_probe.probe_height
+        logger.info(
+            "PROBE_ACCURACY at X:%.3f Y:%.3f Z:%.3f (samples=%d speed=%.1f)",
+            position.x,
+            position.y,
+            position.z,
+            sample_count,
+            speed,
+        )
 
         self._toolhead.manual_move(z=probe_height, speed=speed)
         measurements: list[float] = []
         while len(measurements) < sample_count:
             distance = self._scan_probe.probe(speed=speed)
             measurements.append(distance)
+        logger.debug("Measurements gathered: %s", measurements)
+
         max_value = max(measurements)
         min_value = min(measurements)
         range_value = max_value - min_value
