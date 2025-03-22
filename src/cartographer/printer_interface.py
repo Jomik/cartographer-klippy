@@ -63,7 +63,7 @@ class Toolhead(Protocol):
 C = TypeVar("C", covariant=True)
 
 
-class Endstop(Protocol, Generic[C]):
+class Endstop(Generic[C], Protocol):
     def query_is_triggered(self, print_time: float) -> bool:
         """Return true if endstop is currently triggered"""
         ...
@@ -93,7 +93,7 @@ class Sample(Protocol):
 S = TypeVar("S", bound=Sample)
 
 
-class Mcu(Protocol, Generic[C, S]):
+class Mcu(Generic[C, S], Protocol):
     def start_homing_scan(self, print_time: float, frequency: float) -> C: ...
     def start_homing_touch(self, print_time: float, threshold: int) -> C: ...
     def stop_homing(self, home_end_time: float) -> float: ...
