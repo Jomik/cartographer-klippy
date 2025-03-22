@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import pytest
 from numpy.polynomial import Polynomial
 
-from cartographer.model import Boundary, Model, Sample
+from cartographer.model import MAX_TOLERANCE, Boundary, Model, Sample
 from cartographer.printer_interface import Position, Toolhead
 
 if TYPE_CHECKING:
@@ -52,7 +52,7 @@ def poly(mocker: MockerFixture, domain: Boundary) -> Polynomial:
 
 @pytest.fixture
 def model(poly: Polynomial, z_range: Boundary) -> Model:
-    return Model(poly, z_range)
+    return Model(poly, z_range, z_offset=0)
 
 
 @pytest.mark.filterwarnings("ignore:The fit may be poorly conditioned")
@@ -63,16 +63,16 @@ def test_fit(toolhead: Toolhead, samples: list[Sample]) -> None:
     toolhead.get_requested_position = get_requested_position
     model = Model.fit(toolhead, samples)
     assert isinstance(model, Model)
-    assert model.z_range.lower < model.z_range.upper
+    assert model.range.lower < model.range.upper
 
 
 def test_from_coefficients(z_range: Boundary, domain: Boundary) -> None:
     coefficients = [1.0, -2.0, 3.0]
-    model = Model.from_coefficients(coefficients, domain, z_range)
+    model = Model.from_coefficients(coefficients, domain, z_range, z_offset=0)
     assert isinstance(model, Model)
     assert model.poly.domain[0] == domain.lower  # pyright: ignore[reportAny]
     assert model.poly.domain[1] == domain.upper  # pyright: ignore[reportAny]
-    assert model.z_range == z_range
+    assert model.range == z_range
 
 
 def test_frequency_to_distance(model: Model) -> None:
@@ -100,6 +100,24 @@ def test_distance_to_frequency_convergence_error(mocker: MockerFixture, z_range:
 
     poly = mocker.Mock(spec=Polynomial, autospec=True, side_effect=eval_poly)
     poly.domain = domain
-    model = Model(poly, z_range)
+    model = Model(poly, z_range, z_offset=0)
     with pytest.raises(RuntimeError, match="Model convergence error"):
         _ = model.distance_to_frequency(2.5)
+
+
+def test_frequency_to_distance_applies_offset(model: Model) -> None:
+    frequency = 1 / 3.0
+    model.offset = 0.5
+
+    distance = model.frequency_to_distance(frequency)
+
+    assert distance == 2.5
+
+
+def test_distance_to_frequency_applies_offset(model: Model) -> None:
+    distance = 2.5
+    model.offset = 0.5
+
+    frequency = model.distance_to_frequency(distance)
+
+    assert pytest.approx(frequency, MAX_TOLERANCE) == 1 / 3  # pyright: ignore[reportUnknownMemberType]

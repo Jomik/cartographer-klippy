@@ -28,11 +28,14 @@ class Boundary(NamedTuple):
 # TODO: Temperature compensation
 class Model:
     poly: Polynomial
-    z_range: Boundary
+    range: Boundary
+    offset: float
+    """The offset to add to the measured distance to get the actual distance"""
 
-    def __init__(self, poly: Polynomial, z_range: Boundary) -> None:
+    def __init__(self, poly: Polynomial, z_range: Boundary, *, z_offset: float) -> None:
         self.poly = poly
-        self.z_range = z_range
+        self.range = z_range
+        self.offset = z_offset
 
     @staticmethod
     def fit(toolhead: Toolhead, samples: list[Sample]) -> Model:
@@ -41,12 +44,12 @@ class Model:
 
         poly = polynomial_fit(inverse_frequencies, z_offsets, DEGREES)
 
-        return Model(poly, Boundary(min(z_offsets), max(z_offsets)))
+        return Model(poly, Boundary(min(z_offsets), max(z_offsets)), z_offset=0)
 
     @staticmethod
-    def from_coefficients(coefficients: list[float], domain: Boundary, z_range: Boundary) -> Model:
+    def from_coefficients(coefficients: list[float], domain: Boundary, z_range: Boundary, *, z_offset: float) -> Model:
         poly = Polynomial(coefficients, domain)
-        return Model(poly, z_range)
+        return Model(poly, z_range, z_offset=z_offset)
 
     def frequency_to_distance(self, frequency: float) -> float:
         lower_bound, upper_bound = self._domain()
@@ -57,10 +60,11 @@ class Model:
         elif inverse_frequency < lower_bound:
             return float("-inf")
 
-        return self._eval(inverse_frequency)
+        return self._eval(inverse_frequency) - self.offset
 
     def distance_to_frequency(self, distance: float) -> float:
-        min_z, max_z = self.z_range
+        distance += self.offset
+        min_z, max_z = self.range
         if distance < min_z or distance > max_z:
             msg = f"Attempted to map out-of-range distance {distance:.3f}, valid range [{min_z:.3f}, {max_z:.3f}]"
             raise RuntimeError(msg)

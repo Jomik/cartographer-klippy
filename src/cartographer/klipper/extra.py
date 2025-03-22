@@ -53,7 +53,7 @@ class PrinterCartographer:
         printer = config.get_printer()
         logger.debug("Initializing Cartographer")
 
-        model = Model.from_coefficients(coefficients, domain, z_range)
+        model = Model.from_coefficients(coefficients, domain, z_range, z_offset=0)
 
         self.mcu = KlipperCartographerMcu(config)
         toolhead = KlipperToolhead(config)
