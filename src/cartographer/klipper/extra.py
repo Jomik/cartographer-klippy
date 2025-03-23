@@ -4,6 +4,7 @@ import logging
 from typing import TYPE_CHECKING, final
 
 from cartographer.endstops import ScanEndstop
+from cartographer.klipper.configuration import KlipperCartographerConfiguration
 from cartographer.klipper.endstop import KlipperEndstop
 from cartographer.klipper.homing import CartographerHomingChip
 from cartographer.klipper.logging import GCodeConsoleFormatter, GCodeConsoleHandler, apply_logging_config
@@ -12,8 +13,7 @@ from cartographer.klipper.printer import KlipperToolhead
 from cartographer.klipper.temperature import PrinterTemperatureCoil
 from cartographer.macros import ProbeAccuracyMacro, ProbeMacro
 from cartographer.macros.probe import QueryProbe, ZOffsetApplyProbe
-from cartographer.model import Boundary, Model
-from cartographer.probes import ScanProbe
+from cartographer.probes import ScanModel, ScanProbe
 
 if TYPE_CHECKING:
     from configfile import ConfigWrapper
@@ -29,31 +29,19 @@ def load_config(config: ConfigWrapper):
     return PrinterCartographer(config)
 
 
-coefficients = [
-    1.495489734476631,
-    1.818884970732857,
-    0.7167873060601451,
-    0.22706698538067396,
-    0.47250958126556464,
-    0.7893292346615394,
-    0.3691949811150437,
-    0.8464623041312073,
-    0.33346414135574437,
-    0.46140861763722246,
-]
-domain = Boundary(3.2110630714271213e-07, 3.343269852974841e-07)
-z_range = Boundary(0.200000, 5.100000)
-
 apply_logging_config()
 
 
 @final
 class PrinterCartographer:
+    config: KlipperCartographerConfiguration
+
     def __init__(self, config: ConfigWrapper) -> None:
         printer = config.get_printer()
         logger.debug("Initializing Cartographer")
+        self.config = KlipperCartographerConfiguration(config)
 
-        model = Model.from_coefficients(coefficients, domain, z_range, z_offset=0)
+        model = ScanModel(self.config.scan_models["default"])
 
         self.mcu = KlipperCartographerMcu(config)
         toolhead = KlipperToolhead(config)
@@ -77,8 +65,7 @@ class PrinterCartographer:
 
     def _configure_macro_logger(self) -> None:
         macro_logger = logging.getLogger("cartographer.macros")
-        # TODO: Configure from configfile
-        macro_logger.setLevel(logging.DEBUG)
+        macro_logger.setLevel(logging.DEBUG if self.config.verbose else logging.INFO)
 
         handler = GCodeConsoleHandler(self.gcode)
         handler.setFormatter(GCodeConsoleFormatter())

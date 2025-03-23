@@ -10,7 +10,7 @@ from cartographer.printer_interface import HomingState, Mcu
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
-    from cartographer.model import Sample
+    from cartographer.probes.scan_model import Sample
 
 
 @pytest.fixture

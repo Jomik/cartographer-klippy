@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, Callable, NamedTuple, Protocol
 from numpy.polynomial import Polynomial
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from cartographer.printer_interface import Toolhead
 
 
@@ -20,39 +22,51 @@ DEGREES = 9
 polynomial_fit: Callable[[list[float], list[float], int], Polynomial] = Polynomial.fit  # pyright:ignore[reportUnknownMemberType]
 
 
-class Boundary(NamedTuple):
+class Domain(NamedTuple):
     lower: float
     upper: float
 
 
-# TODO: Temperature compensation
-class Model:
-    poly: Polynomial
-    range: Boundary
-    offset: float
-    """The offset to add to the measured distance to get the actual distance"""
+class Configuration(Protocol):
+    @property
+    def name(self) -> str: ...
 
-    def __init__(self, poly: Polynomial, z_range: Boundary, *, z_offset: float) -> None:
-        self.poly = poly
-        self.range = z_range
-        self.offset = z_offset
+    @property
+    def coefficients(self) -> list[float]: ...
+
+    @property
+    def domain(self) -> Domain: ...
+
+    @property
+    def z_offset(self) -> float: ...
+
+    def save_z_offset(self, offset: float) -> None: ...
+
+
+# TODO: Temperature compensation
+class ScanModel:
+    config: Configuration
+    _poly: Polynomial | None = None
+
+    @property
+    def poly(self) -> Polynomial:
+        if self._poly is None:
+            self._poly = Polynomial(self.config.coefficients, self.config.domain)
+        return self._poly
+
+    def __init__(self, config: Configuration) -> None:
+        self.config = config
 
     @staticmethod
-    def fit(toolhead: Toolhead, samples: list[Sample]) -> Model:
+    def fit(toolhead: Toolhead, samples: Sequence[Sample]) -> Polynomial:
         z_offsets = [toolhead.get_requested_position(sample.time).z for sample in samples]
         inverse_frequencies = [1 / sample.frequency for sample in samples]
 
         poly = polynomial_fit(inverse_frequencies, z_offsets, DEGREES)
-
-        return Model(poly, Boundary(min(z_offsets), max(z_offsets)), z_offset=0)
-
-    @staticmethod
-    def from_coefficients(coefficients: list[float], domain: Boundary, z_range: Boundary, *, z_offset: float) -> Model:
-        poly = Polynomial(coefficients, domain)
-        return Model(poly, z_range, z_offset=z_offset)
+        return poly
 
     def frequency_to_distance(self, frequency: float) -> float:
-        lower_bound, upper_bound = self._domain()
+        lower_bound, upper_bound = self.config.domain
         inverse_frequency = 1 / frequency
 
         if inverse_frequency > upper_bound:
@@ -60,16 +74,18 @@ class Model:
         elif inverse_frequency < lower_bound:
             return float("-inf")
 
-        return self._eval(inverse_frequency) - self.offset
+        return self._eval(inverse_frequency) - self.config.z_offset
 
     def distance_to_frequency(self, distance: float) -> float:
-        distance += self.offset
-        min_z, max_z = self.range
+        # PERF: We can use brentq if scipy is available
+        # https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.brentq.html#scipy.optimize.brentq
+        distance += self.config.z_offset
+        min_z, max_z = self._get_z_range()
         if distance < min_z or distance > max_z:
             msg = f"Attempted to map out-of-range distance {distance:.3f}, valid range [{min_z:.3f}, {max_z:.3f}]"
             raise RuntimeError(msg)
 
-        lower_bound, upper_bound = self._domain()
+        lower_bound, upper_bound = self.config.domain
 
         for _ in range(ITERATIONS):
             midpoint = (upper_bound + lower_bound) / 2
@@ -85,9 +101,13 @@ class Model:
         msg = "Model convergence error"
         raise RuntimeError(msg)
 
+    _z_range: Domain | None = None
+
+    def _get_z_range(self) -> Domain:
+        if self._z_range is None:
+            min, max = self.config.domain
+            self._z_range = Domain(self._eval(min), self._eval(max))
+        return self._z_range
+
     def _eval(self, x: float) -> float:
         return float(self.poly(x))  # pyright: ignore[reportUnknownArgumentType]
-
-    def _domain(self) -> Boundary:
-        lower_bound, upper_bound = self.poly.domain  # pyright: ignore[reportAny]
-        return Boundary(lower_bound, upper_bound)

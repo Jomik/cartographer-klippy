@@ -83,7 +83,6 @@ class ConfigWrapper:
         default: None,
         note_valid: bool = True,
     ) -> bool | None: ...
-    @overload
     def getchoice(
         self,
         option: str,
@@ -91,14 +90,6 @@ class ConfigWrapper:
         default: str = ...,
         note_valid: bool = True,
     ) -> str: ...
-    @overload
-    def getchoice(
-        self,
-        option: str,
-        choices: dict[str, str],
-        default: str | None,
-        note_valid: bool = True,
-    ) -> str | None: ...
     @overload
     def getintlist(
         self,
