@@ -4,15 +4,16 @@ import logging
 from typing import TYPE_CHECKING, final
 
 from cartographer.endstops import ScanEndstop
-from cartographer.klipper.configuration import KlipperCartographerConfiguration
+from cartographer.klipper.configuration import KlipperCartographerConfiguration, KlipperProbeConfiguration
 from cartographer.klipper.endstop import KlipperEndstop
 from cartographer.klipper.homing import CartographerHomingChip
 from cartographer.klipper.logging import GCodeConsoleFormatter, GCodeConsoleHandler, apply_logging_config
 from cartographer.klipper.mcu import KlipperCartographerMcu
 from cartographer.klipper.printer import KlipperToolhead
+from cartographer.klipper.probe import KlipperCartographerProbe
 from cartographer.klipper.temperature import PrinterTemperatureCoil
 from cartographer.macros import ProbeAccuracyMacro, ProbeMacro
-from cartographer.macros.probe import QueryProbe, ZOffsetApplyProbe
+from cartographer.macros.probe import QueryProbeMacro, ZOffsetApplyProbeMacro
 from cartographer.probes import ScanModel, ScanProbe
 
 if TYPE_CHECKING:
@@ -41,7 +42,8 @@ class PrinterCartographer:
         logger.debug("Initializing Cartographer")
         self.config = KlipperCartographerConfiguration(config)
 
-        model = ScanModel(self.config.scan_models["default"])
+        probe_config = self.config.scan_models["default"]
+        model = ScanModel(probe_config)
 
         self.mcu = KlipperCartographerMcu(config)
         toolhead = KlipperToolhead(config)
@@ -51,14 +53,26 @@ class PrinterCartographer:
         endstop = KlipperEndstop(self.mcu, scan_endstop)
         homing_chip = CartographerHomingChip(printer, endstop)
 
-        config.get_printer().lookup_object("pins").register_chip("probe", homing_chip)
+        printer.lookup_object("pins").register_chip("probe", homing_chip)
 
         self.gcode = printer.lookup_object("gcode")
         self._configure_macro_logger()
-        self._register_macro(ProbeMacro(scan_probe))
+        probe_macro = ProbeMacro(scan_probe)
+        self._register_macro(probe_macro)
         self._register_macro(ProbeAccuracyMacro(scan_probe, toolhead))
-        self._register_macro(QueryProbe(scan_endstop, toolhead))
-        self._register_macro(ZOffsetApplyProbe(toolhead))
+        query_probe_macro = QueryProbeMacro(scan_endstop, toolhead)
+        self._register_macro(query_probe_macro)
+        self._register_macro(ZOffsetApplyProbeMacro(toolhead))
+
+        printer.add_object(
+            "probe",
+            KlipperCartographerProbe(
+                scan_probe,
+                KlipperProbeConfiguration(self.config, probe_config),
+                probe_macro,
+                query_probe_macro,
+            ),
+        )
 
     def _register_macro(self, macro: Macro) -> None:
         self.gcode.register_command(macro.name, macro.run, desc=macro.description)

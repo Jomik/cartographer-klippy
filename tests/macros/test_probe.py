@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import pytest
 
 from cartographer.endstops.scan_endstop import ScanEndstop
-from cartographer.macros.probe import ProbeAccuracyMacro, ProbeMacro, QueryProbe, ZOffsetApplyProbe
+from cartographer.macros.probe import ProbeAccuracyMacro, ProbeMacro, QueryProbeMacro, ZOffsetApplyProbeMacro
 from cartographer.printer_interface import MacroParams, Position, Sample, Toolhead
 from cartographer.probes.scan_probe import ScanProbe
 
@@ -127,7 +127,7 @@ def test_query_probe_macro_triggered_output(
     toolhead: Toolhead,
     params: MacroParams,
 ):
-    macro = QueryProbe(endstop, toolhead)
+    macro = QueryProbeMacro(endstop, toolhead)
     endstop.query_is_triggered = lambda print_time=...: True
 
     with caplog.at_level(logging.INFO):
@@ -142,7 +142,7 @@ def test_query_probe_macro_open_output(
     toolhead: Toolhead,
     params: MacroParams,
 ):
-    macro = QueryProbe(endstop, toolhead)
+    macro = QueryProbeMacro(endstop, toolhead)
     endstop.query_is_triggered = lambda print_time=...: False
 
     with caplog.at_level(logging.INFO):
@@ -152,7 +152,7 @@ def test_query_probe_macro_open_output(
 
 
 def test_z_offset_apply_probe_output(caplog: LogCaptureFixture, toolhead: Toolhead, params: MacroParams):
-    macro = ZOffsetApplyProbe(toolhead)
+    macro = ZOffsetApplyProbeMacro(toolhead)
     toolhead.get_gcode_z_offset = lambda: -42.0
 
     with caplog.at_level(logging.INFO):
