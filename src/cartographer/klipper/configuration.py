@@ -123,3 +123,14 @@ class KlipperScanModelConfiguration(ScanModelConfiguration):
             z_offset=z_offset,
             hash=hash,
         )
+
+
+class KlipperProbeConfiguration:
+    x_offset: float
+    y_offset: float
+    z_offset: float
+
+    def __init__(self, config: CartographerConfiguration, probe_config: ScanModelConfiguration) -> None:
+        self.x_offset = config.x_offset
+        self.y_offset = config.y_offset
+        self.z_offset = probe_config.z_offset

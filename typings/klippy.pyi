@@ -15,12 +15,12 @@ from extras.bed_mesh import BedMesh
 from extras.heaters import PrinterHeaters
 from extras.homing import Homing, HomingMove, PrinterHoming
 from extras.motion_report import PrinterMotionReport
-from extras.probe import PrinterProbe
+from extras.probe import P, PrinterProbe, S
 
 class Printer:
     config_error: type[configfile.error]
     command_error: type[CommandError]
-    def add_object(self, name: Literal["probe"], obj: PrinterProbe) -> None: ...
+    def add_object(self, name: Literal["probe"], obj: PrinterProbe[S, P]) -> None: ...
     @overload
     def load_object(
         self,

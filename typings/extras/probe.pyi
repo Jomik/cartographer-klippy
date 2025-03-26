@@ -1,4 +1,4 @@
-from typing import Callable, Literal, Protocol, TypedDict
+from typing import Callable, Generic, Literal, Protocol, TypedDict, TypeVar
 
 from configfile import ConfigWrapper
 from gcode import GCodeCommand
@@ -9,13 +9,15 @@ HINT_TIMEOUT: str
 
 type _Pos = list[float]
 
-def run_single_probe(probe: PrinterProbe, gcmd: GCodeCommand) -> None: ...
+def run_single_probe(probe: PrinterProbe[S, P], gcmd: GCodeCommand) -> None: ...
 def calc_probe_z_average(positions: list[_Pos], method: Literal["average", "median"] = "average") -> _Pos: ...
 
 class _ProbeStatus(TypedDict):
     name: str
     last_query: bool | int
     last_z_result: float
+
+S = TypeVar("S", bound=_ProbeStatus, covariant=True)
 
 class ProbeCommandHelper:
     def __init__(
@@ -41,11 +43,13 @@ class _ProbeSession(Protocol):
 class _ProbeParams(TypedDict):
     probe_speed: float
     lift_speed: float
-    samples: int
-    sample_retract_dist: float
-    samples_tolerance: float
-    samples_tolerance_retries: int
-    samples_result: Literal["average", "median"]
+    # samples: int
+    # sample_retract_dist: float
+    # samples_tolerance: float
+    # samples_tolerance_retries: int
+    # samples_result: Literal["average", "median"]
+
+P = TypeVar("P", bound=_ProbeParams, covariant=True)
 
 class ProbeSessionHelper(_ProbeSession):
     def __init__(self, config: ConfigWrapper, mcu_probe: ProbeEndstopWrapper) -> None: ...
@@ -67,8 +71,8 @@ class ProbeEndstopWrapper(MCU_endstop, Protocol):
     @override
     def get_position_endstop(self) -> float: ...
 
-class PrinterProbe(Protocol):
-    def get_probe_params(self, gcmd: GCodeCommand | None = None) -> _ProbeParams: ...
+class PrinterProbe(Generic[S, P], Protocol):
+    def get_probe_params(self, gcmd: GCodeCommand | None = None) -> P: ...
     def get_offsets(self) -> tuple[float, float, float]: ...
-    def get_status(self, eventtime: float) -> _ProbeStatus: ...
+    def get_status(self, eventtime: float) -> S: ...
     def start_probe_session(self, gcmd: GCodeCommand) -> _ProbeSession: ...
