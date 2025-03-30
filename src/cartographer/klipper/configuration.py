@@ -34,8 +34,7 @@ class KlipperCartographerConfiguration(CartographerConfiguration):
     x_offset: float
     y_offset: float
     backlash_compensation: float
-    homing_mode: ProbeMode
-    probe_mode: ProbeMode
+    probing_mode: ProbeMode
     verbose: bool
     scan_models: dict[str, ScanModelConfiguration]
 
@@ -44,8 +43,7 @@ class KlipperCartographerConfiguration(CartographerConfiguration):
         self.x_offset = config.getfloat("x_offset")
         self.y_offset = config.getfloat("y_offset")
         self.backlash_compensation = config.getfloat("backlash_compensation", 0)
-        self.homing_mode = get_enum_choice(config, "homing_mode", ProbeMode, ProbeMode.SCAN)
-        self.probe_mode = get_enum_choice(config, "probe_mode", ProbeMode, ProbeMode.SCAN)
+        self.probing_mode = get_enum_choice(config, "probing_mode", ProbeMode, ProbeMode.SCAN)
         self.verbose = config.getboolean("verbose", default=False)
 
         config_name = config.get_name()

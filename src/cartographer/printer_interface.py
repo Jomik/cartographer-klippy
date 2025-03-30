@@ -59,6 +59,10 @@ class Toolhead(Protocol):
         """Returns currently applied gcode offset for the z axis."""
         ...
 
+    def z_homing_move(self, endstop: Endstop[C], *, bottom: float, speed: float) -> float:
+        """Starts homing move towards the given endstop."""
+        ...
+
 
 C = TypeVar("C", covariant=True)
 
@@ -102,7 +106,7 @@ class Mcu(Generic[C, S], Protocol):
 
 class MacroParams(Protocol):
     def get(self, name: str, default: str = ...) -> str: ...
-    def get_float(self, name: str, default: float = ..., *, above: int = ...) -> float: ...
+    def get_float(self, name: str, default: float = ..., *, above: float = ..., minval: float = ...) -> float: ...
     def get_int(self, name: str, default: int = ..., *, minval: int = ...) -> int: ...
 
 
@@ -114,4 +118,7 @@ class Macro(Protocol):
 
 
 class Probe(Protocol):
+    probe_height: float
+
     def probe(self, *, speed: float) -> float: ...
+    def query_is_triggered(self, print_time: float) -> bool: ...

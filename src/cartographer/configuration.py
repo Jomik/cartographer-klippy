@@ -16,8 +16,7 @@ class CartographerConfiguration(Protocol):
     x_offset: float
     y_offset: float
     backlash_compensation: float
-    homing_mode: ProbeMode
-    probe_mode: ProbeMode
+    probing_mode: ProbeMode
     verbose: bool
 
     scan_models: dict[str, ScanModelConfiguration]

@@ -5,42 +5,17 @@ from typing import TYPE_CHECKING, final
 
 from typing_extensions import override
 
-from cartographer.printer_interface import Endstop, HomingAxis, HomingState, Position, Toolhead
+from cartographer.klipper.endstop import KlipperEndstop
+from cartographer.printer_interface import Endstop, HomingAxis, Position, Toolhead
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
     from configfile import ConfigWrapper
-    from extras.homing import Homing
+    from reactor import ReactorCompletion
     from toolhead import ToolHead as KlippyToolhead
 
+    from cartographer.klipper.mcu.mcu import KlipperCartographerMcu
+
 logger = logging.getLogger(__name__)
-
-axis_mapping: dict[HomingAxis, int] = {
-    "x": 0,
-    "y": 1,
-    "z": 2,
-}
-
-
-def axis_to_index(axis: HomingAxis) -> int:
-    return axis_mapping[axis]
-
-
-@final
-class KlipperHomingState(HomingState):
-    def __init__(self, homing: Homing, endstops: Sequence[Endstop[object]]) -> None:
-        self.homing = homing
-        self.endstops = endstops
-
-    @override
-    def is_homing_z(self) -> bool:
-        return axis_to_index("z") in self.homing.get_axes()
-
-    @override
-    def set_z_homed_position(self, position: float) -> None:
-        logger.debug("Setting homed distance for z to %.2F", position)
-        self.homing.set_homed_position([None, None, position])
 
 
 @final
@@ -53,7 +28,8 @@ class KlipperToolhead(Toolhead):
             self.__toolhead = self.printer.lookup_object("toolhead")
         return self.__toolhead
 
-    def __init__(self, config: ConfigWrapper) -> None:
+    def __init__(self, config: ConfigWrapper, mcu: KlipperCartographerMcu) -> None:
+        self.mcu = mcu
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
         self.motion_report = self.printer.load_object(config, "motion_report")
@@ -98,3 +74,14 @@ class KlipperToolhead(Toolhead):
     def get_gcode_z_offset(self) -> float:
         gcode_move = self.printer.lookup_object("gcode_move")
         return gcode_move.get_status()["homing_origin"].z
+
+    @override
+    def z_homing_move(self, endstop: Endstop[ReactorCompletion], *, bottom: float, speed: float) -> float:
+        klipper_endstop = KlipperEndstop(self.mcu, endstop)
+        self.wait_moves()
+
+        pos = self.toolhead.get_position()[:]
+        pos[2] = bottom
+
+        epos = self.printer.lookup_object("homing").probing_move(klipper_endstop, pos, speed)
+        return epos[2]

@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, final
 
+from cartographer.configuration import ProbeMode
 from cartographer.klipper.configuration import KlipperCartographerConfiguration, KlipperProbeConfiguration
 from cartographer.klipper.endstop import KlipperEndstop
 from cartographer.klipper.homing import CartographerHomingChip
@@ -11,9 +12,8 @@ from cartographer.klipper.mcu import KlipperCartographerMcu
 from cartographer.klipper.printer import KlipperToolhead
 from cartographer.klipper.probe import KlipperCartographerProbe
 from cartographer.klipper.temperature import PrinterTemperatureCoil
-from cartographer.macros import ProbeAccuracyMacro, ProbeMacro
-from cartographer.macros.probe import QueryProbeMacro, ZOffsetApplyProbeMacro
-from cartographer.probes import ScanModel, ScanProbe
+from cartographer.macros import ProbeAccuracyMacro, ProbeMacro, QueryProbeMacro, ZOffsetApplyProbeMacro
+from cartographer.probes import ScanModel, ScanProbe, TouchProbe
 
 if TYPE_CHECKING:
     from configfile import ConfigWrapper
@@ -42,20 +42,25 @@ class PrinterCartographer:
         model = ScanModel(probe_config)
 
         self.mcu = KlipperCartographerMcu(config)
-        toolhead = KlipperToolhead(config)
-        scan_probe = ScanProbe(self.mcu, toolhead, model=model)
+        toolhead = KlipperToolhead(config, self.mcu)
 
-        endstop = KlipperEndstop(self.mcu, scan_probe)
-        homing_chip = CartographerHomingChip(printer, endstop)
+        scan_probe = ScanProbe(self.mcu, toolhead, model=model)
+        scan_endstop = KlipperEndstop(self.mcu, scan_probe)
+
+        touch_probe = TouchProbe(self.mcu, toolhead, threshold=2750)
+
+        homing_chip = CartographerHomingChip(printer, scan_endstop)
 
         printer.lookup_object("pins").register_chip("probe", homing_chip)
 
+        probing_probe = touch_probe if self.config.probing_mode is ProbeMode.TOUCH else scan_probe
+
         self.gcode = printer.lookup_object("gcode")
         self._configure_macro_logger()
-        probe_macro = ProbeMacro(scan_probe)
+        probe_macro = ProbeMacro(probing_probe)
         self._register_macro(probe_macro)
-        self._register_macro(ProbeAccuracyMacro(scan_probe, toolhead))
-        query_probe_macro = QueryProbeMacro(scan_probe, toolhead)
+        self._register_macro(ProbeAccuracyMacro(probing_probe, toolhead))
+        query_probe_macro = QueryProbeMacro(probing_probe, toolhead)
         self._register_macro(query_probe_macro)
         self._register_macro(ZOffsetApplyProbeMacro(toolhead))
 

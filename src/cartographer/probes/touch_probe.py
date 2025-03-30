@@ -14,14 +14,30 @@ logger = logging.getLogger(__name__)
 class TouchProbe(Endstop[C]):
     """Implementation for Survey Touch."""
 
-    def __init__(self, toolhead: Toolhead, mcu: Mcu[C, S], threshold: int) -> None:
+    def __init__(
+        self,
+        mcu: Mcu[C, S],
+        toolhead: Toolhead,
+        *,
+        threshold: int,
+    ) -> None:
         self._toolhead = toolhead
         self._mcu = mcu
         self.threshold = threshold
+        self.probe_height = 5.0
+
+    def probe(self, *, speed: float) -> float:
+        if not self._toolhead.is_homed("z"):
+            msg = "Z axis must be homed before probing"
+            raise RuntimeError(msg)
+        self._toolhead.manual_move(z=self.probe_height, speed=speed)
+        self._toolhead.wait_moves()
+        distance = self._toolhead.z_homing_move(self, bottom=-2.0, speed=3.0)
+        return distance
 
     @override
     def query_is_triggered(self, print_time: float) -> bool:
-        """Touch endstop is never in a triggered state."""
+        # Touch endstop is never in a triggered state.
         return False
 
     @override

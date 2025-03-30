@@ -6,11 +6,10 @@ from typing import TYPE_CHECKING, final
 import numpy as np
 from typing_extensions import override
 
-from cartographer.printer_interface import Macro, MacroParams
+from cartographer.printer_interface import Macro, MacroParams, Probe
 
 if TYPE_CHECKING:
-    from cartographer.printer_interface import C, Toolhead
-    from cartographer.probes.scan_probe import ScanProbe
+    from cartographer.printer_interface import Toolhead
 
 logger = logging.getLogger(__name__)
 
@@ -21,14 +20,14 @@ class ProbeMacro(Macro):
     description = "Probe the bed to get the height offset at the current position."
     last_distance: float = 0
 
-    def __init__(self, scan_probe: ScanProbe[C]) -> None:
-        self._scan_probe = scan_probe
+    def __init__(self, probe: Probe) -> None:
+        self._probe = probe
 
     @override
     def run(self, params: MacroParams) -> None:
         speed = params.get_float("SPEED", 3.0, above=0)
 
-        distance = self._scan_probe.probe(speed=speed)
+        distance = self._probe.probe(speed=speed)
         logger.info("Result is z=%.6f", distance)
         self.last_distance = distance
 
@@ -38,31 +37,37 @@ class ProbeAccuracyMacro(Macro):
     name = "PROBE_ACCURACY"
     description = "Probe the bed multiple times to measure the accuracy of the probe."
 
-    def __init__(self, scan_probe: ScanProbe[C], toolhead: Toolhead) -> None:
-        self._scan_probe = scan_probe
+    def __init__(self, probe: Probe, toolhead: Toolhead) -> None:
+        self._probe = probe
         self._toolhead = toolhead
 
     @override
     def run(self, params: MacroParams) -> None:
-        speed = params.get_float("SPEED", 3.0, above=0)
+        probe_speed = params.get_float("PROBE_SPEED", 3.0, above=0)
+        lift_speed = params.get_float("LIFT_SPEED", 3.0, above=0)
+        retract = params.get_float("SAMPLE_RETRACT_DIST", 1.0, minval=0)
         sample_count = params.get_int("SAMPLES", 10, minval=1)
         position = self._toolhead.get_position()
 
-        probe_height = self._scan_probe.probe_height
+        probe_height = self._probe.probe_height
         logger.info(
-            "PROBE_ACCURACY at X:%.3f Y:%.3f Z:%.3f (samples=%d speed=%.1f)",
+            "PROBE_ACCURACY at X:%.3f Y:%.3f Z:%.3f (samples=%d retract=%.3f speed=%.1f lift_speed=%.1f)",
             position.x,
             position.y,
             position.z,
             sample_count,
-            speed,
+            retract,
+            probe_speed,
+            lift_speed,
         )
 
-        self._toolhead.manual_move(z=probe_height, speed=speed)
+        self._toolhead.manual_move(z=probe_height, speed=probe_speed)
         measurements: list[float] = []
         while len(measurements) < sample_count:
-            distance = self._scan_probe.probe(speed=speed)
+            distance = self._probe.probe(speed=probe_speed)
             measurements.append(distance)
+            pos = self._toolhead.get_position()
+            self._toolhead.manual_move(z=pos.z + retract, speed=lift_speed)
         logger.debug("Measurements gathered: %s", measurements)
 
         max_value = max(measurements)
@@ -90,7 +95,7 @@ class QueryProbeMacro(Macro):
     description = "Return the status of the z-probe"
     last_triggered: bool = False
 
-    def __init__(self, probe: ScanProbe[C], toolhead: Toolhead) -> None:
+    def __init__(self, probe: Probe, toolhead: Toolhead) -> None:
         self._probe = probe
         self._toolhead = toolhead
 

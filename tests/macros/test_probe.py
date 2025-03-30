@@ -4,22 +4,18 @@ import logging
 from typing import TYPE_CHECKING
 
 import pytest
-from typing_extensions import TypeAlias
 
 from cartographer.macros.probe import ProbeAccuracyMacro, ProbeMacro, QueryProbeMacro, ZOffsetApplyProbeMacro
-from cartographer.printer_interface import MacroParams, Position, Toolhead
-from cartographer.probes.scan_probe import ScanProbe
+from cartographer.printer_interface import MacroParams, Position, Probe, Toolhead
 
 if TYPE_CHECKING:
     from pytest import LogCaptureFixture
     from pytest_mock import MockerFixture
 
-Probe: TypeAlias = ScanProbe[object]
-
 
 @pytest.fixture
 def probe(mocker: MockerFixture) -> Probe:
-    return mocker.Mock(spec=ScanProbe, autospec=True)
+    return mocker.Mock(spec=Probe, autospec=True)
 
 
 @pytest.fixture
