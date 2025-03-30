@@ -111,3 +111,7 @@ class Macro(Protocol):
     description: str
 
     def run(self, params: MacroParams) -> None: ...
+
+
+class Probe(Protocol):
+    def probe(self, *, speed: float) -> float: ...

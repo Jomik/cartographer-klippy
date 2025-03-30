@@ -20,6 +20,7 @@ logger = logging.getLogger(__name__)
 class ProbeMacro(Macro):
     name = "PROBE"
     description = "Probe the bed to get the height offset at the current position."
+    last_distance: float = 0
 
     def __init__(self, scan_probe: ScanProbe[S]) -> None:
         self._scan_probe = scan_probe
@@ -30,7 +31,7 @@ class ProbeMacro(Macro):
 
         distance = self._scan_probe.probe(speed=speed)
         logger.info("Result is z=%.6f", distance)
-        # TODO: Update status object
+        self.last_distance = distance
 
 
 @final
@@ -85,9 +86,10 @@ class ProbeAccuracyMacro(Macro):
 
 
 @final
-class QueryProbe(Macro):
+class QueryProbeMacro(Macro):
     name = "QUERY_PROBE"
     description = "Return the status of the z-probe"
+    last_triggered: bool = False
 
     def __init__(self, scan_endstop: ScanEndstop[C, S], toolhead: Toolhead) -> None:
         self._scan_endstop = scan_endstop
@@ -98,10 +100,11 @@ class QueryProbe(Macro):
         time = self._toolhead.get_last_move_time()
         triggered = self._scan_endstop.query_is_triggered(time)
         logger.info("probe: %s", "TRIGGERED" if triggered else "open")
+        self.last_triggered = triggered
 
 
 @final
-class ZOffsetApplyProbe(Macro):
+class ZOffsetApplyProbeMacro(Macro):
     name = "Z_OFFSET_APPLY_PROBE"
     description = "Adjust the probe's z_offset"
 

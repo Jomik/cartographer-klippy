@@ -41,11 +41,11 @@ class _ProbeSession(Protocol):
 class _ProbeParams(TypedDict):
     probe_speed: float
     lift_speed: float
-    samples: int
-    sample_retract_dist: float
-    samples_tolerance: float
-    samples_tolerance_retries: int
-    samples_result: Literal["average", "median"]
+    # samples: int
+    # sample_retract_dist: float
+    # samples_tolerance: float
+    # samples_tolerance_retries: int
+    # samples_result: Literal["average", "median"]
 
 class ProbeSessionHelper(_ProbeSession):
     def __init__(self, config: ConfigWrapper, mcu_probe: ProbeEndstopWrapper) -> None: ...
