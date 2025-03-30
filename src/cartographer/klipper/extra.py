@@ -3,7 +3,6 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, final
 
-from cartographer.endstops import ScanEndstop
 from cartographer.klipper.configuration import KlipperCartographerConfiguration, KlipperProbeConfiguration
 from cartographer.klipper.endstop import KlipperEndstop
 from cartographer.klipper.homing import CartographerHomingChip
@@ -45,9 +44,8 @@ class PrinterCartographer:
         self.mcu = KlipperCartographerMcu(config)
         toolhead = KlipperToolhead(config)
         scan_probe = ScanProbe(self.mcu, toolhead, model=model)
-        scan_endstop = ScanEndstop(self.mcu, scan_probe)
 
-        endstop = KlipperEndstop(self.mcu, scan_endstop)
+        endstop = KlipperEndstop(self.mcu, scan_probe)
         homing_chip = CartographerHomingChip(printer, endstop)
 
         printer.lookup_object("pins").register_chip("probe", homing_chip)
@@ -57,7 +55,7 @@ class PrinterCartographer:
         probe_macro = ProbeMacro(scan_probe)
         self._register_macro(probe_macro)
         self._register_macro(ProbeAccuracyMacro(scan_probe, toolhead))
-        query_probe_macro = QueryProbeMacro(scan_endstop, toolhead)
+        query_probe_macro = QueryProbeMacro(scan_probe, toolhead)
         self._register_macro(query_probe_macro)
         self._register_macro(ZOffsetApplyProbeMacro(toolhead))
 

@@ -4,30 +4,27 @@ import logging
 from typing import TYPE_CHECKING
 
 import pytest
+from typing_extensions import TypeAlias
 
-from cartographer.endstops.scan_endstop import ScanEndstop
 from cartographer.macros.probe import ProbeAccuracyMacro, ProbeMacro, QueryProbeMacro, ZOffsetApplyProbeMacro
-from cartographer.printer_interface import MacroParams, Position, Sample, Toolhead
+from cartographer.printer_interface import MacroParams, Position, Toolhead
 from cartographer.probes.scan_probe import ScanProbe
 
 if TYPE_CHECKING:
     from pytest import LogCaptureFixture
     from pytest_mock import MockerFixture
 
+Probe: TypeAlias = ScanProbe[object]
+
 
 @pytest.fixture
-def probe(mocker: MockerFixture) -> ScanProbe[Sample]:
+def probe(mocker: MockerFixture) -> Probe:
     return mocker.Mock(spec=ScanProbe, autospec=True)
 
 
 @pytest.fixture
 def toolhead(mocker: MockerFixture) -> Toolhead:
     return mocker.Mock(spec=Toolhead, autospec=True)
-
-
-@pytest.fixture
-def endstop(mocker: MockerFixture) -> ScanEndstop[object, Sample]:
-    return mocker.Mock(spec=ScanEndstop, autospec=True)
 
 
 @pytest.fixture
@@ -41,7 +38,7 @@ def params(mocker: MockerFixture):
 def test_probe_macro_output(
     mocker: MockerFixture,
     caplog: LogCaptureFixture,
-    probe: ScanProbe[Sample],
+    probe: Probe,
     params: MacroParams,
 ):
     macro = ProbeMacro(probe)
@@ -56,7 +53,7 @@ def test_probe_macro_output(
 def test_probe_accuracy_macro_output(
     mocker: MockerFixture,
     caplog: LogCaptureFixture,
-    probe: ScanProbe[Sample],
+    probe: Probe,
     toolhead: Toolhead,
     params: MacroParams,
 ):
@@ -90,7 +87,7 @@ def test_probe_accuracy_macro_output(
 def test_probe_accuracy_macro_sample_count(
     mocker: MockerFixture,
     caplog: LogCaptureFixture,
-    probe: ScanProbe[Sample],
+    probe: Probe,
     toolhead: Toolhead,
     params: MacroParams,
 ):
@@ -123,12 +120,12 @@ def test_probe_accuracy_macro_sample_count(
 
 def test_query_probe_macro_triggered_output(
     caplog: LogCaptureFixture,
-    endstop: ScanEndstop[object, Sample],
+    probe: Probe,
     toolhead: Toolhead,
     params: MacroParams,
 ):
-    macro = QueryProbeMacro(endstop, toolhead)
-    endstop.query_is_triggered = lambda print_time=...: True
+    macro = QueryProbeMacro(probe, toolhead)
+    probe.query_is_triggered = lambda print_time=...: True
 
     with caplog.at_level(logging.INFO):
         macro.run(params)
@@ -138,12 +135,12 @@ def test_query_probe_macro_triggered_output(
 
 def test_query_probe_macro_open_output(
     caplog: LogCaptureFixture,
-    endstop: ScanEndstop[object, Sample],
+    probe: Probe,
     toolhead: Toolhead,
     params: MacroParams,
 ):
-    macro = QueryProbeMacro(endstop, toolhead)
-    endstop.query_is_triggered = lambda print_time=...: False
+    macro = QueryProbeMacro(probe, toolhead)
+    probe.query_is_triggered = lambda print_time=...: False
 
     with caplog.at_level(logging.INFO):
         macro.run(params)

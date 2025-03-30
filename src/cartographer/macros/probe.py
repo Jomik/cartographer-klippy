@@ -9,8 +9,7 @@ from typing_extensions import override
 from cartographer.printer_interface import Macro, MacroParams
 
 if TYPE_CHECKING:
-    from cartographer.endstops.scan_endstop import ScanEndstop
-    from cartographer.printer_interface import C, S, Toolhead
+    from cartographer.printer_interface import C, Toolhead
     from cartographer.probes.scan_probe import ScanProbe
 
 logger = logging.getLogger(__name__)
@@ -22,7 +21,7 @@ class ProbeMacro(Macro):
     description = "Probe the bed to get the height offset at the current position."
     last_distance: float = 0
 
-    def __init__(self, scan_probe: ScanProbe[S]) -> None:
+    def __init__(self, scan_probe: ScanProbe[C]) -> None:
         self._scan_probe = scan_probe
 
     @override
@@ -39,7 +38,7 @@ class ProbeAccuracyMacro(Macro):
     name = "PROBE_ACCURACY"
     description = "Probe the bed multiple times to measure the accuracy of the probe."
 
-    def __init__(self, scan_probe: ScanProbe[S], toolhead: Toolhead) -> None:
+    def __init__(self, scan_probe: ScanProbe[C], toolhead: Toolhead) -> None:
         self._scan_probe = scan_probe
         self._toolhead = toolhead
 
@@ -91,14 +90,14 @@ class QueryProbeMacro(Macro):
     description = "Return the status of the z-probe"
     last_triggered: bool = False
 
-    def __init__(self, scan_endstop: ScanEndstop[C, S], toolhead: Toolhead) -> None:
-        self._scan_endstop = scan_endstop
+    def __init__(self, probe: ScanProbe[C], toolhead: Toolhead) -> None:
+        self._probe = probe
         self._toolhead = toolhead
 
     @override
     def run(self, params: MacroParams) -> None:
         time = self._toolhead.get_last_move_time()
-        triggered = self._scan_endstop.query_is_triggered(time)
+        triggered = self._probe.query_is_triggered(time)
         logger.info("probe: %s", "TRIGGERED" if triggered else "open")
         self.last_triggered = triggered
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Generic, final
+from typing import final
 
 from typing_extensions import override
 
@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 @final
-class TouchEndstop(Endstop[C], Generic[C, S]):
+class TouchProbe(Endstop[C]):
     """Implementation for Survey Touch."""
 
     def __init__(self, toolhead: Toolhead, mcu: Mcu[C, S], threshold: int) -> None:
