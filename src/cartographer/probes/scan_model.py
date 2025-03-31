@@ -49,6 +49,10 @@ class ScanModel:
     _poly: Polynomial | None = None
 
     @property
+    def z_offset(self) -> float:
+        return self.config.z_offset
+
+    @property
     def poly(self) -> Polynomial:
         if self._poly is None:
             self._poly = Polynomial(self.config.coefficients, self.config.domain)

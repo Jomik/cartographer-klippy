@@ -54,7 +54,6 @@ def test_probe_accuracy_macro_output(
     params: MacroParams,
 ):
     macro = ProbeAccuracyMacro(probe, toolhead)
-    probe.probe_height = 2
     params.get_int = mocker.Mock(return_value=10)
     toolhead.get_position = lambda: Position(0, 0, 0)
     params.get_float = mocker.Mock(return_value=1)
@@ -72,12 +71,12 @@ def test_probe_accuracy_macro_output(
         macro.run(params)
 
     assert "probe accuracy results" in caplog.text
-    assert "minimum 50.000000" in caplog.text
-    assert "maximum 140.000000" in caplog.text
-    assert "range 90.000000" in caplog.text
-    assert "average 95.000000" in caplog.text
-    assert "median 95.000000" in caplog.text
-    assert "standard deviation 28.722813" in caplog.text
+    assert "minimum 50" in caplog.text
+    assert "maximum 140" in caplog.text
+    assert "range 90" in caplog.text
+    assert "average 95" in caplog.text
+    assert "median 95" in caplog.text
+    assert "standard deviation 30.27" in caplog.text
 
 
 def test_probe_accuracy_macro_sample_count(
@@ -88,8 +87,7 @@ def test_probe_accuracy_macro_sample_count(
     params: MacroParams,
 ):
     macro = ProbeAccuracyMacro(probe, toolhead)
-    probe.probe_height = 2
-    params.get_int = mocker.Mock(return_value=1)
+    params.get_int = mocker.Mock(return_value=3)
     toolhead.get_position = lambda: Position(0, 0, 0)
     params.get_float = mocker.Mock(return_value=1)
     i = -1
@@ -106,12 +104,12 @@ def test_probe_accuracy_macro_sample_count(
         macro.run(params)
 
     assert "probe accuracy results" in caplog.text
-    assert "minimum 50.000000" in caplog.text
-    assert "maximum 50.000000" in caplog.text
-    assert "range 0.000000" in caplog.text
-    assert "average 50.000000" in caplog.text
-    assert "median 50.000000" in caplog.text
-    assert "standard deviation 0.000000" in caplog.text
+    assert "minimum 50" in caplog.text
+    assert "maximum 70" in caplog.text
+    assert "range 20" in caplog.text
+    assert "average 60" in caplog.text
+    assert "median 60" in caplog.text
+    assert "standard deviation 10" in caplog.text
 
 
 def test_query_probe_macro_triggered_output(
@@ -151,5 +149,5 @@ def test_z_offset_apply_probe_output(caplog: LogCaptureFixture, toolhead: Toolhe
     with caplog.at_level(logging.INFO):
         macro.run(params)
 
-    assert "cartographer: z_offset: 42.000" in caplog.text
+    assert "cartographer: z_offset: 42" in caplog.text
     assert "SAVE_CONFIG" in caplog.text

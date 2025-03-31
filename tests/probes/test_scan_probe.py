@@ -24,6 +24,11 @@ Probe: TypeAlias = ScanProbe[object]
 
 
 class MockModel(Model):
+    @property
+    @override
+    def z_offset(self) -> float:
+        return 0
+
     @override
     def distance_to_frequency(self, distance: float) -> float:
         return distance

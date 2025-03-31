@@ -118,7 +118,7 @@ class Macro(Protocol):
 
 
 class Probe(Protocol):
-    probe_height: float
-
+    @property
+    def z_offset(self) -> float: ...
     def probe(self, *, speed: float) -> float: ...
     def query_is_triggered(self, print_time: float) -> bool: ...

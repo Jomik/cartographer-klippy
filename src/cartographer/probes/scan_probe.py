@@ -13,6 +13,8 @@ if TYPE_CHECKING:
 
 
 class Model(Protocol):
+    @property
+    def z_offset(self) -> float: ...
     def distance_to_frequency(self, distance: float) -> float: ...
     def frequency_to_distance(self, frequency: float) -> float: ...
 
@@ -23,6 +25,12 @@ TRIGGER_DISTANCE = 2.0
 @final
 class ScanProbe(Endstop[C]):
     """Implementation for Scan mode."""
+
+    @property
+    def z_offset(self) -> float:
+        if self.model is None:
+            return 0.0
+        return self.model.z_offset
 
     def __init__(
         self,
