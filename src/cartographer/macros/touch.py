@@ -19,7 +19,7 @@ Probe = TouchProbe[object]
 
 
 @final
-class TouchMacro(Macro):
+class TouchMacro(Macro[MacroParams]):
     name = "TOUCH"
     description = "Touch the bed to get the height offset at the current position."
     last_distance: float = 0
@@ -37,7 +37,7 @@ class TouchMacro(Macro):
 
 
 @final
-class TouchAccuracyMacro(Macro):
+class TouchAccuracyMacro(Macro[MacroParams]):
     name = "TOUCH_ACCURACY"
     description = "Touch the bed multiple times to measure the accuracy of the probe."
 

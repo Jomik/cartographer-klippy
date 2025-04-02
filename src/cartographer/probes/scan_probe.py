@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Protocol, final
+from typing import TYPE_CHECKING, Generic, Protocol
 
 import numpy as np
 from typing_extensions import override
@@ -10,6 +10,7 @@ from cartographer.printer_interface import C, Endstop, HomingState, S
 
 if TYPE_CHECKING:
     from cartographer.printer_interface import Mcu, Toolhead
+    from cartographer.stream import Session
 
 
 class Model(Protocol):
@@ -22,8 +23,7 @@ class Model(Protocol):
 TRIGGER_DISTANCE = 2.0
 
 
-@final
-class ScanProbe(Endstop[C]):
+class ScanProbe(Endstop[C], Generic[C, S]):
     """Implementation for Scan mode."""
 
     @property
@@ -43,7 +43,7 @@ class ScanProbe(Endstop[C]):
         self._toolhead: Toolhead = toolhead
         self.model: Model | None = model
         self.probe_height: float = probe_height
-        self._mcu = mcu
+        self._mcu: Mcu[C, S] = mcu
 
     def probe(self, *, speed: float) -> float:
         if not self._toolhead.is_homed("z"):
@@ -101,3 +101,9 @@ class ScanProbe(Endstop[C]):
     @override
     def home_wait(self, home_end_time: float) -> float:
         return self._mcu.stop_homing(home_end_time)
+
+    def start_session(
+        self,
+    ) -> Session[S]:
+        time = self._toolhead.get_last_move_time()
+        return self._mcu.start_session(lambda sample: sample.time >= time)
