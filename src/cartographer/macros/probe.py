@@ -27,7 +27,7 @@ class ProbeMacro(Macro):
 
     @override
     def run(self, params: MacroParams) -> None:
-        speed = params.get_float("speed", 3.0, above=0)
+        speed = params.get_float("SPEED", 3.0, above=0)
 
         distance = self._scan_probe.probe(speed=speed)
         logger.info("Result is z=%.6f", distance)
@@ -45,8 +45,8 @@ class ProbeAccuracyMacro(Macro):
 
     @override
     def run(self, params: MacroParams) -> None:
-        speed = params.get_float("speed", 3.0, above=0)
-        sample_count = params.get_int("samples", 10, minval=1)
+        speed = params.get_float("SPEED", 3.0, above=0)
+        sample_count = params.get_int("SAMPLES", 10, minval=1)
         position = self._toolhead.get_position()
 
         probe_height = self._scan_probe.probe_height
