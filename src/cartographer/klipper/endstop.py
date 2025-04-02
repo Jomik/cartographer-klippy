@@ -38,7 +38,6 @@ class KlipperEndstop(MCU_endstop):
 
     @override
     def add_stepper(self, stepper: MCU_stepper) -> None:
-        logger.debug("Adding stepper %s to endstop", stepper.get_name())
         return self.mcu.dispatch.add_stepper(stepper)
 
     @override

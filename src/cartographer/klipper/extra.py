@@ -7,7 +7,7 @@ from cartographer.endstops import ScanEndstop
 from cartographer.klipper.configuration import KlipperCartographerConfiguration, KlipperProbeConfiguration
 from cartographer.klipper.endstop import KlipperEndstop
 from cartographer.klipper.homing import CartographerHomingChip
-from cartographer.klipper.logging import GCodeConsoleFormatter, GCodeConsoleHandler, apply_logging_config
+from cartographer.klipper.logging import setup_console_logger
 from cartographer.klipper.mcu import KlipperCartographerMcu
 from cartographer.klipper.printer import KlipperToolhead
 from cartographer.klipper.probe import KlipperCartographerProbe
@@ -28,9 +28,6 @@ def load_config(config: ConfigWrapper):
     pheaters = config.get_printer().load_object(config, "heaters")
     pheaters.add_sensor_factory("cartographer_coil", PrinterTemperatureCoil)
     return PrinterCartographer(config)
-
-
-apply_logging_config()
 
 
 @final
@@ -78,10 +75,7 @@ class PrinterCartographer:
         self.gcode.register_command(macro.name, macro.run, desc=macro.description)
 
     def _configure_macro_logger(self) -> None:
-        macro_logger = logging.getLogger("cartographer.macros")
-        macro_logger.setLevel(logging.DEBUG if self.config.verbose else logging.INFO)
+        handler = setup_console_logger(self.gcode)
 
-        handler = GCodeConsoleHandler(self.gcode)
-        handler.setFormatter(GCodeConsoleFormatter())
-
-        macro_logger.addHandler(handler)
+        log_level = logging.DEBUG if self.config.verbose else logging.INFO
+        handler.setLevel(log_level)

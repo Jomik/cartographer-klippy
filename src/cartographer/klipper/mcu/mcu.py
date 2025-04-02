@@ -104,7 +104,6 @@ class KlipperCartographerMcu(Mcu[ReactorCompletion, Sample], KlipperStreamMcu):
         self.dispatch.wait_end(home_end_time)
         self._commands.send_stop_home()
         result = self.dispatch.stop()
-        logger.debug("Stop homing result: %d", result)
         if result >= MCU_trsync.REASON_COMMS_TIMEOUT:
             msg = "communication timeout during homing"
             raise self.klipper_mcu.error(msg)
@@ -140,7 +139,6 @@ class KlipperCartographerMcu(Mcu[ReactorCompletion, Sample], KlipperStreamMcu):
         kin = self.printer.lookup_object("toolhead").get_kinematics()
         for stepper in kin.get_steppers():
             if stepper.is_active_axis("z"):
-                logger.debug("Adding stepper %s to dispatch", stepper.get_name())
                 self.dispatch.add_stepper(stepper)
 
     def _handle_connect(self) -> None:
