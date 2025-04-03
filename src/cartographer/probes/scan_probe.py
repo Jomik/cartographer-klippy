@@ -1,34 +1,49 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Generic, Protocol
+from typing import TYPE_CHECKING, Protocol, final
 
 import numpy as np
+from typing_extensions import override
 
-from cartographer.printer_interface import S
+from cartographer.printer_interface import C, Endstop, HomingState, S
 
 if TYPE_CHECKING:
     from cartographer.printer_interface import Mcu, Toolhead
 
 
 class Model(Protocol):
+    @property
+    def z_offset(self) -> float: ...
     def distance_to_frequency(self, distance: float) -> float: ...
     def frequency_to_distance(self, frequency: float) -> float: ...
 
 
-class ScanProbe(Generic[S]):
+TRIGGER_DISTANCE = 2.0
+
+
+@final
+class ScanProbe(Endstop[C]):
+    """Implementation for Scan mode."""
+
+    @property
+    def z_offset(self) -> float:
+        if self.model is None:
+            return 0.0
+        return self.model.z_offset
+
     def __init__(
         self,
-        mcu: Mcu[object, S],
+        mcu: Mcu[C, S],
         toolhead: Toolhead,
         *,
         model: Model | None = None,
-        probe_height: float = 2.0,
+        probe_height: float = TRIGGER_DISTANCE,
     ) -> None:
         self._toolhead: Toolhead = toolhead
         self.model: Model | None = model
         self.probe_height: float = probe_height
-        self._mcu: Mcu[object, S] = mcu
+        self._mcu = mcu
 
     def probe(self, *, speed: float) -> float:
         if not self._toolhead.is_homed("z"):
@@ -58,3 +73,31 @@ class ScanProbe(Generic[S]):
             msg = "toolhead stopped below model range"
             raise RuntimeError(msg)
         return dist
+
+    @override
+    def query_is_triggered(self, print_time: float = ...) -> bool:
+        distance = self.measure_distance(time=print_time)
+        return distance <= self.get_endstop_position()
+
+    @override
+    def get_endstop_position(self) -> float:
+        return self.probe_height
+
+    @override
+    def home_start(self, print_time: float) -> C:
+        trigger_frequency = self.distance_to_frequency(self.get_endstop_position())
+        return self._mcu.start_homing_scan(print_time, trigger_frequency)
+
+    @override
+    def on_home_end(self, homing_state: HomingState) -> None:
+        if self not in homing_state.endstops:
+            return
+        if not homing_state.is_homing_z():
+            return
+        distance = self.measure_distance()
+
+        homing_state.set_z_homed_position(distance)
+
+    @override
+    def home_wait(self, home_end_time: float) -> float:
+        return self._mcu.stop_homing(home_end_time)

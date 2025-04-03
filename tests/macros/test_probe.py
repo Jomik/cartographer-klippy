@@ -5,10 +5,8 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from cartographer.endstops.scan_endstop import ScanEndstop
 from cartographer.macros.probe import ProbeAccuracyMacro, ProbeMacro, QueryProbeMacro, ZOffsetApplyProbeMacro
-from cartographer.printer_interface import MacroParams, Position, Sample, Toolhead
-from cartographer.probes.scan_probe import ScanProbe
+from cartographer.printer_interface import MacroParams, Position, Probe, Toolhead
 
 if TYPE_CHECKING:
     from pytest import LogCaptureFixture
@@ -16,18 +14,13 @@ if TYPE_CHECKING:
 
 
 @pytest.fixture
-def probe(mocker: MockerFixture) -> ScanProbe[Sample]:
-    return mocker.Mock(spec=ScanProbe, autospec=True)
+def probe(mocker: MockerFixture) -> Probe:
+    return mocker.Mock(spec=Probe, autospec=True)
 
 
 @pytest.fixture
 def toolhead(mocker: MockerFixture) -> Toolhead:
     return mocker.Mock(spec=Toolhead, autospec=True)
-
-
-@pytest.fixture
-def endstop(mocker: MockerFixture) -> ScanEndstop[object, Sample]:
-    return mocker.Mock(spec=ScanEndstop, autospec=True)
 
 
 @pytest.fixture
@@ -41,7 +34,7 @@ def params(mocker: MockerFixture):
 def test_probe_macro_output(
     mocker: MockerFixture,
     caplog: LogCaptureFixture,
-    probe: ScanProbe[Sample],
+    probe: Probe,
     params: MacroParams,
 ):
     macro = ProbeMacro(probe)
@@ -56,12 +49,11 @@ def test_probe_macro_output(
 def test_probe_accuracy_macro_output(
     mocker: MockerFixture,
     caplog: LogCaptureFixture,
-    probe: ScanProbe[Sample],
+    probe: Probe,
     toolhead: Toolhead,
     params: MacroParams,
 ):
     macro = ProbeAccuracyMacro(probe, toolhead)
-    probe.probe_height = 2
     params.get_int = mocker.Mock(return_value=10)
     toolhead.get_position = lambda: Position(0, 0, 0)
     params.get_float = mocker.Mock(return_value=1)
@@ -79,24 +71,23 @@ def test_probe_accuracy_macro_output(
         macro.run(params)
 
     assert "probe accuracy results" in caplog.text
-    assert "minimum 50.000000" in caplog.text
-    assert "maximum 140.000000" in caplog.text
-    assert "range 90.000000" in caplog.text
-    assert "average 95.000000" in caplog.text
-    assert "median 95.000000" in caplog.text
-    assert "standard deviation 28.722813" in caplog.text
+    assert "minimum 50" in caplog.text
+    assert "maximum 140" in caplog.text
+    assert "range 90" in caplog.text
+    assert "average 95" in caplog.text
+    assert "median 95" in caplog.text
+    assert "standard deviation 30.27" in caplog.text
 
 
 def test_probe_accuracy_macro_sample_count(
     mocker: MockerFixture,
     caplog: LogCaptureFixture,
-    probe: ScanProbe[Sample],
+    probe: Probe,
     toolhead: Toolhead,
     params: MacroParams,
 ):
     macro = ProbeAccuracyMacro(probe, toolhead)
-    probe.probe_height = 2
-    params.get_int = mocker.Mock(return_value=1)
+    params.get_int = mocker.Mock(return_value=3)
     toolhead.get_position = lambda: Position(0, 0, 0)
     params.get_float = mocker.Mock(return_value=1)
     i = -1
@@ -113,22 +104,22 @@ def test_probe_accuracy_macro_sample_count(
         macro.run(params)
 
     assert "probe accuracy results" in caplog.text
-    assert "minimum 50.000000" in caplog.text
-    assert "maximum 50.000000" in caplog.text
-    assert "range 0.000000" in caplog.text
-    assert "average 50.000000" in caplog.text
-    assert "median 50.000000" in caplog.text
-    assert "standard deviation 0.000000" in caplog.text
+    assert "minimum 50" in caplog.text
+    assert "maximum 70" in caplog.text
+    assert "range 20" in caplog.text
+    assert "average 60" in caplog.text
+    assert "median 60" in caplog.text
+    assert "standard deviation 10" in caplog.text
 
 
 def test_query_probe_macro_triggered_output(
     caplog: LogCaptureFixture,
-    endstop: ScanEndstop[object, Sample],
+    probe: Probe,
     toolhead: Toolhead,
     params: MacroParams,
 ):
-    macro = QueryProbeMacro(endstop, toolhead)
-    endstop.query_is_triggered = lambda print_time=...: True
+    macro = QueryProbeMacro(probe, toolhead)
+    probe.query_is_triggered = lambda print_time=...: True
 
     with caplog.at_level(logging.INFO):
         macro.run(params)
@@ -138,12 +129,12 @@ def test_query_probe_macro_triggered_output(
 
 def test_query_probe_macro_open_output(
     caplog: LogCaptureFixture,
-    endstop: ScanEndstop[object, Sample],
+    probe: Probe,
     toolhead: Toolhead,
     params: MacroParams,
 ):
-    macro = QueryProbeMacro(endstop, toolhead)
-    endstop.query_is_triggered = lambda print_time=...: False
+    macro = QueryProbeMacro(probe, toolhead)
+    probe.query_is_triggered = lambda print_time=...: False
 
     with caplog.at_level(logging.INFO):
         macro.run(params)
@@ -158,5 +149,5 @@ def test_z_offset_apply_probe_output(caplog: LogCaptureFixture, toolhead: Toolhe
     with caplog.at_level(logging.INFO):
         macro.run(params)
 
-    assert "cartographer: z_offset: 42.000" in caplog.text
+    assert "cartographer: z_offset: 42" in caplog.text
     assert "SAVE_CONFIG" in caplog.text

@@ -6,8 +6,7 @@ import pins
 
 if TYPE_CHECKING:
     from klippy import Printer
-
-    from cartographer.klipper.endstop import KlipperEndstop
+    from mcu import MCU_endstop
 
 
 # https://github.com/Klipper3d/klipper/blob/75a10bfcafc0655e36e5ecf01c3f2033a14ef2c7/klippy/pins.py#L93-L94
@@ -19,10 +18,10 @@ class _PinParams(TypedDict):
 
 @final
 class CartographerHomingChip:
-    def __init__(self, printer: Printer, endstop: KlipperEndstop) -> None:
+    def __init__(self, printer: Printer, endstop: MCU_endstop) -> None:
         self.endstop = endstop
 
-    def setup_pin(self, pin_type: str, pin_params: _PinParams) -> KlipperEndstop:
+    def setup_pin(self, pin_type: str, pin_params: _PinParams) -> MCU_endstop:
         if pin_type != "endstop" or pin_params["pin"] != "z_virtual_endstop":
             msg = "Cartographer virtual endstop only useful as endstop pin"
             raise pins.error(msg)

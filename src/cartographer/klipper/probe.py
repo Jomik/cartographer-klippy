@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, TypedDict
+from typing import TYPE_CHECKING, Protocol, TypedDict
 
 from extras.probe import PrinterProbe
 from typing_extensions import override
@@ -8,7 +8,6 @@ from typing_extensions import override
 if TYPE_CHECKING:
     from gcode import GCodeCommand
 
-    from cartographer.klipper.configuration import KlipperProbeConfiguration
     from cartographer.macros.probe import ProbeMacro, QueryProbeMacro
     from cartographer.printer_interface import Probe
 
@@ -47,16 +46,21 @@ class KlipperProbeSession:
         pass
 
 
+class Configuration(Protocol):
+    x_offset: float
+    y_offset: float
+
+
 class KlipperCartographerProbe(PrinterProbe):
     def __init__(
         self,
         probe: Probe,
-        config: KlipperProbeConfiguration,
+        config: Configuration,
         probe_macro: ProbeMacro,
         query_probe_macro: QueryProbeMacro,
     ) -> None:
         self.probe: Probe = probe
-        self.config: KlipperProbeConfiguration = config
+        self.config: Configuration = config
         self.probe_macro: ProbeMacro = probe_macro
         self.query_probe_macro: QueryProbeMacro = query_probe_macro
 
@@ -71,7 +75,7 @@ class KlipperCartographerProbe(PrinterProbe):
 
     @override
     def get_offsets(self) -> tuple[float, float, float]:
-        return (self.config.x_offset, self.config.y_offset, self.config.z_offset)
+        return (self.config.x_offset, self.config.y_offset, self.probe.z_offset)
 
     @override
     def get_status(self, eventtime: float) -> ProbeStatus:

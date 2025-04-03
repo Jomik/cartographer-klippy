@@ -1,7 +1,7 @@
 # https://github.com/Klipper3d/klipper/blob/master/klippy/stepper.py
 from typing import Literal
 
-from mcu import MCU, MCU_endstop
+from mcu import MCU
 
 type _Pos = list[float]
 
@@ -13,4 +13,4 @@ class MCU_stepper:
 
 class PrinterRail:
     def get_steppers(self) -> list[MCU_stepper]: ...
-    def get_endstops(self) -> list[tuple[MCU_endstop, str]]: ...
+    def get_endstops(self) -> list[tuple[object, str]]: ...

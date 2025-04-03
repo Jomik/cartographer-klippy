@@ -6,18 +6,22 @@ from typing import TYPE_CHECKING, final
 import numpy as np
 from typing_extensions import override
 
-from cartographer.printer_interface import Macro, MacroParams, Probe
+from cartographer.printer_interface import Macro, MacroParams
+from cartographer.probes.touch_probe import TouchProbe
 
 if TYPE_CHECKING:
     from cartographer.printer_interface import Toolhead
 
+
 logger = logging.getLogger(__name__)
+
+Probe = TouchProbe[object]
 
 
 @final
-class ProbeMacro(Macro):
-    name = "PROBE"
-    description = "Probe the bed to get the height offset at the current position."
+class TouchMacro(Macro):
+    name = "TOUCH"
+    description = "Touch the bed to get the height offset at the current position."
     last_distance: float = 0
 
     def __init__(self, probe: Probe) -> None:
@@ -33,9 +37,9 @@ class ProbeMacro(Macro):
 
 
 @final
-class ProbeAccuracyMacro(Macro):
-    name = "PROBE_ACCURACY"
-    description = "Probe the bed multiple times to measure the accuracy of the probe."
+class TouchAccuracyMacro(Macro):
+    name = "TOUCH_ACCURACY"
+    description = "Touch the bed multiple times to measure the accuracy of the probe."
 
     def __init__(self, probe: Probe, toolhead: Toolhead) -> None:
         self._probe = probe
@@ -43,14 +47,14 @@ class ProbeAccuracyMacro(Macro):
 
     @override
     def run(self, params: MacroParams) -> None:
-        probe_speed = params.get_float("PROBE_SPEED", 3.0, above=0)
         lift_speed = params.get_float("LIFT_SPEED", 3.0, above=0)
         retract = params.get_float("SAMPLE_RETRACT_DIST", 1.0, minval=0)
         sample_count = params.get_int("SAMPLES", 10, minval=1)
         position = self._toolhead.get_position()
+        probe_speed = self._probe.config.speed
 
         logger.info(
-            "PROBE_ACCURACY at X:%.3f Y:%.3f Z:%.3f (samples=%d retract=%.3f speed=%.1f lift_speed=%.1f)",
+            "TOUCH_ACCURACY at X:%.3f Y:%.3f Z:%.3f (samples=%d retract=%.3f speed=%.1f lift_speed=%.1f)",
             position.x,
             position.y,
             position.z,
@@ -77,7 +81,7 @@ class ProbeAccuracyMacro(Macro):
         std_dev = np.std(measurements, ddof=1)
 
         logger.info(
-            """probe accuracy results: maximum %.6f, minimum %.6f, range %.6f, \
+            """touch accuracy results: maximum %.6f, minimum %.6f, range %.6f, \
             average %.6f, median %.6f, standard deviation %.6f""",
             max_value,
             min_value,
@@ -86,44 +90,3 @@ class ProbeAccuracyMacro(Macro):
             median,
             std_dev,
         )
-
-
-@final
-class QueryProbeMacro(Macro):
-    name = "QUERY_PROBE"
-    description = "Return the status of the z-probe"
-    last_triggered: bool = False
-
-    def __init__(self, probe: Probe, toolhead: Toolhead) -> None:
-        self._probe = probe
-        self._toolhead = toolhead
-
-    @override
-    def run(self, params: MacroParams) -> None:
-        time = self._toolhead.get_last_move_time()
-        triggered = self._probe.query_is_triggered(time)
-        logger.info("probe: %s", "TRIGGERED" if triggered else "open")
-        self.last_triggered = triggered
-
-
-@final
-class ZOffsetApplyProbeMacro(Macro):
-    name = "Z_OFFSET_APPLY_PROBE"
-    description = "Adjust the probe's z_offset"
-
-    def __init__(self, toolhead: Toolhead) -> None:
-        self._toolhead = toolhead
-
-    @override
-    def run(self, params: MacroParams) -> None:
-        offset = self._toolhead.get_gcode_z_offset()
-        # TODO: Get current offset from config
-        current_offset = 0
-        new_offset = current_offset - offset
-        logger.info(
-            """cartographer: z_offset: %.3f
-            The SAVE_CONFIG command will update the printer config file
-            with the above and restart the printer.""",
-            new_offset,
-        )
-        # TODO: Save to config
