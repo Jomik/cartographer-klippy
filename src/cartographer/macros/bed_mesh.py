@@ -61,6 +61,7 @@ class BedMeshCalibrateMacro(Macro[P]):
         if method != "scan" and method != "rapid_scan":
             return self.helper.orig_macro(params)
 
+        runs = params.get_int("RUNS", default=1, minval=1)
         speed = params.get_float("SPEED", default=self.config.speed, minval=1)
         scan_height = params.get_float("HEIGHT", default=self.config.scan_height, minval=1)
         if self.probe.model is None:
@@ -75,9 +76,13 @@ class BedMeshCalibrateMacro(Macro[P]):
 
         with self.probe.start_session() as session:
             session.wait_for(lambda samples: len(samples) >= 5)
-            for point in path:
-                self._move_to_point(point, speed)
-            self.toolhead.wait_moves()
+            for i in range(runs):
+                is_odd = i & 1  # Bitwise check for odd numbers
+                # Every other run should be going in reverse
+                path_iter = reversed(path) if is_odd else path
+                for point in path_iter:
+                    self._move_to_point(point, speed)
+                self.toolhead.wait_moves()
             time = self.toolhead.get_last_move_time() + 0.5
             session.wait_for(lambda samples: samples[-1].time >= time)
 

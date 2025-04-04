@@ -113,6 +113,34 @@ def test_applies_offsets(
     ] in move_spy.mock_calls
 
 
+def test_multiple_runs(
+    mocker: MockerFixture,
+    macro: Macro,
+    toolhead: Toolhead,
+    helper: Helper,
+):
+    helper.generate_path = mocker.Mock(return_value=[MeshPoint(10, 10, False), MeshPoint(20, 20, False)])
+    params = mocker.MagicMock()
+    params.get = mocker.Mock(return_value="scan")
+    params.get_int = mocker.Mock(return_value=3)
+    params.get_float = mocker.Mock(return_value=42.0)
+    move_spy = mocker.spy(toolhead, "manual_move")
+
+    macro.run(params)
+
+    assert [
+        # first
+        mocker.call(x=10, y=10, speed=42.0),
+        mocker.call(x=20, y=20, speed=42.0),
+        # second
+        mocker.call(x=20, y=20, speed=42.0),
+        mocker.call(x=10, y=10, speed=42.0),
+        # third
+        mocker.call(x=10, y=10, speed=42.0),
+        mocker.call(x=20, y=20, speed=42.0),
+    ] in move_spy.mock_calls
+
+
 def test_run_invalid_method(mocker: MockerFixture, macro: Macro, helper: Helper):
     params = mocker.MagicMock()
     params.get = mocker.Mock(return_value="invalid")
