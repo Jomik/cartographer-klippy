@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Callable, final
 
+from cartographer.klipper.bed_mesh import KlipperMeshConfiguration, KlipperMeshHelper
 from cartographer.klipper.configuration import KlipperCartographerConfiguration
 from cartographer.klipper.endstop import KlipperEndstop
 from cartographer.klipper.homing import CartographerHomingChip
@@ -12,6 +13,7 @@ from cartographer.klipper.printer import KlipperToolhead
 from cartographer.klipper.probe import KlipperCartographerProbe
 from cartographer.klipper.temperature import PrinterTemperatureCoil
 from cartographer.macros import ProbeAccuracyMacro, ProbeMacro, QueryProbeMacro, ZOffsetApplyProbeMacro
+from cartographer.macros.bed_mesh import BedMeshCalibrateMacro
 from cartographer.macros.touch import TouchAccuracyMacro, TouchMacro
 from cartographer.probes import ScanModel, ScanProbe, TouchProbe
 
@@ -68,6 +70,12 @@ class PrinterCartographer:
         self._register_macro(TouchMacro(touch_probe))
         self._register_macro(TouchAccuracyMacro(touch_probe, toolhead))
 
+        self._register_macro(
+            BedMeshCalibrateMacro(
+                scan_probe, toolhead, KlipperMeshHelper(config, self.gcode), KlipperMeshConfiguration(config)
+            )
+        )
+
         printer.add_object(
             "probe",
             KlipperCartographerProbe(
@@ -78,7 +86,7 @@ class PrinterCartographer:
             ),
         )
 
-    def _register_macro(self, macro: Macro) -> None:
+    def _register_macro(self, macro: Macro[GCodeCommand]) -> None:
         self.gcode.register_command(macro.name, catch_macro_errors(macro.run), desc=macro.description)
 
     def _configure_macro_logger(self) -> None:

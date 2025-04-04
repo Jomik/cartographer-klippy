@@ -110,11 +110,14 @@ class MacroParams(Protocol):
     def get_int(self, name: str, default: int = ..., *, minval: int = ...) -> int: ...
 
 
-class Macro(Protocol):
+P = TypeVar("P", bound=MacroParams, contravariant=True)
+
+
+class Macro(Generic[P], Protocol):
     name: str
     description: str
 
-    def run(self, params: MacroParams) -> None: ...
+    def run(self, params: P) -> None: ...
 
 
 class Probe(Protocol):

@@ -20,7 +20,7 @@ class Sample:
     frequency: float
 
 
-Probe: TypeAlias = ScanProbe[object]
+Probe: TypeAlias = ScanProbe[object, Sample]
 
 
 class MockModel(Model):

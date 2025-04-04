@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 
 @final
-class ProbeMacro(Macro):
+class ProbeMacro(Macro[MacroParams]):
     name = "PROBE"
     description = "Probe the bed to get the height offset at the current position."
     last_distance: float = 0
@@ -33,7 +33,7 @@ class ProbeMacro(Macro):
 
 
 @final
-class ProbeAccuracyMacro(Macro):
+class ProbeAccuracyMacro(Macro[MacroParams]):
     name = "PROBE_ACCURACY"
     description = "Probe the bed multiple times to measure the accuracy of the probe."
 
@@ -89,7 +89,7 @@ class ProbeAccuracyMacro(Macro):
 
 
 @final
-class QueryProbeMacro(Macro):
+class QueryProbeMacro(Macro[MacroParams]):
     name = "QUERY_PROBE"
     description = "Return the status of the z-probe"
     last_triggered: bool = False
@@ -107,7 +107,7 @@ class QueryProbeMacro(Macro):
 
 
 @final
-class ZOffsetApplyProbeMacro(Macro):
+class ZOffsetApplyProbeMacro(Macro[MacroParams]):
     name = "Z_OFFSET_APPLY_PROBE"
     description = "Adjust the probe's z_offset"
 
