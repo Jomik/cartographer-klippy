@@ -7,6 +7,7 @@ from numpy.polynomial import Polynomial
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
+    from cartographer.configuration import ScanModelConfiguration
     from cartographer.printer_interface import Toolhead
 
 
@@ -27,25 +28,9 @@ class Domain(NamedTuple):
     upper: float
 
 
-class Configuration(Protocol):
-    @property
-    def name(self) -> str: ...
-
-    @property
-    def coefficients(self) -> list[float]: ...
-
-    @property
-    def domain(self) -> Domain: ...
-
-    @property
-    def z_offset(self) -> float: ...
-
-    def save_z_offset(self, offset: float) -> None: ...
-
-
 # TODO: Temperature compensation
 class ScanModel:
-    config: Configuration
+    config: ScanModelConfiguration
     _poly: Polynomial | None = None
 
     @property
@@ -58,7 +43,7 @@ class ScanModel:
             self._poly = Polynomial(self.config.coefficients, self.config.domain)
         return self._poly
 
-    def __init__(self, config: Configuration) -> None:
+    def __init__(self, config: ScanModelConfiguration) -> None:
         self.config = config
 
     @staticmethod

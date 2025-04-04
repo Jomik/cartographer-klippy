@@ -8,10 +8,12 @@ import pytest
 from numpy.polynomial import Polynomial
 
 from cartographer.printer_interface import Position, Toolhead
-from cartographer.probes.scan_model import Configuration, Domain, Sample, ScanModel
+from cartographer.probes.scan_model import Sample, ScanModel
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
+
+    from cartographer.configuration import ScanModelConfiguration
 
 
 @dataclass
@@ -35,15 +37,12 @@ def toolhead(mocker: MockerFixture) -> Toolhead:
 class MockConfiguration:
     name: str = "default"
     coefficients: list[float] = [1 / 3.0] * 9
-    domain: Domain = Domain(1, 3)
+    domain: tuple[float, float] = (1, 3)
     z_offset: float = 0
-
-    def save_z_offset(self, offset: float) -> None:
-        self.z_offset = offset
 
 
 @pytest.fixture
-def config() -> Configuration:
+def config() -> ScanModelConfiguration:
     return MockConfiguration()
 
 
@@ -69,11 +68,11 @@ def test_fit(toolhead: Toolhead) -> None:
     assert poly(10) == pytest.approx(10.0)  # pyright: ignore[reportUnknownMemberType]
 
 
-def test_from_config(config: Configuration) -> None:
+def test_from_config(config: ScanModelConfiguration) -> None:
     model = ScanModel(config)
     assert isinstance(model, ScanModel)
-    assert model.poly.domain[0] == config.domain.lower  # pyright: ignore[reportAny]
-    assert model.poly.domain[1] == config.domain.upper  # pyright: ignore[reportAny]
+    assert model.poly.domain[0] == config.domain[0]  # pyright: ignore[reportAny]
+    assert model.poly.domain[1] == config.domain[1]  # pyright: ignore[reportAny]
 
 
 def test_frequency_to_distance(model: ScanModel) -> None:
@@ -95,8 +94,8 @@ def test_distance_to_frequency_out_of_range(model: ScanModel) -> None:
         _ = model.distance_to_frequency(11)  # Out of z_range
 
 
-def test_frequency_to_distance_applies_offset(model: ScanModel, config: Configuration) -> None:
-    config.save_z_offset(0.5)
+def test_frequency_to_distance_applies_offset(model: ScanModel, config: ScanModelConfiguration) -> None:
+    config.z_offset = 0.5
     frequency = 1 / 3.0
 
     distance = model.frequency_to_distance(frequency)
@@ -104,8 +103,8 @@ def test_frequency_to_distance_applies_offset(model: ScanModel, config: Configur
     assert distance == 2.5
 
 
-def test_distance_to_frequency_applies_offset(model: ScanModel, config: Configuration) -> None:
-    config.save_z_offset(0.5)
+def test_distance_to_frequency_applies_offset(model: ScanModel, config: ScanModelConfiguration) -> None:
+    config.z_offset = 0.5
     distance = 2.5
 
     frequency = model.distance_to_frequency(distance)

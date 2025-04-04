@@ -7,7 +7,7 @@ import pytest
 from typing_extensions import TypeAlias, override
 
 from cartographer.printer_interface import HomingState, Mcu, Toolhead
-from cartographer.probes.scan_probe import Model, ScanProbe
+from cartographer.probes.scan_probe import Configuration, Model, ScanProbe
 from cartographer.stream import Session
 
 if TYPE_CHECKING:
@@ -38,6 +38,15 @@ class MockModel(Model):
         return frequency
 
 
+class MockConfiguration(Configuration):
+    x_offset: float = 0.0
+    y_offset: float = 0.0
+    move_speed: float = 42.0
+
+    scan_samples: float = 10
+    scan_mesh_runs: int = 1
+
+
 @pytest.fixture
 def toolhead(mocker: MockerFixture) -> Toolhead:
     return mocker.Mock(spec=Toolhead, autospec=True)
@@ -56,6 +65,11 @@ def mcu(mocker: MockerFixture, session: Session[Sample]) -> Mcu[object, Sample]:
 
 
 @pytest.fixture
+def config() -> MockConfiguration:
+    return MockConfiguration()
+
+
+@pytest.fixture
 def model() -> Model:
     return MockModel()
 
@@ -68,8 +82,8 @@ def homing_state(mocker: MockerFixture, probe: Probe) -> HomingState:
 
 
 @pytest.fixture
-def probe(mcu: Mcu[object, Sample], toolhead: Toolhead, model: Model) -> Probe:
-    return ScanProbe(mcu, toolhead, model=model)
+def probe(mcu: Mcu[object, Sample], toolhead: Toolhead, config: Configuration, model: Model) -> Probe:
+    return ScanProbe(mcu, toolhead, config, model=model)
 
 
 def test_measures_distance(probe: Probe, session: Session[Sample]):
@@ -100,13 +114,13 @@ def test_probe_errors_when_not_homed(probe: Probe, toolhead: Toolhead):
     toolhead.is_homed = lambda axis: False
 
     with pytest.raises(RuntimeError):
-        _ = probe.probe(speed=1.0)
+        _ = probe.probe()
 
 
 def test_probe_returns_distance(probe: Probe, session: Session[Sample]):
     session.get_items = lambda: [Sample(time=0.0, frequency=42) for _ in range(11)]
 
-    distance = probe.probe(speed=1.0)
+    distance = probe.probe()
 
     assert distance == 42
 
@@ -116,7 +130,7 @@ def test_probe_errors_outside_range(probe: Probe, session: Session[Sample], mode
     model.frequency_to_distance = lambda frequency: float("inf")
 
     with pytest.raises(RuntimeError):
-        _ = probe.probe(speed=1.0)
+        _ = probe.probe()
 
 
 def test_do_nothing_when_not_homing(mocker: MockerFixture, probe: Probe, homing_state: HomingState):

@@ -47,11 +47,11 @@ class PrinterCartographer:
         self.mcu = KlipperCartographerMcu(config)
         toolhead = KlipperToolhead(config, self.mcu)
 
-        scan_probe = ScanProbe(self.mcu, toolhead, model=model)
+        scan_probe = ScanProbe(self.mcu, toolhead, self.config, model=model)
         scan_endstop = KlipperEndstop(self.mcu, scan_probe)
 
         touch_config = self.config.touch_models["default"]
-        touch_probe = TouchProbe(self.mcu, toolhead, touch_config)
+        touch_probe = TouchProbe(self.mcu, toolhead, self.config, model=touch_config)
 
         homing_chip = CartographerHomingChip(printer, scan_endstop)
 
@@ -72,7 +72,10 @@ class PrinterCartographer:
 
         self._register_macro(
             BedMeshCalibrateMacro(
-                scan_probe, toolhead, KlipperMeshHelper(config, self.gcode), KlipperMeshConfiguration(config)
+                scan_probe,
+                toolhead,
+                KlipperMeshHelper(config, self.gcode),
+                KlipperMeshConfiguration.from_config(config, self.config),
             )
         )
 
@@ -80,7 +83,6 @@ class PrinterCartographer:
             "probe",
             KlipperCartographerProbe(
                 scan_probe,
-                self.config,
                 probe_macro,
                 query_probe_macro,
             ),
