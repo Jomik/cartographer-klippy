@@ -18,8 +18,8 @@ class PrinterTemperatureCoil:
     def __init__(self, config: ConfigWrapper):
         self.printer = config.get_printer()
         self.name = config.get_name()
-        self.min_temp = 0.0
-        self.max_temp = 0.0
+        self.min_temp = float("-inf")
+        self.max_temp = float("inf")
         self.temperature_callback = None
         self.printer.register_event_handler("klippy:mcu_identify", self._handle_mcu_identify)
 

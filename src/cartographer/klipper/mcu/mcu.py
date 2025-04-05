@@ -48,6 +48,23 @@ class Sample(CartographerSample):
 
 @final
 class KlipperCartographerMcu(Mcu[ReactorCompletion, Sample], KlipperStreamMcu):
+    _constants: KlipperCartographerConstants | None = None
+    _commands: KlipperCartographerCommands | None = None
+
+    @property
+    def constants(self) -> KlipperCartographerConstants:
+        if self._constants is None:
+            msg = "mcu not initialized"
+            raise RuntimeError(msg)
+        return self._constants
+
+    @property
+    def commands(self) -> KlipperCartographerCommands:
+        if self._commands is None:
+            msg = "mcu not initialized"
+            raise RuntimeError(msg)
+        return self._commands
+
     def __init__(
         self,
         config: ConfigWrapper,
@@ -55,17 +72,17 @@ class KlipperCartographerMcu(Mcu[ReactorCompletion, Sample], KlipperStreamMcu):
     ):
         self.printer = config.get_printer()
         self.klipper_mcu = mcu.get_printer_mcu(self.printer, config.get("mcu"))
-        self._constants = KlipperCartographerConstants(self.klipper_mcu)
-        self._commands = KlipperCartographerCommands(self.klipper_mcu)
         self._stream = KlipperStream[Sample](self, self.klipper_mcu.get_printer().get_reactor(), smoothing_fn)
-
         self.dispatch = KlipperTriggerDispatch(self.klipper_mcu)
-
-        self._command_queue = self.klipper_mcu.alloc_command_queue()
 
         self.printer.register_event_handler("klippy:mcu_identify", self._handle_mcu_identify)
         self.printer.register_event_handler("klippy:connect", self._handle_connect)
         self.printer.register_event_handler("klippy:shutdown", self._handle_shutdown)
+        self.klipper_mcu.register_config_callback(self._initialize)
+
+    def _initialize(self) -> None:
+        self._constants = KlipperCartographerConstants(self.klipper_mcu)
+        self._commands = KlipperCartographerCommands(self.klipper_mcu)
         self.klipper_mcu.register_response(self._handle_data, "cartographer_data")
 
     @override
@@ -73,7 +90,7 @@ class KlipperCartographerMcu(Mcu[ReactorCompletion, Sample], KlipperStreamMcu):
         self._set_threshold(frequency)
         completion = self.dispatch.start(print_time)
 
-        self._commands.send_home(
+        self.commands.send_home(
             HomeCommand(
                 trsync_oid=self.dispatch.get_oid(),
                 trigger_reason=MCU_trsync.REASON_ENDSTOP_HIT,
@@ -88,7 +105,7 @@ class KlipperCartographerMcu(Mcu[ReactorCompletion, Sample], KlipperStreamMcu):
     def start_homing_touch(self, print_time: float, threshold: int) -> ReactorCompletion:
         completion = self.dispatch.start(print_time)
 
-        self._commands.send_home(
+        self.commands.send_home(
             HomeCommand(
                 trsync_oid=self.dispatch.get_oid(),
                 trigger_reason=MCU_trsync.REASON_ENDSTOP_HIT,
@@ -102,7 +119,7 @@ class KlipperCartographerMcu(Mcu[ReactorCompletion, Sample], KlipperStreamMcu):
     @override
     def stop_homing(self, home_end_time: float) -> float:
         self.dispatch.wait_end(home_end_time)
-        self._commands.send_stop_home()
+        self.commands.send_stop_home()
         result = self.dispatch.stop()
         if result >= MCU_trsync.REASON_COMMS_TIMEOUT:
             msg = "communication timeout during homing"
@@ -123,17 +140,17 @@ class KlipperCartographerMcu(Mcu[ReactorCompletion, Sample], KlipperStreamMcu):
 
     @override
     def start_streaming(self) -> None:
-        self._commands.send_stream_state(enable=True)
+        self.commands.send_stream_state(enable=True)
 
     @override
     def stop_streaming(self) -> None:
-        self._commands.send_stream_state(enable=False)
+        self.commands.send_stream_state(enable=False)
 
     def _set_threshold(self, trigger_frequency: float) -> None:
-        trigger = self._constants.frequency_to_count(trigger_frequency)
-        untrigger = self._constants.frequency_to_count(trigger_frequency * (1 - TRIGGER_HYSTERESIS))
+        trigger = self.constants.frequency_to_count(trigger_frequency)
+        untrigger = self.constants.frequency_to_count(trigger_frequency * (1 - TRIGGER_HYSTERESIS))
 
-        self._commands.send_threshold(ThresholdCommand(trigger, untrigger))
+        self.commands.send_threshold(ThresholdCommand(trigger, untrigger))
 
     def _handle_mcu_identify(self) -> None:
         kin = self.printer.lookup_object("toolhead").get_kinematics()
@@ -153,9 +170,9 @@ class KlipperCartographerMcu(Mcu[ReactorCompletion, Sample], KlipperStreamMcu):
         time = self.klipper_mcu.clock_to_print_time(clock)
 
         # TODO: Apply smoothing
-        frequency = self._constants.count_to_frequency(data["data"])
+        frequency = self.constants.count_to_frequency(data["data"])
 
-        temperature = self._constants.calculate_temperature(data["temp"])
+        temperature = self.constants.calculate_temperature(data["temp"])
 
         sample = Sample(time=time, frequency=frequency, temperature=temperature)
         self._stream.add_item(sample)
@@ -167,7 +184,7 @@ class KlipperCartographerMcu(Mcu[ReactorCompletion, Sample], KlipperStreamMcu):
         error: str | None = None
         if count == SHORTED_FREQUENCY_VALUE:
             error = "Coil is shorted or not connected."
-        elif count > self._constants.minimum_count * FREQUENCY_RANGE_PERCENT:
+        elif count > self.constants.minimum_count * FREQUENCY_RANGE_PERCENT:
             error = "Coil frequency reading exceeded max expected value, received %(data)d"
 
         if self._data_error == error:
