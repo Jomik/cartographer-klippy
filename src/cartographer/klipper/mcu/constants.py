@@ -79,7 +79,7 @@ class KlipperCartographerConstants:
             return clock_frequency / 2
         return clock_frequency / 6
 
-    def count_to_frequency(self, count: int):
+    def count_to_frequency(self, count: int) -> float:
         return count * self._sensor_frequency / (2**28)
 
     def frequency_to_count(self, frequency: float) -> int:
