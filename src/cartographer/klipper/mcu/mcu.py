@@ -169,9 +169,7 @@ class KlipperCartographerMcu(Mcu[ReactorCompletion, Sample], KlipperStreamMcu):
         clock = self.klipper_mcu.clock32_to_clock64(data["clock"])
         time = self.klipper_mcu.clock_to_print_time(clock)
 
-        # TODO: Apply smoothing
         frequency = self.constants.count_to_frequency(data["data"])
-
         temperature = self.constants.calculate_temperature(data["temp"])
 
         sample = Sample(time=time, frequency=frequency, temperature=temperature)

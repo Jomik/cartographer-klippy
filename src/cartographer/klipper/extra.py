@@ -9,9 +9,11 @@ from cartographer.klipper.endstop import KlipperEndstop
 from cartographer.klipper.homing import CartographerHomingChip
 from cartographer.klipper.logging import setup_console_logger
 from cartographer.klipper.mcu import KlipperCartographerMcu
+from cartographer.klipper.mcu.mcu import Sample
 from cartographer.klipper.printer import KlipperToolhead
 from cartographer.klipper.probe import KlipperCartographerProbe
 from cartographer.klipper.temperature import PrinterTemperatureCoil
+from cartographer.lib.alpha_beta_filter import AlphaBetaFilter
 from cartographer.macros import ProbeAccuracyMacro, ProbeMacro, QueryProbeMacro, ZOffsetApplyProbeMacro
 from cartographer.macros.bed_mesh import BedMeshCalibrateMacro
 from cartographer.macros.touch import TouchAccuracyMacro, TouchMacro
@@ -32,6 +34,17 @@ def load_config(config: ConfigWrapper):
     return PrinterCartographer(config)
 
 
+def smooth_with(filter: AlphaBetaFilter) -> Callable[[Sample], Sample]:
+    def fn(sample: Sample) -> Sample:
+        return Sample(
+            sample.time,
+            filter.update(measurement=sample.frequency, time=sample.time),
+            sample.temperature,
+        )
+
+    return fn
+
+
 @final
 class PrinterCartographer:
     config: KlipperCartographerConfiguration
@@ -41,12 +54,13 @@ class PrinterCartographer:
         logger.debug("Initializing Cartographer")
         self.config = KlipperCartographerConfiguration(config)
 
-        scan_config = self.config.scan_models["default"]
-        model = ScanModel(scan_config)
+        filter = AlphaBetaFilter()
+        self.mcu = KlipperCartographerMcu(config, smooth_with(filter))
 
-        self.mcu = KlipperCartographerMcu(config)
         toolhead = KlipperToolhead(config, self.mcu)
 
+        scan_config = self.config.scan_models["default"]
+        model = ScanModel(scan_config)
         scan_probe = ScanProbe(self.mcu, toolhead, self.config, model=model)
         scan_endstop = KlipperEndstop(self.mcu, scan_probe)
 
