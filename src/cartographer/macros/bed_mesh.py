@@ -18,10 +18,9 @@ logger = logging.getLogger(__name__)
 
 
 class Configuration(Protocol):
-    x_offset: float
-    y_offset: float
     speed: float
     scan_height: float
+    runs: int
 
 
 @dataclass
@@ -61,11 +60,11 @@ class BedMeshCalibrateMacro(Macro[P]):
         if method != "scan" and method != "rapid_scan":
             return self.helper.orig_macro(params)
 
-        runs = params.get_int("RUNS", default=1, minval=1)
+        runs = params.get_int("RUNS", default=self.config.runs, minval=1)
         speed = params.get_float("SPEED", default=self.config.speed, minval=1)
         scan_height = params.get_float("HEIGHT", default=self.config.scan_height, minval=1)
         if self.probe.model is None:
-            msg = "Cannot run bed mesh without a model"
+            msg = "cannot run bed mesh without a model"
             raise RuntimeError(msg)
 
         self.helper.prepare(params)
@@ -89,22 +88,24 @@ class BedMeshCalibrateMacro(Macro[P]):
         samples = session.get_items()
         positions = self._calculate_positions(self.probe.model, path, samples)
 
-        self.helper.finalize(Position(x=self.config.x_offset, y=self.config.y_offset, z=self.probe.z_offset), positions)
+        self.helper.finalize(self.probe.offset, positions)
 
     def _move_to_point(self, point: MeshPoint, speed: float) -> None:
-        self.toolhead.manual_move(x=point.x - self.config.x_offset, y=point.y - self.config.y_offset, speed=speed)
+        offset = self.probe.offset
+        self.toolhead.manual_move(x=point.x - offset.x, y=point.y - offset.y, speed=speed)
 
     def _key(self, point: MeshPoint) -> tuple[float, float]:
         return round(point.x, 2), round(point.y, 2)
 
     def _calculate_positions(self, model: Model, path: list[MeshPoint], samples: list[S]) -> list[Position]:
+        offset = self.probe.offset
         searcher = NearestNeighborSearcher(path)
 
         clusters: dict[tuple[float, float], list[S]] = {self._key(point): [] for point in path if point.include}
 
         for s in samples:
             position = self.toolhead.get_requested_position(s.time)
-            point = searcher.query(Position(position.x + self.config.x_offset, position.y + self.config.y_offset, 0))
+            point = searcher.query(Position(position.x + offset.x, position.y + offset.y, 0))
             if not point.include:
                 continue
             clusters[self._key(point)].append(s)

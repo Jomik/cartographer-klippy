@@ -1,11 +1,7 @@
 from __future__ import annotations
 
 from enum import Enum
-from typing import TYPE_CHECKING, Protocol
-
-if TYPE_CHECKING:
-    from cartographer.probes.scan_model import Configuration as ScanModelConfiguration
-    from cartographer.probes.touch_probe import Configuration as TouchModelConfiguration
+from typing import Protocol
 
 
 class ProbeMode(Enum):
@@ -13,11 +9,38 @@ class ProbeMode(Enum):
     TOUCH = "touch"
 
 
-class CartographerConfiguration(Protocol):
+class Configuration(Protocol):
+    # [cartographer]
     x_offset: float
     y_offset: float
     backlash_compensation: float
+    move_speed: float
     verbose: bool
 
+    # [cartographer scan]
+    scan_samples: int
+    scan_mesh_runs: int
+
+    # [cartographer touch]
+    touch_samples: int
+    touch_retries: int
+
+    # [cartographer scan_model default]
     scan_models: dict[str, ScanModelConfiguration]
+
+    # [cartographer touch_model default]
     touch_models: dict[str, TouchModelConfiguration]
+
+
+class ScanModelConfiguration(Protocol):
+    name: str
+    coefficients: list[float]
+    domain: tuple[float, float]
+    z_offset: float
+
+
+class TouchModelConfiguration(Protocol):
+    name: str
+    threshold: int
+    speed: float
+    z_offset: float

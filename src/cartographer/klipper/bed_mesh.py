@@ -11,22 +11,28 @@ from cartographer.macros.bed_mesh import Configuration, MeshHelper, MeshPoint
 if TYPE_CHECKING:
     from configfile import ConfigWrapper
 
+    from cartographer.configuration import (
+        Configuration as CartographerConfiguration,
+    )
     from cartographer.printer_interface import Position
 
 
 class KlipperMeshConfiguration(Configuration):
-    x_offset: float
-    y_offset: float
-    speed: float
-    scan_height: float
+    def __init__(self, *, speed: float, scan_height: float, runs: int) -> None:
+        self.speed: float = speed
+        self.scan_height: float = scan_height
+        self.runs: int = runs
 
-    def __init__(self, config: ConfigWrapper) -> None:
-        self.x_offset = config.getfloat("x_offset")
-        self.y_offset = config.getfloat("y_offset")
-
+    @staticmethod
+    def from_config(config: ConfigWrapper, cartographer_config: CartographerConfiguration) -> KlipperMeshConfiguration:
         mesh_config = config.getsection("bed_mesh")
-        self.speed = mesh_config.getfloat("speed", default=50, above=0)
-        self.scan_height = mesh_config.getfloat("horizontal_move_z", default=5, above=0)
+        speed = mesh_config.getfloat("speed", default=50, above=0)
+        scan_height = mesh_config.getfloat("horizontal_move_z", default=4, above=0)
+        return KlipperMeshConfiguration(
+            speed=speed,
+            scan_height=scan_height,
+            runs=cartographer_config.scan_mesh_runs,
+        )
 
 
 @final

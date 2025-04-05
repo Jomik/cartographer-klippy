@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Generic, Protocol
 import numpy as np
 from typing_extensions import override
 
-from cartographer.printer_interface import C, Endstop, HomingState, S
+from cartographer.printer_interface import C, Endstop, HomingState, Position, Probe, S
 
 if TYPE_CHECKING:
     from cartographer.printer_interface import Mcu, Toolhead
@@ -23,33 +23,48 @@ class Model(Protocol):
 TRIGGER_DISTANCE = 2.0
 
 
-class ScanProbe(Endstop[C], Generic[C, S]):
+class Configuration(Protocol):
+    x_offset: float
+    y_offset: float
+    move_speed: float
+
+
+class ScanProbe(Probe, Endstop[C], Generic[C, S]):
     """Implementation for Scan mode."""
 
-    @property
-    def z_offset(self) -> float:
+    def get_model(self) -> Model:
         if self.model is None:
-            return 0.0
-        return self.model.z_offset
+            msg = "no scan model loaded"
+            raise RuntimeError(msg)
+        return self.model
+
+    @property
+    @override
+    def offset(self) -> Position:
+        z_offset = self.model.z_offset if self.model else 0.0
+        return Position(self.config.x_offset, self.config.y_offset, z_offset)
 
     def __init__(
         self,
         mcu: Mcu[C, S],
         toolhead: Toolhead,
+        config: Configuration,
         *,
         model: Model | None = None,
         probe_height: float = TRIGGER_DISTANCE,
     ) -> None:
         self._toolhead: Toolhead = toolhead
         self.model: Model | None = model
+        self.config: Configuration = config
         self.probe_height: float = probe_height
         self._mcu: Mcu[C, S] = mcu
 
-    def probe(self, *, speed: float) -> float:
+    @override
+    def probe(self) -> float:
         if not self._toolhead.is_homed("z"):
             msg = "Z axis must be homed before probing"
             raise RuntimeError(msg)
-        self._toolhead.manual_move(z=self.probe_height, speed=speed)
+        self._toolhead.manual_move(z=self.probe_height, speed=self.config.move_speed)
         self._toolhead.wait_moves()
         return self.measure_distance()
 

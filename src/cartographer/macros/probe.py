@@ -25,9 +25,7 @@ class ProbeMacro(Macro[MacroParams]):
 
     @override
     def run(self, params: MacroParams) -> None:
-        speed = params.get_float("SPEED", 3.0, above=0)
-
-        distance = self._probe.probe(speed=speed)
+        distance = self._probe.probe()
         logger.info("Result is z=%.6f", distance)
         self.last_distance = distance
 
@@ -43,27 +41,25 @@ class ProbeAccuracyMacro(Macro[MacroParams]):
 
     @override
     def run(self, params: MacroParams) -> None:
-        probe_speed = params.get_float("PROBE_SPEED", 3.0, above=0)
-        lift_speed = params.get_float("LIFT_SPEED", 3.0, above=0)
+        lift_speed = params.get_float("LIFT_SPEED", 5.0, above=0)
         retract = params.get_float("SAMPLE_RETRACT_DIST", 1.0, minval=0)
         sample_count = params.get_int("SAMPLES", 10, minval=1)
         position = self._toolhead.get_position()
 
         logger.info(
-            "PROBE_ACCURACY at X:%.3f Y:%.3f Z:%.3f (samples=%d retract=%.3f speed=%.1f lift_speed=%.1f)",
+            "PROBE_ACCURACY at X:%.3f Y:%.3f Z:%.3f (samples=%d retract=%.3f lift_speed=%.1f)",
             position.x,
             position.y,
             position.z,
             sample_count,
             retract,
-            probe_speed,
             lift_speed,
         )
 
         self._toolhead.manual_move(z=position.z + retract, speed=lift_speed)
         measurements: list[float] = []
         while len(measurements) < sample_count:
-            distance = self._probe.probe(speed=probe_speed)
+            distance = self._probe.probe()
             measurements.append(distance)
             pos = self._toolhead.get_position()
             self._toolhead.manual_move(z=pos.z + retract, speed=lift_speed)

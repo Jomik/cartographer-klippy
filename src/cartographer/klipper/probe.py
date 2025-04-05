@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, TypedDict
+from typing import TYPE_CHECKING, TypedDict
 
 from extras.probe import PrinterProbe
 from typing_extensions import override
@@ -34,9 +34,8 @@ class KlipperProbeSession:
         self.positions: list[list[float]] = []
 
     def run_probe(self, gcmd: GCodeCommand) -> None:
-        # TODO: Consolidate with below get_probe_params
-        probe_speed = gcmd.get_float("SPEED", default=DEFAULT_PROBE_SPEED, above=0)
-        distance = self.probe.probe(speed=probe_speed)
+        del gcmd
+        distance = self.probe.probe()
         self.positions.append([0, 0, distance])
 
     def pull_probed_results(self):
@@ -46,21 +45,14 @@ class KlipperProbeSession:
         pass
 
 
-class Configuration(Protocol):
-    x_offset: float
-    y_offset: float
-
-
 class KlipperCartographerProbe(PrinterProbe):
     def __init__(
         self,
         probe: Probe,
-        config: Configuration,
         probe_macro: ProbeMacro,
         query_probe_macro: QueryProbeMacro,
     ) -> None:
         self.probe: Probe = probe
-        self.config: Configuration = config
         self.probe_macro: ProbeMacro = probe_macro
         self.query_probe_macro: QueryProbeMacro = query_probe_macro
 
@@ -75,7 +67,7 @@ class KlipperCartographerProbe(PrinterProbe):
 
     @override
     def get_offsets(self) -> tuple[float, float, float]:
-        return (self.config.x_offset, self.config.y_offset, self.probe.z_offset)
+        return self.probe.offset.as_tuple()
 
     @override
     def get_status(self, eventtime: float) -> ProbeStatus:

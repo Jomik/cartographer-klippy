@@ -17,6 +17,9 @@ class Position:
     y: float
     z: float
 
+    def as_tuple(self) -> tuple[float, float, float]:
+        return (self.x, self.y, self.z)
+
 
 class HomingState(Protocol):
     endstops: Sequence[Endstop[object]]
@@ -122,6 +125,6 @@ class Macro(Generic[P], Protocol):
 
 class Probe(Protocol):
     @property
-    def z_offset(self) -> float: ...
-    def probe(self, *, speed: float) -> float: ...
+    def offset(self) -> Position: ...
+    def probe(self) -> float: ...
     def query_is_triggered(self, print_time: float) -> bool: ...

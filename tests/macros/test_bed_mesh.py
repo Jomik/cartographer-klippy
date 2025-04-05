@@ -37,10 +37,15 @@ def session(mocker: MockerFixture) -> Session[Sample]:
 
 
 @pytest.fixture
-def probe(mocker: MockerFixture, model: Model, session: Session[Sample]) -> Probe:
+def offset() -> Position:
+    return Position(0.0, 0.0, 1.5)
+
+
+@pytest.fixture
+def probe(mocker: MockerFixture, model: Model, session: Session[Sample], offset: Position) -> Probe:
     probe = mocker.MagicMock(spec=ScanProbe, autospec=True, instance=True)
     probe.model = model
-    probe.z_offset = 1.5
+    probe.offset = offset
     probe.probe_height = 10.0
     probe.start_session = mocker.Mock(return_value=session)
     return probe
@@ -56,14 +61,15 @@ def helper(mocker: MockerFixture) -> Helper:
     return mocker.MagicMock(spec=MeshHelper, autospec=True, instance=True)
 
 
+class MockConfiguration(Configuration):
+    speed: float = 400
+    runs: int = 1
+    scan_height: float = 5.0
+
+
 @pytest.fixture
-def config(mocker: MockerFixture) -> Configuration:
-    config = mocker.MagicMock(spec=Configuration, autospec=True, instance=True)
-    config.speed = 400
-    config.scan_height = 5.0
-    config.x_offset = 0.0
-    config.y_offset = 0.0
-    return config
+def config() -> Configuration:
+    return MockConfiguration()
 
 
 @pytest.fixture
@@ -95,14 +101,14 @@ def test_applies_offsets(
     macro: Macro,
     toolhead: Toolhead,
     helper: Helper,
-    config: Configuration,
+    offset: Position,
 ):
     helper.generate_path = mocker.Mock(return_value=[MeshPoint(10, 10, False), MeshPoint(20, 20, False)])
     params = mocker.MagicMock()
     params.get = mocker.Mock(return_value="scan")
     params.get_float = mocker.Mock(return_value=42.0)
-    config.x_offset = -5
-    config.y_offset = 5
+    offset.x = -5
+    offset.y = 5
     move_spy = mocker.spy(toolhead, "manual_move")
 
     macro.run(params)
