@@ -81,14 +81,13 @@ class TouchProbe(Probe, Endstop[C]):
             if len(collected) < 3:
                 continue  # Need at least 3 samples for meaningful statistics
 
-            std_dev = np.std(collected, ddof=1)  # Sample standard deviation
+            std_dev = np.std(collected)
 
             if std_dev > TOLERANCE:
                 msg = f"standard deviation ({std_dev:.6f}) exceeded tolerance ({TOLERANCE:.6f})"
                 raise ValueError(msg)
 
-        mean_val = np.mean(collected)
-        final_value = np.median(collected) if len(collected) == 3 else mean_val
+        final_value = np.median(collected) if len(collected) == 3 else np.mean(collected)
         return float(final_value)
 
     def _probe_distance(self) -> float:

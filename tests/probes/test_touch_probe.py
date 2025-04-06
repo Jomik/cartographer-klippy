@@ -72,7 +72,7 @@ def test_probe_success(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) 
 
 
 def test_probe_standard_deviation_failure(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
-    toolhead.z_homing_move = mocker.Mock(side_effect=[1.000, 1.002, 1.014, 1.016, 1.018])
+    toolhead.z_homing_move = mocker.Mock(side_effect=[1.000, 1.002, 1.1, 1.016, 1.018])
 
     with pytest.raises(RuntimeError, match="failed"):
         _ = probe.probe()

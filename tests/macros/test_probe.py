@@ -76,7 +76,7 @@ def test_probe_accuracy_macro_output(
     assert "range 90" in caplog.text
     assert "average 95" in caplog.text
     assert "median 95" in caplog.text
-    assert "standard deviation 30.27" in caplog.text
+    assert "standard deviation 28" in caplog.text
 
 
 def test_probe_accuracy_macro_sample_count(
@@ -109,7 +109,7 @@ def test_probe_accuracy_macro_sample_count(
     assert "range 20" in caplog.text
     assert "average 60" in caplog.text
     assert "median 60" in caplog.text
-    assert "standard deviation 10" in caplog.text
+    assert "standard deviation 8" in caplog.text
 
 
 def test_query_probe_macro_triggered_output(

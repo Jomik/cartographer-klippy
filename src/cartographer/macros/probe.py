@@ -70,7 +70,7 @@ class ProbeAccuracyMacro(Macro[MacroParams]):
         range_value = max_value - min_value
         avg_value = np.mean(measurements)
         median = np.median(measurements)
-        std_dev = np.std(measurements, ddof=1)
+        std_dev = np.std(measurements)
 
         logger.info(
             """probe accuracy results: maximum %.6f, minimum %.6f, range %.6f, \
