@@ -66,6 +66,10 @@ class Toolhead(Protocol):
         """Starts homing move towards the given endstop."""
         ...
 
+    def set_z_position(self, z: float) -> None:
+        """Set the z position of the toolhead."""
+        ...
+
 
 C = TypeVar("C", covariant=True)
 

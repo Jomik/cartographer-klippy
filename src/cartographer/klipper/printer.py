@@ -85,3 +85,9 @@ class KlipperToolhead(Toolhead):
 
         epos = self.printer.lookup_object("homing").probing_move(klipper_endstop, pos, speed)
         return epos[2]
+
+    @override
+    def set_z_position(self, z: float) -> None:
+        pos = self.toolhead.get_position()[:]
+        pos[2] = z
+        self.toolhead.set_position(pos, "z")

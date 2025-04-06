@@ -70,21 +70,23 @@ class TouchProbe(Probe, Endstop[C]):
             except ValueError as err:
                 logger.info("Touch attempt %d / %d failed: %s", i + 1, tries, err)
 
-        msg = f"failed after {tries} attempts"
+        msg = f"touch failed after {tries} attempts"
         raise RuntimeError(msg)
 
     def _run_probe(self) -> float:
         collected: list[float] = []
+        logger.debug("Starting touch sequence...")
         for i in range(self.config.touch_samples):
-            logger.debug("Starting touch %d", i + 1)
-            collected.append(self._probe_distance())
+            distance = self._probe_distance()
+            logger.debug("Touch %d of %d: %.6f", i + 1, self.config.touch_samples, distance)
+            collected.append(distance)
             if len(collected) < 3:
                 continue  # Need at least 3 samples for meaningful statistics
 
             std_dev = np.std(collected)
 
             if std_dev > TOLERANCE:
-                msg = f"standard deviation ({std_dev:.6f}) exceeded tolerance ({TOLERANCE:.6f})"
+                msg = f"standard deviation ({std_dev:.6f}) exceeded tolerance ({TOLERANCE:g})"
                 raise ValueError(msg)
 
         final_value = np.median(collected) if len(collected) == 3 else np.mean(collected)
@@ -125,7 +127,7 @@ class TouchProbe(Probe, Endstop[C]):
         if not homing_state.is_homing_z():
             return
 
-        homing_state.set_z_homed_position(0)
+        homing_state.set_z_homed_position(self.get_model().z_offset)
 
     @override
     def home_wait(self, home_end_time: float) -> float:

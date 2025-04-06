@@ -16,7 +16,7 @@ from cartographer.klipper.temperature import PrinterTemperatureCoil
 from cartographer.lib.alpha_beta_filter import AlphaBetaFilter
 from cartographer.macros import ProbeAccuracyMacro, ProbeMacro, QueryProbeMacro, ZOffsetApplyProbeMacro
 from cartographer.macros.bed_mesh import BedMeshCalibrateMacro
-from cartographer.macros.touch import TouchAccuracyMacro, TouchMacro
+from cartographer.macros.touch import TouchAccuracyMacro, TouchHomeMacro, TouchMacro
 from cartographer.probes import ScanModel, ScanProbe, TouchProbe
 
 if TYPE_CHECKING:
@@ -83,6 +83,7 @@ class PrinterCartographer:
 
         self._register_macro(TouchMacro(touch_probe))
         self._register_macro(TouchAccuracyMacro(touch_probe, toolhead))
+        self._register_macro(TouchHomeMacro(touch_probe, toolhead))
 
         self._register_macro(
             BedMeshCalibrateMacro(
