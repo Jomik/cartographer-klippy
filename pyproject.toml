@@ -53,10 +53,16 @@ raw-options.local_scheme = "no-local-version"
 [tool.hatch.build.hooks.vcs]
 version-file = "src/cartographer/__version__.py"
 
+[tool.hatch.build.targets.sdist]
+exclude = [
+  "/.github",
+  "/.jj",
+  "/docs",
+]
 [tool.hatch.build.targets.wheel]
 packages = ["src/cartographer"]
 
-[tool.hatch.build.hooks.custom]
+[tool.hatch.build.targets.wheel.hooks.custom]
 path = "hatch_build.py"
 
 [build-system]

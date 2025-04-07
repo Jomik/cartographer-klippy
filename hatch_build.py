@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shlex
 import subprocess
 from datetime import datetime, timezone
@@ -35,7 +36,7 @@ def retrieve_git_version(root: str) -> str:
 class ReleaseInfo(TypedDict):
     project_name: str
     package_name: str
-    urls: list[str]
+    urls: dict[str, str]
     package_version: str
     git_version: str
     commit_sha: str
@@ -45,7 +46,7 @@ class ReleaseInfo(TypedDict):
 
 class Project(TypedDict):
     name: str
-    urls: list[str]
+    urls: dict[str, str]
 
 
 class CustomBuildHook(BuildHookInterface[BuilderConfig]):
@@ -55,11 +56,19 @@ class CustomBuildHook(BuildHookInterface[BuilderConfig]):
         if project is None:
             msg = "project not found in metadata"
             raise ValueError(msg)
+
         build_time = datetime.now(timezone.utc)
+        urls = project.get("urls", {})
+
+        ref_name = os.getenv("GITHUB_REF_NAME")
+        repository = os.getenv("GITHUB_REPOSITORY")
+        if ref_name is not None and repository is not None:
+            urls["changelog"] = f"{repository}/releases/tag/{ref_name}"
+
         data = ReleaseInfo(
             project_name=project.get("name"),
             package_name=self.metadata.name,  # pyright: ignore[reportUnknownMemberType]
-            urls=project.get("urls", []),
+            urls=urls,
             package_version=self.metadata.version,  # pyright: ignore[reportUnknownMemberType]
             git_version=retrieve_git_version(self.root),
             commit_sha=get_commit_sha(self.root),
@@ -67,13 +76,13 @@ class CustomBuildHook(BuildHookInterface[BuilderConfig]):
             system_dependencies={},
         )
 
-        out_file = Path(self.root, "release_info")
+        out_file = Path(self.directory, "release_info")
         with open(out_file, "w") as f:
             json.dump(data, f)
 
-        build_data["artifacts"].append(str(out_file.relative_to(self.root)))  # pyright: ignore[reportAny]
+        build_data["extra_metadata"][str(out_file)] = "release_info"
 
     @override
     def clean(self, versions: list[str]) -> None:
-        out_file = Path(self.root, "release_info")
+        out_file = Path(self.directory, "release_info")
         out_file.unlink(missing_ok=True)
