@@ -76,7 +76,7 @@ class CustomBuildHook(BuildHookInterface[BuilderConfig]):
             system_dependencies={},
         )
 
-        out_file = Path(self.directory, "release_info")
+        out_file = Path(self.root, "release_info")
         with open(out_file, "w") as f:
             json.dump(data, f)
 
@@ -84,5 +84,5 @@ class CustomBuildHook(BuildHookInterface[BuilderConfig]):
 
     @override
     def clean(self, versions: list[str]) -> None:
-        out_file = Path(self.directory, "release_info")
+        out_file = Path(self.root, "release_info")
         out_file.unlink(missing_ok=True)
