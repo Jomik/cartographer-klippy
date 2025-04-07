@@ -74,7 +74,7 @@ class TouchAccuracyMacro(Macro[MacroParams]):
         range_value = max_value - min_value
         avg_value = np.mean(measurements)
         median = np.median(measurements)
-        std_dev = np.std(measurements, ddof=1)
+        std_dev = np.std(measurements)
 
         logger.info(
             """touch accuracy results: maximum %.6f, minimum %.6f, range %.6f, \
@@ -86,3 +86,24 @@ class TouchAccuracyMacro(Macro[MacroParams]):
             median,
             std_dev,
         )
+
+
+@final
+class TouchHomeMacro(Macro[MacroParams]):
+    name = "TOUCH_HOME"
+    description = "Touch the bed to get the height offset at the current position."
+
+    def __init__(
+        self,
+        probe: Probe,
+        toolhead: Toolhead,
+    ) -> None:
+        self._probe = probe
+        self._toolhead = toolhead
+
+    @override
+    def run(self, params: MacroParams) -> None:
+        distance = self._probe.probe()
+        pos = self._toolhead.get_position()
+        self._toolhead.set_z_position(pos.z - (distance + self._probe.offset.z))
+        logger.debug("Touch home at (%.3f,%.3f) adjusted z by %.3f", pos.x, pos.y, -distance)
