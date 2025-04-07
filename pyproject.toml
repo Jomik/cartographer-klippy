@@ -46,6 +46,9 @@ default-groups = ["test", "lint", "typecheck"]
 
 [tool.hatch.version]
 source = "vcs"
+# TestPyPi does not support local version identifiers
+# https://github.com/ofek/hatch-vcs/issues/43
+raw-options.local_scheme = "no-local-version"
 
 [tool.hatch.build.hooks.vcs]
 version-file = "src/cartographer/__version__.py"
