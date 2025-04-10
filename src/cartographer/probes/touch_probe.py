@@ -59,7 +59,7 @@ class TouchProbe(Probe, Endstop[C]):
     @override
     def probe(self) -> float:
         if not self._toolhead.is_homed("z"):
-            msg = "Z axis must be homed before probing"
+            msg = "z axis must be homed before probing"
             raise RuntimeError(msg)
         self._toolhead.manual_move(z=5, speed=self.config.move_speed)
         self._toolhead.wait_moves()

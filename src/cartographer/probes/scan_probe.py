@@ -62,7 +62,7 @@ class ScanProbe(Probe, Endstop[C], Generic[C, S]):
     @override
     def probe(self) -> float:
         if not self._toolhead.is_homed("z"):
-            msg = "Z axis must be homed before probing"
+            msg = "z axis must be homed before probing"
             raise RuntimeError(msg)
         self._toolhead.manual_move(z=self.probe_height, speed=self.config.move_speed)
         self._toolhead.wait_moves()

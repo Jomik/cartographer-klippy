@@ -71,7 +71,7 @@ class ScanModel:
         distance += self.config.z_offset
         min_z, max_z = self._get_z_range()
         if distance < min_z or distance > max_z:
-            msg = f"Attempted to map out-of-range distance {distance:.3f}, valid range [{min_z:.3f}, {max_z:.3f}]"
+            msg = f"attempted to map out-of-range distance {distance:.3f}, valid range [{min_z:.3f}, {max_z:.3f}]"
             raise RuntimeError(msg)
 
         lower_bound, upper_bound = self.config.domain
@@ -87,7 +87,7 @@ class ScanModel:
             else:
                 upper_bound = midpoint
 
-        msg = "Model convergence error"
+        msg = "model convergence error"
         raise RuntimeError(msg)
 
     _z_range: Domain | None = None
