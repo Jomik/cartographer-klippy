@@ -37,6 +37,9 @@ class ScanModel:
     def z_offset(self) -> float:
         return self.config.z_offset
 
+    def save_z_offset(self, new_offset: float) -> None:
+        self.config.save_z_offset(new_offset)
+
     @property
     def poly(self) -> Polynomial:
         if self._poly is None:

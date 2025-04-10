@@ -43,6 +43,10 @@ class TouchProbe(Probe, Endstop[C]):
         z_offset = self.model.z_offset if self.model else 0.0
         return Position(self.config.x_offset, self.config.y_offset, z_offset)
 
+    @override
+    def save_z_offset(self, new_offset: float) -> None:
+        self.get_model().save_z_offset(new_offset)
+
     def __init__(
         self,
         mcu: Mcu[C, S],

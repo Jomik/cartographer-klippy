@@ -38,9 +38,13 @@ class ScanModelConfiguration(Protocol):
     domain: tuple[float, float]
     z_offset: float
 
+    def save_z_offset(self, new_offset: float) -> None: ...
+
 
 class TouchModelConfiguration(Protocol):
     name: str
     threshold: int
     speed: float
     z_offset: float
+
+    def save_z_offset(self, new_offset: float) -> None: ...
