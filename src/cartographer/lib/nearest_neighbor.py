@@ -50,6 +50,6 @@ class NearestNeighborSearcher(Generic[P]):
                 min_distance: float = dist
                 nearest_point = index
         if nearest_point is None:
-            msg = "No points to search for nearest neighbor."
+            msg = "no points to search for nearest neighbor."
             raise ValueError(msg)
         return nearest_point

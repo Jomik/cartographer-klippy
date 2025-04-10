@@ -90,7 +90,7 @@ def test_probe_suceeds_on_retry(
 def test_probe_unhomed_z(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
     toolhead.is_homed = mocker.Mock(return_value=False)
 
-    with pytest.raises(RuntimeError, match="Z axis must be homed"):
+    with pytest.raises(RuntimeError, match="z axis must be homed"):
         _ = probe.probe()
 
 

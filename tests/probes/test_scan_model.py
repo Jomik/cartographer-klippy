@@ -90,7 +90,7 @@ def test_distance_to_frequency(model: ScanModel) -> None:
 
 
 def test_distance_to_frequency_out_of_range(model: ScanModel) -> None:
-    with pytest.raises(RuntimeError, match="Attempted to map out-of-range distance"):
+    with pytest.raises(RuntimeError, match="attempted to map out-of-range distance"):
         _ = model.distance_to_frequency(11)  # Out of z_range
 
 

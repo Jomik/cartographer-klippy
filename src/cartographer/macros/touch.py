@@ -106,4 +106,10 @@ class TouchHomeMacro(Macro[MacroParams]):
         distance = self._probe.probe()
         pos = self._toolhead.get_position()
         self._toolhead.set_z_position(pos.z - (distance + self._probe.offset.z))
-        logger.debug("Touch home at (%.3f,%.3f) adjusted z by %.3f", pos.x, pos.y, -distance)
+        logger.info(
+            "Touch home at (%.3f,%.3f) adjusted z by %.3f, offset %.3f",
+            pos.x,
+            pos.y,
+            -distance,
+            -self._probe.offset.z,
+        )
