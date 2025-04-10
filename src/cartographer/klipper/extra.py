@@ -59,12 +59,12 @@ class PrinterCartographer:
 
         toolhead = KlipperToolhead(config, self.mcu)
 
-        scan_config = self.config.scan_models["default"]
-        model = ScanModel(scan_config)
+        scan_config = self.config.scan_models.get("default")
+        model = ScanModel(scan_config) if scan_config else None
         scan_probe = ScanProbe(self.mcu, toolhead, self.config, model=model)
         scan_endstop = KlipperEndstop(self.mcu, scan_probe)
 
-        touch_config = self.config.touch_models["default"]
+        touch_config = self.config.touch_models.get("default")
         touch_probe = TouchProbe(self.mcu, toolhead, self.config, model=touch_config)
 
         homing_chip = CartographerHomingChip(printer, scan_endstop)
@@ -79,7 +79,7 @@ class PrinterCartographer:
         query_probe_macro = QueryProbeMacro(scan_probe, toolhead)
         self._register_macro(query_probe_macro)
 
-        self._register_macro(ZOffsetApplyProbeMacro(toolhead))
+        self._register_macro(ZOffsetApplyProbeMacro(toolhead, scan_probe, touch_probe))
 
         self._register_macro(TouchMacro(touch_probe))
         self._register_macro(TouchAccuracyMacro(touch_probe, toolhead))

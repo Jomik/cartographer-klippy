@@ -148,7 +148,7 @@ def test_touch_home_macro_with_z_offset(
 ):
     macro = TouchHomeMacro(probe, toolhead)
     probe.probe = mocker.Mock(return_value=0.0)
-    offset.z = 0.1
+    offset.z = -0.1
     toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 2))
     set_z_position_spy = mocker.spy(toolhead, "set_z_position")
 

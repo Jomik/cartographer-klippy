@@ -42,6 +42,10 @@ class MockModel:
     speed: float = 10.0
     z_offset: float = 0.0
 
+    def save_z_offset(self, new_offset: float) -> None:
+        del new_offset
+        pass
+
 
 @pytest.fixture
 def config() -> Configuration:

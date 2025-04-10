@@ -6,10 +6,12 @@ from typing import TYPE_CHECKING, final
 import numpy as np
 from typing_extensions import override
 
-from cartographer.printer_interface import Macro, MacroParams, Probe
+from cartographer.printer_interface import C, Macro, MacroParams, Probe, S
 
 if TYPE_CHECKING:
     from cartographer.printer_interface import Toolhead
+    from cartographer.probes.scan_probe import ScanProbe
+    from cartographer.probes.touch_probe import TouchProbe
 
 logger = logging.getLogger(__name__)
 
@@ -107,19 +109,31 @@ class ZOffsetApplyProbeMacro(Macro[MacroParams]):
     name = "Z_OFFSET_APPLY_PROBE"
     description = "Adjust the probe's z_offset"
 
-    def __init__(self, toolhead: Toolhead) -> None:
+    def __init__(self, toolhead: Toolhead, scan_probe: ScanProbe[C, S], touch_probe: TouchProbe[object]) -> None:
         self._toolhead = toolhead
+        self._scan_probe = scan_probe
+        self._touch_probe = touch_probe
 
     @override
     def run(self, params: MacroParams) -> None:
-        offset = self._toolhead.get_gcode_z_offset()
-        # TODO: Get current offset from config
-        current_offset = 0
-        new_offset = current_offset - offset
+        additional_offset = self._toolhead.get_gcode_z_offset()
+        # If a touch model is loaded, we assume the user uses touch.
+        probe_mode, probe = (
+            ("touch", self._touch_probe) if self._touch_probe.model is not None else ("scan", self._scan_probe)
+        )
+        current_offset = probe.offset.z
+        if probe.model is None:
+            msg = "no probe model loaded"
+            raise RuntimeError(msg)
+
+        new_offset = current_offset - additional_offset
         logger.info(
-            """cartographer: z_offset: %.3f
+            """cartographer: %s %s z_offset: %.3f
             The SAVE_CONFIG command will update the printer config file
             with the above and restart the printer.""",
+            probe_mode,
+            probe.model.name,
             new_offset,
         )
-        # TODO: Save to config
+
+        probe.save_z_offset(new_offset)

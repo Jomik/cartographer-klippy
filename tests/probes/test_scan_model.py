@@ -40,6 +40,9 @@ class MockConfiguration:
     domain: tuple[float, float] = (1, 3)
     z_offset: float = 0
 
+    def save_z_offset(self, new_offset: float) -> None:
+        self.z_offset = new_offset
+
 
 @pytest.fixture
 def config() -> ScanModelConfiguration:
