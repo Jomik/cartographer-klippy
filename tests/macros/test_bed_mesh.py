@@ -9,10 +9,11 @@ from typing_extensions import TypeAlias
 from cartographer.macros.bed_mesh import BedMeshCalibrateMacro, Configuration, MeshHelper, MeshPoint
 from cartographer.printer_interface import MacroParams, Position, Toolhead
 from cartographer.probes.scan_probe import Model, ScanProbe
-from cartographer.stream import Session
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
+
+    from cartographer.stream import Session
 
 
 @dataclass
@@ -32,16 +33,6 @@ def model(mocker: MockerFixture) -> Model:
 
 
 @pytest.fixture
-def session(mocker: MockerFixture) -> Session[Sample]:
-    return Session[Sample](mocker.Mock(), mocker.Mock())
-
-
-@pytest.fixture
-def offset() -> Position:
-    return Position(0.0, 0.0, 1.5)
-
-
-@pytest.fixture
 def probe(mocker: MockerFixture, model: Model, session: Session[Sample], offset: Position) -> Probe:
     probe = mocker.MagicMock(spec=ScanProbe, autospec=True, instance=True)
     probe.model = model
@@ -49,11 +40,6 @@ def probe(mocker: MockerFixture, model: Model, session: Session[Sample], offset:
     probe.probe_height = 10.0
     probe.start_session = mocker.Mock(return_value=session)
     return probe
-
-
-@pytest.fixture
-def toolhead(mocker: MockerFixture) -> Toolhead:
-    return mocker.MagicMock(spec=Toolhead, autospec=True, instance=True)
 
 
 @pytest.fixture
