@@ -15,7 +15,11 @@ if TYPE_CHECKING:
 
 class Model(Protocol):
     @property
+    def name(self) -> str: ...
+
+    @property
     def z_offset(self) -> float: ...
+    def save_z_offset(self, new_offset: float) -> None: ...
     def distance_to_frequency(self, distance: float) -> float: ...
     def frequency_to_distance(self, frequency: float) -> float: ...
 
@@ -43,6 +47,10 @@ class ScanProbe(Probe, Endstop[C], Generic[C, S]):
     def offset(self) -> Position:
         z_offset = self.model.z_offset if self.model else 0.0
         return Position(self.config.x_offset, self.config.y_offset, z_offset)
+
+    @override
+    def save_z_offset(self, new_offset: float) -> None:
+        self.get_model().save_z_offset(new_offset)
 
     def __init__(
         self,
