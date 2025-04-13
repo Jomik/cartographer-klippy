@@ -18,28 +18,10 @@ Probe: TypeAlias = TouchProbe[object]
 
 
 @pytest.fixture
-def offset() -> Position:
-    return Position(0, 0, 0)
-
-
-@pytest.fixture
 def probe(mocker: MockerFixture, offset: Position) -> Probe:
     mock = mocker.Mock(spec=Probe, autospec=True)
     mock.offset = offset
     return mock
-
-
-@pytest.fixture
-def toolhead(mocker: MockerFixture) -> Toolhead:
-    return mocker.Mock(spec=Toolhead, autospec=True)
-
-
-@pytest.fixture
-def params(mocker: MockerFixture) -> MacroParams:
-    return mocker.Mock(
-        spec=MacroParams,
-        autospec=True,
-    )
 
 
 def test_touch_macro_output(

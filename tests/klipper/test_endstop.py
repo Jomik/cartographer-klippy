@@ -1,24 +1,20 @@
 from __future__ import annotations
 
-import sys
 from typing import TYPE_CHECKING
 from unittest.mock import MagicMock
 
 import pytest
 from typing_extensions import override
 
-sys.modules["extras.homing"] = MagicMock()
-sys.modules["reactor"] = MagicMock()
-
-from reactor import ReactorCompletion  # noqa: E402
-
-from cartographer.klipper.endstop import KlipperEndstop  # noqa: E402
-from cartographer.printer_interface import Endstop, HomingState  # noqa: E402
+from cartographer.klipper.endstop import KlipperEndstop
+from cartographer.printer_interface import Endstop, HomingState
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
-    from cartographer.klipper.mcu.mcu import KlipperCartographerMcu
+    from cartographer.klipper.mcu import KlipperCartographerMcu
+
+ReactorCompletion = MagicMock
 
 
 class MockEndstop(Endstop[ReactorCompletion]):
@@ -45,7 +41,7 @@ class MockEndstop(Endstop[ReactorCompletion]):
 
 @pytest.fixture
 def mcu(mocker: MockerFixture) -> KlipperCartographerMcu:
-    return mocker.Mock(autospec=True)
+    return mocker.MagicMock()
 
 
 @pytest.fixture

@@ -8,10 +8,11 @@ from typing_extensions import TypeAlias, override
 
 from cartographer.printer_interface import HomingState, Mcu, Toolhead
 from cartographer.probes.scan_probe import Configuration, Model, ScanProbe
-from cartographer.stream import Session
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
+
+    from cartographer.stream import Session
 
 
 @dataclass
@@ -54,23 +55,6 @@ class MockConfiguration(Configuration):
 
     scan_samples: float = 10
     scan_mesh_runs: int = 1
-
-
-@pytest.fixture
-def toolhead(mocker: MockerFixture) -> Toolhead:
-    return mocker.Mock(spec=Toolhead, autospec=True)
-
-
-@pytest.fixture
-def session(mocker: MockerFixture) -> Session[Sample]:
-    return Session(mocker.Mock(), mocker.Mock())
-
-
-@pytest.fixture
-def mcu(mocker: MockerFixture, session: Session[Sample]) -> Mcu[object, Sample]:
-    mock = mocker.Mock(spec=Mcu, autospec=True)
-    mock.start_session = mocker.Mock(return_value=session)
-    return mock
 
 
 @pytest.fixture

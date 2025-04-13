@@ -7,31 +7,19 @@ from typing import TYPE_CHECKING
 import pytest
 from numpy.polynomial import Polynomial
 
-from cartographer.printer_interface import Position, Toolhead
 from cartographer.probes.scan_model import Sample, ScanModel
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from cartographer.configuration import ScanModelConfiguration
+    from cartographer.printer_interface import Toolhead
 
 
 @dataclass
 class MockSample(Sample):
     time: float
     frequency: float
-
-
-@pytest.fixture
-def toolhead(mocker: MockerFixture) -> Toolhead:
-    mock = mocker.Mock(spec=Toolhead, autospec=True)
-
-    def get_requested_position(time: float) -> Position:
-        return Position(x=0, y=0, z=time)
-
-    mock.get_requested_position = get_requested_position
-
-    return mock
 
 
 class MockConfiguration:
@@ -58,7 +46,6 @@ def model(mocker: MockerFixture, config: MockConfiguration) -> ScanModel:
     poly.domain = config.domain
 
     model = ScanModel(config)
-    # model._poly = poly
     return model
 
 

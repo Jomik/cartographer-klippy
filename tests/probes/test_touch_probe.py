@@ -17,16 +17,6 @@ if TYPE_CHECKING:
 Probe: TypeAlias = TouchProbe[object]
 
 
-@pytest.fixture
-def mcu(mocker: MockerFixture) -> Mcu[object, Sample]:
-    return mocker.create_autospec(Mcu, instance=True)
-
-
-@pytest.fixture
-def toolhead(mocker: MockerFixture) -> Toolhead:
-    return mocker.create_autospec(Toolhead, instance=True)
-
-
 class MockConfiguration:
     x_offset: float = 0.0
     y_offset: float = 0.0

@@ -21,19 +21,6 @@ def probe(mocker: MockerFixture) -> Probe:
 
 
 @pytest.fixture
-def toolhead(mocker: MockerFixture) -> Toolhead:
-    return mocker.Mock(spec=Toolhead, autospec=True)
-
-
-@pytest.fixture
-def params(mocker: MockerFixture):
-    return mocker.Mock(
-        spec=MacroParams,
-        autospec=True,
-    )
-
-
-@pytest.fixture
 def scan_probe(mocker: MockerFixture):
     scan_probe = mocker.Mock(spec=ScanProbe, autospec=True)
     scan_probe.model = mocker.Mock()
