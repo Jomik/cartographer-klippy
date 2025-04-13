@@ -3,9 +3,18 @@ component_management:
     - component_id: cartographer
       name: Cartographer
       paths:
-        - "src/cartographer/**"
-        - "!src/cartographer/klipper/**"
+        - "src/cartographer/"
+        - "!src/cartographer/klipper/"
     - component_id: klipper_integration
       name: Klipper Integration
       paths:
-        - "src/cartographer/klipper/**"
+        - "src/cartographer/klipper/"
+
+coverage:
+  status:
+    project:
+      default:
+        only_pulls: true
+    patch:
+      default:
+        only_pulls: true
