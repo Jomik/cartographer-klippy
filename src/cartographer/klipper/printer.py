@@ -76,7 +76,8 @@ class KlipperToolhead(Toolhead):
         return gcode_move.get_status()["homing_origin"].z
 
     @override
-    def z_homing_move(self, endstop: Endstop[ReactorCompletion], *, bottom: float, speed: float) -> float:
+    # TODO: Fix override
+    def z_homing_move(self, endstop: Endstop[ReactorCompletion], *, bottom: float, speed: float) -> float:  # pyright: ignore[reportIncompatibleMethodOverride]
         klipper_endstop = KlipperEndstop(self.mcu, endstop)
         self.wait_moves()
 
