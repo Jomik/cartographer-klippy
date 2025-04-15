@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Protocol
 
 
-class ProbeMode(Enum):
+class ProbeMethod(Enum):
     SCAN = "scan"
     TOUCH = "touch"
 

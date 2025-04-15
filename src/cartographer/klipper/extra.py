@@ -17,7 +17,7 @@ from cartographer.lib.alpha_beta_filter import AlphaBetaFilter
 from cartographer.macros import ProbeAccuracyMacro, ProbeMacro, QueryProbeMacro, ZOffsetApplyProbeMacro
 from cartographer.macros.bed_mesh import BedMeshCalibrateMacro
 from cartographer.macros.touch import TouchAccuracyMacro, TouchHomeMacro, TouchMacro
-from cartographer.probes import ScanModel, ScanProbe, TouchProbe
+from cartographer.probe import Probe, ScanMode, ScanModel, TouchMode
 
 if TYPE_CHECKING:
     from configfile import ConfigWrapper
@@ -61,11 +61,12 @@ class PrinterCartographer:
 
         scan_config = self.config.scan_models.get("default")
         model = ScanModel(scan_config) if scan_config else None
-        scan_probe = ScanProbe(self.mcu, toolhead, self.config, model=model)
-        scan_endstop = KlipperEndstop(self.mcu, scan_probe)
+        scan_mode = ScanMode(self.mcu, toolhead, self.config, model=model)
+        scan_endstop = KlipperEndstop(self.mcu, scan_mode)
 
         touch_config = self.config.touch_models.get("default")
-        touch_probe = TouchProbe(self.mcu, toolhead, self.config, model=touch_config)
+        touch_mode = TouchMode(self.mcu, toolhead, self.config, model=touch_config)
+        probe = Probe(scan_mode, touch_mode)
 
         homing_chip = CartographerHomingChip(printer, scan_endstop)
 
@@ -73,21 +74,21 @@ class PrinterCartographer:
 
         self.gcode = printer.lookup_object("gcode")
         self._configure_macro_logger()
-        probe_macro = ProbeMacro(scan_probe)
+        probe_macro = ProbeMacro(probe)
         self._register_macro(probe_macro)
-        self._register_macro(ProbeAccuracyMacro(scan_probe, toolhead))
-        query_probe_macro = QueryProbeMacro(scan_probe, toolhead)
+        self._register_macro(ProbeAccuracyMacro(probe, toolhead))
+        query_probe_macro = QueryProbeMacro(probe)
         self._register_macro(query_probe_macro)
 
-        self._register_macro(ZOffsetApplyProbeMacro(toolhead, scan_probe, touch_probe))
+        self._register_macro(ZOffsetApplyProbeMacro(probe, toolhead))
 
-        self._register_macro(TouchMacro(touch_probe))
-        self._register_macro(TouchAccuracyMacro(touch_probe, toolhead))
-        self._register_macro(TouchHomeMacro(touch_probe, toolhead))
+        self._register_macro(TouchMacro(touch_mode))
+        self._register_macro(TouchAccuracyMacro(touch_mode, toolhead))
+        self._register_macro(TouchHomeMacro(touch_mode, toolhead))
 
         self._register_macro(
             BedMeshCalibrateMacro(
-                scan_probe,
+                scan_mode,
                 toolhead,
                 KlipperMeshHelper(config, self.gcode),
                 KlipperMeshConfiguration.from_config(config, self.config),
@@ -97,7 +98,7 @@ class PrinterCartographer:
         printer.add_object(
             "probe",
             KlipperCartographerProbe(
-                scan_probe,
+                scan_mode,
                 probe_macro,
                 query_probe_macro,
             ),

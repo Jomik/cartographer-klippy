@@ -8,7 +8,7 @@ from typing_extensions import TypeAlias
 
 from cartographer.macros.bed_mesh import BedMeshCalibrateMacro, Configuration, MeshHelper, MeshPoint
 from cartographer.printer_interface import MacroParams, Position, Toolhead
-from cartographer.probes.scan_probe import Model, ScanProbe
+from cartographer.probe.scan_mode import Model, ScanMode
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -22,7 +22,7 @@ class Sample:
     frequency: float
 
 
-Probe: TypeAlias = ScanProbe[object, Sample]
+Probe: TypeAlias = ScanMode[object, Sample]
 Macro: TypeAlias = BedMeshCalibrateMacro[MacroParams]
 Helper: TypeAlias = MeshHelper[MacroParams]
 
@@ -33,8 +33,13 @@ def model(mocker: MockerFixture) -> Model:
 
 
 @pytest.fixture
+def offset() -> Position:
+    return Position(0, 0, 0)
+
+
+@pytest.fixture
 def probe(mocker: MockerFixture, model: Model, session: Session[Sample], offset: Position) -> Probe:
-    probe = mocker.MagicMock(spec=ScanProbe, autospec=True, instance=True)
+    probe = mocker.MagicMock(spec=ScanMode, autospec=True, instance=True)
     probe.model = model
     probe.offset = offset
     probe.probe_height = 10.0

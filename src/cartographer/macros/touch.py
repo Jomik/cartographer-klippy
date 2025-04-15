@@ -7,7 +7,7 @@ import numpy as np
 from typing_extensions import override
 
 from cartographer.printer_interface import Macro, MacroParams
-from cartographer.probes.touch_probe import TouchProbe
+from cartographer.probe.touch_mode import TouchMode
 
 if TYPE_CHECKING:
     from cartographer.printer_interface import Toolhead
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-Probe = TouchProbe[object]
+Probe = TouchMode[object]
 
 
 @final
@@ -29,7 +29,7 @@ class TouchMacro(Macro[MacroParams]):
 
     @override
     def run(self, params: MacroParams) -> None:
-        distance = self._probe.probe()
+        distance = self._probe.perform_probe()
         logger.info("Result is z=%.6f", distance)
         self.last_distance = distance
 
@@ -63,7 +63,7 @@ class TouchAccuracyMacro(Macro[MacroParams]):
         self._toolhead.manual_move(z=position.z + retract, speed=lift_speed)
         measurements: list[float] = []
         while len(measurements) < sample_count:
-            distance = self._probe.probe()
+            distance = self._probe.perform_probe()
             measurements.append(distance)
             pos = self._toolhead.get_position()
             self._toolhead.manual_move(z=pos.z + retract, speed=lift_speed)
@@ -103,7 +103,7 @@ class TouchHomeMacro(Macro[MacroParams]):
 
     @override
     def run(self, params: MacroParams) -> None:
-        distance = self._probe.probe()
+        distance = self._probe.perform_probe()
         pos = self._toolhead.get_position()
         self._toolhead.set_z_position(pos.z - (distance - self._probe.offset.z))
         logger.info(

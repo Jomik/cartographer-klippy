@@ -6,12 +6,11 @@ from typing import TYPE_CHECKING, final
 import numpy as np
 from typing_extensions import override
 
-from cartographer.printer_interface import C, Macro, MacroParams, Probe, S
+from cartographer.printer_interface import Macro, MacroParams
 
 if TYPE_CHECKING:
     from cartographer.printer_interface import Toolhead
-    from cartographer.probes.scan_probe import ScanProbe
-    from cartographer.probes.touch_probe import TouchProbe
+    from cartographer.probe import Probe
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +26,7 @@ class ProbeMacro(Macro[MacroParams]):
 
     @override
     def run(self, params: MacroParams) -> None:
-        distance = self._probe.probe()
+        distance = self._probe.perform_scan()
         logger.info("Result is z=%.6f", distance)
         self.last_distance = distance
 
@@ -61,7 +60,7 @@ class ProbeAccuracyMacro(Macro[MacroParams]):
         self._toolhead.manual_move(z=position.z + retract, speed=lift_speed)
         measurements: list[float] = []
         while len(measurements) < sample_count:
-            distance = self._probe.probe()
+            distance = self._probe.perform_scan()
             measurements.append(distance)
             pos = self._toolhead.get_position()
             self._toolhead.manual_move(z=pos.z + retract, speed=lift_speed)
@@ -92,14 +91,12 @@ class QueryProbeMacro(Macro[MacroParams]):
     description = "Return the status of the z-probe"
     last_triggered: bool = False
 
-    def __init__(self, probe: Probe, toolhead: Toolhead) -> None:
+    def __init__(self, probe: Probe) -> None:
         self._probe = probe
-        self._toolhead = toolhead
 
     @override
     def run(self, params: MacroParams) -> None:
-        time = self._toolhead.get_last_move_time()
-        triggered = self._probe.query_is_triggered(time)
+        triggered = self._probe.query_is_triggered()
         logger.info("probe: %s", "TRIGGERED" if triggered else "open")
         self.last_triggered = triggered
 
@@ -109,31 +106,26 @@ class ZOffsetApplyProbeMacro(Macro[MacroParams]):
     name = "Z_OFFSET_APPLY_PROBE"
     description = "Adjust the probe's z_offset"
 
-    def __init__(self, toolhead: Toolhead, scan_probe: ScanProbe[C, S], touch_probe: TouchProbe[object]) -> None:
+    def __init__(self, probe: Probe, toolhead: Toolhead) -> None:
+        self._probe = probe
         self._toolhead = toolhead
-        self._scan_probe = scan_probe
-        self._touch_probe = touch_probe
 
     @override
     def run(self, params: MacroParams) -> None:
         additional_offset = self._toolhead.get_gcode_z_offset()
-        # If a touch model is loaded, we assume the user uses touch.
-        probe_mode, probe = (
-            ("touch", self._touch_probe) if self._touch_probe.model is not None else ("scan", self._scan_probe)
+        # If a touch is ready, we assume the user uses touch.
+        probe_mode_str, probe_mode = (
+            ("touch", self._probe.touch) if self._probe.touch.is_ready else ("scan", self._probe.scan)
         )
-        current_offset = probe.offset.z
-        if probe.model is None:
-            msg = "no probe model loaded"
-            raise RuntimeError(msg)
-
+        current_offset = probe_mode.offset.z
         new_offset = current_offset - additional_offset
         logger.info(
             """cartographer: %s %s z_offset: %.3f
             The SAVE_CONFIG command will update the printer config file
             with the above and restart the printer.""",
-            probe_mode,
-            probe.model.name,
+            probe_mode_str,
+            probe_mode.get_model().name,
             new_offset,
         )
 
-        probe.save_z_offset(new_offset)
+        probe_mode.save_z_offset(new_offset)

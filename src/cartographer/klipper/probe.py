@@ -9,7 +9,7 @@ if TYPE_CHECKING:
     from gcode import GCodeCommand
 
     from cartographer.macros.probe import ProbeMacro, QueryProbeMacro
-    from cartographer.printer_interface import Probe
+    from cartographer.printer_interface import ProbeMode
 
 
 class ProbeStatus(TypedDict):
@@ -29,13 +29,13 @@ DEFAULT_PROBE_SPEED = 3
 
 
 class KlipperProbeSession:
-    def __init__(self, probe: Probe) -> None:
-        self.probe: Probe = probe
+    def __init__(self, probe: ProbeMode) -> None:
+        self.probe: ProbeMode = probe
         self.positions: list[list[float]] = []
 
     def run_probe(self, gcmd: GCodeCommand) -> None:
         del gcmd
-        distance = self.probe.probe()
+        distance = self.probe.perform_probe()
         self.positions.append([0, 0, distance])
 
     def pull_probed_results(self):
@@ -48,11 +48,11 @@ class KlipperProbeSession:
 class KlipperCartographerProbe(PrinterProbe):
     def __init__(
         self,
-        probe: Probe,
+        probe: ProbeMode,
         probe_macro: ProbeMacro,
         query_probe_macro: QueryProbeMacro,
     ) -> None:
-        self.probe: Probe = probe
+        self.probe: ProbeMode = probe
         self.probe_macro: ProbeMacro = probe_macro
         self.query_probe_macro: QueryProbeMacro = query_probe_macro
 

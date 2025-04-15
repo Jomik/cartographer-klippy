@@ -8,13 +8,18 @@ from typing_extensions import TypeAlias
 
 from cartographer.macros.touch import TouchAccuracyMacro, TouchHomeMacro, TouchMacro
 from cartographer.printer_interface import MacroParams, Position, Toolhead
-from cartographer.probes.touch_probe import TouchProbe
+from cartographer.probe.touch_mode import TouchMode
 
 if TYPE_CHECKING:
     from pytest import LogCaptureFixture
     from pytest_mock import MockerFixture
 
-Probe: TypeAlias = TouchProbe[object]
+Probe: TypeAlias = TouchMode[object]
+
+
+@pytest.fixture
+def offset() -> Position:
+    return Position(0, 0, 0)
 
 
 @pytest.fixture
@@ -31,7 +36,7 @@ def test_touch_macro_output(
     params: MacroParams,
 ):
     macro = TouchMacro(probe)
-    probe.probe = mocker.Mock(return_value=5.0)
+    probe.perform_probe = mocker.Mock(return_value=5.0)
 
     with caplog.at_level(logging.INFO):
         macro.run(params)
@@ -58,7 +63,7 @@ def test_touch_accuracy_macro_output(
         i += 1
         return measurements[i]
 
-    probe.probe = mock_probe
+    probe.perform_probe = mock_probe
 
     with caplog.at_level(logging.INFO):
         macro.run(params)
@@ -91,7 +96,7 @@ def test_touch_accuracy_macro_sample_count(
         i += 1
         return measurements[i]
 
-    probe.probe = mock_probe
+    probe.perform_probe = mock_probe
 
     with caplog.at_level(logging.INFO):
         macro.run(params)
@@ -112,7 +117,7 @@ def test_touch_home_macro(
     params: MacroParams,
 ):
     macro = TouchHomeMacro(probe, toolhead)
-    probe.probe = mocker.Mock(return_value=0.1)
+    probe.perform_probe = mocker.Mock(return_value=0.1)
     toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 2))
     set_z_position_spy = mocker.spy(toolhead, "set_z_position")
 
@@ -129,7 +134,7 @@ def test_touch_home_macro_with_z_offset(
     params: MacroParams,
 ):
     macro = TouchHomeMacro(probe, toolhead)
-    probe.probe = mocker.Mock(return_value=0.0)
+    probe.perform_probe = mocker.Mock(return_value=0.0)
     offset.z = -0.1
     toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 2))
     set_z_position_spy = mocker.spy(toolhead, "set_z_position")

@@ -6,7 +6,7 @@ import pytest
 from typing_extensions import TypeAlias
 
 from cartographer.printer_interface import HomingState, Mcu, Sample, Toolhead
-from cartographer.probes.touch_probe import Configuration, TouchProbe
+from cartographer.probe.touch_mode import Configuration, TouchMode
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from cartographer.configuration import TouchModelConfiguration
 
 
-Probe: TypeAlias = TouchProbe[object]
+Probe: TypeAlias = TouchMode[object]
 
 
 class MockConfiguration:
@@ -62,14 +62,14 @@ def homing_state(mocker: MockerFixture, probe: Probe) -> HomingState:
 def test_probe_success(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
     toolhead.z_homing_move = mocker.Mock(return_value=0.5)
 
-    assert probe.probe() == 0.5
+    assert probe.perform_probe() == 0.5
 
 
 def test_probe_standard_deviation_failure(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
     toolhead.z_homing_move = mocker.Mock(side_effect=[1.000, 1.002, 1.1, 1.016, 1.018])
 
     with pytest.raises(RuntimeError, match="failed"):
-        _ = probe.probe()
+        _ = probe.perform_probe()
 
 
 def test_probe_suceeds_on_retry(
@@ -78,14 +78,14 @@ def test_probe_suceeds_on_retry(
     config.touch_retries = 1
     toolhead.z_homing_move = mocker.Mock(side_effect=[1.0, 1.01, 1.5, 0.5, 0.5, 0.5, 0.5, 0.5])
 
-    assert probe.probe() == 0.5
+    assert probe.perform_probe() == 0.5
 
 
 def test_probe_unhomed_z(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
     toolhead.is_homed = mocker.Mock(return_value=False)
 
     with pytest.raises(RuntimeError, match="z axis must be homed"):
-        _ = probe.probe()
+        _ = probe.perform_probe()
 
 
 def test_home_start_invalid_threshold(model: TouchModelConfiguration, probe: Probe) -> None:

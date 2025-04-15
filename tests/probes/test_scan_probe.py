@@ -7,7 +7,7 @@ import pytest
 from typing_extensions import TypeAlias, override
 
 from cartographer.printer_interface import HomingState, Mcu, Toolhead
-from cartographer.probes.scan_probe import Configuration, Model, ScanProbe
+from cartographer.probe.scan_mode import Configuration, Model, ScanMode
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -21,7 +21,7 @@ class Sample:
     frequency: float
 
 
-Probe: TypeAlias = ScanProbe[object, Sample]
+Probe: TypeAlias = ScanMode[object, Sample]
 
 
 class MockModel(Model):
@@ -76,7 +76,7 @@ def homing_state(mocker: MockerFixture, probe: Probe) -> HomingState:
 
 @pytest.fixture
 def probe(mcu: Mcu[object, Sample], toolhead: Toolhead, config: Configuration, model: Model) -> Probe:
-    return ScanProbe(mcu, toolhead, config, model=model)
+    return ScanMode(mcu, toolhead, config, model=model)
 
 
 def test_measures_distance(probe: Probe, session: Session[Sample]):
@@ -107,13 +107,13 @@ def test_probe_errors_when_not_homed(probe: Probe, toolhead: Toolhead):
     toolhead.is_homed = lambda axis: False
 
     with pytest.raises(RuntimeError):
-        _ = probe.probe()
+        _ = probe.perform_probe()
 
 
 def test_probe_returns_distance(probe: Probe, session: Session[Sample]):
     session.get_items = lambda: [Sample(time=0.0, frequency=42) for _ in range(11)]
 
-    distance = probe.probe()
+    distance = probe.perform_probe()
 
     assert distance == 42
 
@@ -123,7 +123,7 @@ def test_probe_errors_outside_range(probe: Probe, session: Session[Sample], mode
     model.frequency_to_distance = lambda frequency: float("inf")
 
     with pytest.raises(RuntimeError):
-        _ = probe.probe()
+        _ = probe.perform_probe()
 
 
 def test_do_nothing_when_not_homing(mocker: MockerFixture, probe: Probe, homing_state: HomingState):

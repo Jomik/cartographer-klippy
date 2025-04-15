@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Generic, Protocol
 import numpy as np
 from typing_extensions import override
 
-from cartographer.printer_interface import C, Endstop, HomingState, Position, Probe, S
+from cartographer.printer_interface import C, Endstop, HomingState, Position, ProbeMode, S
 
 if TYPE_CHECKING:
     from cartographer.printer_interface import Mcu, Toolhead
@@ -33,7 +33,7 @@ class Configuration(Protocol):
     move_speed: float
 
 
-class ScanProbe(Probe, Endstop[C], Generic[C, S]):
+class ScanMode(ProbeMode, Endstop[C], Generic[C, S]):
     """Implementation for Scan mode."""
 
     def get_model(self) -> Model:
@@ -52,6 +52,11 @@ class ScanProbe(Probe, Endstop[C], Generic[C, S]):
     def save_z_offset(self, new_offset: float) -> None:
         self.get_model().save_z_offset(new_offset)
 
+    @property
+    @override
+    def is_ready(self) -> bool:
+        return self.model is not None
+
     def __init__(
         self,
         mcu: Mcu[C, S],
@@ -68,7 +73,7 @@ class ScanProbe(Probe, Endstop[C], Generic[C, S]):
         self._mcu: Mcu[C, S] = mcu
 
     @override
-    def probe(self) -> float:
+    def perform_probe(self) -> float:
         if not self._toolhead.is_homed("z"):
             msg = "z axis must be homed before probing"
             raise RuntimeError(msg)

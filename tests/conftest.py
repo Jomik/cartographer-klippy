@@ -36,10 +36,5 @@ def mcu(mocker: MockerFixture, session: Session[Sample]) -> Mcu[object, Sample]:
 
 
 @pytest.fixture
-def offset() -> Position:
-    return Position(0, 0, 0)
-
-
-@pytest.fixture
 def params(mocker: MockerFixture) -> MacroParams:
     return mocker.MagicMock(spec=MacroParams, autospec=True, instance=True)
