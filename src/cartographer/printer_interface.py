@@ -33,44 +33,6 @@ class HomingState(Protocol):
         ...
 
 
-class Toolhead(Protocol):
-    def get_last_move_time(self) -> float:
-        """Returns the last time the toolhead moved."""
-        ...
-
-    def wait_moves(self) -> None:
-        """Wait for all moves to complete."""
-        ...
-
-    def get_position(self) -> Position:
-        """Get the currently commanded position of the toolhead."""
-        ...
-
-    def get_requested_position(self, time: float) -> Position:
-        """Get the requested position of the toolhead at the given time."""
-        ...
-
-    def manual_move(self, *, x: float = ..., y: float = ..., z: float = ..., speed: float) -> None:
-        """Move to requested position."""
-        ...
-
-    def is_homed(self, axis: HomingAxis) -> bool:
-        """Check if axis is homed."""
-        ...
-
-    def get_gcode_z_offset(self) -> float:
-        """Returns currently applied gcode offset for the z axis."""
-        ...
-
-    def z_homing_move(self, endstop: Endstop[C], *, bottom: float, speed: float) -> float:
-        """Starts homing move towards the given endstop."""
-        ...
-
-    def set_z_position(self, z: float) -> None:
-        """Set the z position of the toolhead."""
-        ...
-
-
 C = TypeVar("C", covariant=True)
 
 
@@ -133,3 +95,41 @@ class Probe(Protocol):
     def save_z_offset(self, new_offset: float) -> None: ...
     def probe(self) -> float: ...
     def query_is_triggered(self, print_time: float) -> bool: ...
+
+
+class Toolhead(Protocol):
+    def get_last_move_time(self) -> float:
+        """Returns the last time the toolhead moved."""
+        ...
+
+    def wait_moves(self) -> None:
+        """Wait for all moves to complete."""
+        ...
+
+    def get_position(self) -> Position:
+        """Get the currently commanded position of the toolhead."""
+        ...
+
+    def get_requested_position(self, time: float) -> Position:
+        """Get the requested position of the toolhead at the given time."""
+        ...
+
+    def manual_move(self, *, x: float = ..., y: float = ..., z: float = ..., speed: float) -> None:
+        """Move to requested position."""
+        ...
+
+    def is_homed(self, axis: HomingAxis) -> bool:
+        """Check if axis is homed."""
+        ...
+
+    def get_gcode_z_offset(self) -> float:
+        """Returns currently applied gcode offset for the z axis."""
+        ...
+
+    def z_homing_move(self, endstop: Endstop[object], *, bottom: float, speed: float) -> float:
+        """Starts homing move towards the given endstop."""
+        ...
+
+    def set_z_position(self, z: float) -> None:
+        """Set the z position of the toolhead."""
+        ...

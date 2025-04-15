@@ -23,10 +23,10 @@ scipy = ["scipy>=1.9.3"]
 
 [dependency-groups]
 test = [
-    "pytest>=8.3.5",
-    "pytest-bdd>=7.3.0",
- "pytest-cov>=5.0.0",
- "pytest-mock>=3.14.0",
+  "pytest>=8.3.5",
+  "pytest-bdd>=7.3.0",
+  "pytest-cov>=5.0.0",
+  "pytest-mock>=3.14.0",
 ]
 lint = ["ruff>=0.11.0"]
 typecheck = [
@@ -39,8 +39,10 @@ typecheck = [
 pythonVersion = "3.8"
 venvPath = "./"
 venv = ".venv"
-reportMissingModuleSource = false # klippy imports are always missing sources
+allowedUntypedLibraries = ["numpy.polynomial"]
+reportMissingModuleSource = false              # klippy imports are always missing sources
 reportMissingTypeStubs = true
+reportAny = false                              # Consider if we can get rid of this
 
 [tool.pytest.ini_options]
 addopts = ["--import-mode=importlib"]
@@ -59,11 +61,7 @@ raw-options.local_scheme = "no-local-version"
 version-file = "src/cartographer/__version__.py"
 
 [tool.hatch.build.targets.sdist]
-exclude = [
-  "/.github",
-  "/.jj",
-  "/docs",
-]
+exclude = ["/.github", "/.jj", "/docs"]
 [tool.hatch.build.targets.wheel]
 packages = ["src/cartographer"]
 

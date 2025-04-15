@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, NamedTuple, Protocol
+from typing import TYPE_CHECKING, NamedTuple, Protocol, cast
 
 from numpy.polynomial import Polynomial
 
@@ -19,8 +19,6 @@ class Sample(Protocol):
 MAX_TOLERANCE = 1e-8
 ITERATIONS = 50
 DEGREES = 9
-
-polynomial_fit: Callable[[list[float], list[float], int], Polynomial] = Polynomial.fit  # pyright:ignore[reportUnknownMemberType]
 
 
 class Domain(NamedTuple):
@@ -58,7 +56,7 @@ class ScanModel:
         z_offsets = [toolhead.get_requested_position(sample.time).z for sample in samples]
         inverse_frequencies = [1 / sample.frequency for sample in samples]
 
-        poly = polynomial_fit(inverse_frequencies, z_offsets, DEGREES)
+        poly = cast("Polynomial", Polynomial.fit(inverse_frequencies, z_offsets, DEGREES))
         return poly
 
     def frequency_to_distance(self, frequency: float) -> float:

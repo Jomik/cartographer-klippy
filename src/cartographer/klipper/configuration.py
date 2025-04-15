@@ -21,7 +21,7 @@ T = TypeVar("T", bound=Enum)
 
 
 def get_enum_choice(config: ConfigWrapper, option: str, enum_type: type[T], default: T) -> T:
-    choice = config.get(option, default.value)  #  pyright: ignore[reportAny]
+    choice = config.get(option, default.value)
     if choice not in enum_type._value2member_map_:
         msg = f"invalid choice '{choice}' for option '{option}'"
         raise config.error(msg)

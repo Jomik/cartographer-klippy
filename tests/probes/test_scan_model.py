@@ -61,8 +61,8 @@ def test_fit(toolhead: Toolhead) -> None:
 def test_from_config(config: ScanModelConfiguration) -> None:
     model = ScanModel(config)
     assert isinstance(model, ScanModel)
-    assert model.poly.domain[0] == config.domain[0]  # pyright: ignore[reportAny]
-    assert model.poly.domain[1] == config.domain[1]  # pyright: ignore[reportAny]
+    assert model.poly.domain[0] == config.domain[0]
+    assert model.poly.domain[1] == config.domain[1]
 
 
 def test_frequency_to_distance(model: ScanModel) -> None:
