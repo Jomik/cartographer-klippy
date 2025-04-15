@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import itertools
 import logging
-import sys
 from typing import TYPE_CHECKING, cast
 
 import pytest
@@ -23,7 +22,6 @@ if TYPE_CHECKING:
     from cartographer.printer_interface import MacroParams, Toolhead
 
 
-pytestmark = pytest.mark.skipif(sys.version_info < (3, 9), reason="requires Python 3.9+")
 scenarios("../../features/probe.feature")
 
 ScanMode: TypeAlias = scan_mode.ScanMode[object, Sample]
