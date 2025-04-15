@@ -12,7 +12,7 @@ from cartographer.lib.nearest_neighbor import NearestNeighborSearcher
 from cartographer.printer_interface import C, Macro, P, Position, S, Toolhead
 
 if TYPE_CHECKING:
-    from cartographer.probes.scan_probe import Model, ScanProbe
+    from cartographer.probe.scan_mode import Model, ScanMode
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ class BedMeshCalibrateMacro(Macro[P]):
 
     def __init__(
         self,
-        probe: ScanProbe[C, S],
+        probe: ScanMode[C, S],
         toolhead: Toolhead,
         helper: MeshHelper[P],
         config: Configuration,

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Protocol, final
 import numpy as np
 from typing_extensions import override
 
-from cartographer.printer_interface import C, Endstop, HomingState, Mcu, Position, Probe, S, Toolhead
+from cartographer.printer_interface import C, Endstop, HomingState, Mcu, Position, ProbeMode, S, Toolhead
 
 if TYPE_CHECKING:
     from cartographer.configuration import TouchModelConfiguration
@@ -19,8 +19,6 @@ RETRACT_DISTANCE = 2.0
 
 
 class Configuration(Protocol):
-    x_offset: float
-    y_offset: float
     move_speed: float
 
     touch_retries: int
@@ -28,7 +26,7 @@ class Configuration(Protocol):
 
 
 @final
-class TouchProbe(Probe, Endstop[C]):
+class TouchMode(ProbeMode, Endstop[C]):
     """Implementation for Survey Touch."""
 
     def get_model(self) -> TouchModelConfiguration:
@@ -41,11 +39,16 @@ class TouchProbe(Probe, Endstop[C]):
     @override
     def offset(self) -> Position:
         z_offset = self.model.z_offset if self.model else 0.0
-        return Position(self.config.x_offset, self.config.y_offset, z_offset)
+        return Position(0.0, 0.0, z_offset)
 
     @override
     def save_z_offset(self, new_offset: float) -> None:
         self.get_model().save_z_offset(new_offset)
+
+    @property
+    @override
+    def is_ready(self) -> bool:
+        return self.model is not None
 
     def __init__(
         self,
@@ -61,7 +64,7 @@ class TouchProbe(Probe, Endstop[C]):
         self.model = model
 
     @override
-    def probe(self) -> float:
+    def perform_probe(self) -> float:
         if not self._toolhead.is_homed("z"):
             msg = "z axis must be homed before probing"
             raise RuntimeError(msg)

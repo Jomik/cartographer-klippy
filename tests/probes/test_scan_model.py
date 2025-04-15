@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import pytest
 from numpy.polynomial import Polynomial
 
-from cartographer.probes.scan_model import Sample, ScanModel
+from cartographer.probe.scan_model import Sample, ScanModel
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
