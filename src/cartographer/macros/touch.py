@@ -22,16 +22,16 @@ Probe = TouchMode[object]
 class TouchMacro(Macro[MacroParams]):
     name = "TOUCH"
     description = "Touch the bed to get the height offset at the current position."
-    last_distance: float = 0
+    last_trigger_position: float = 0
 
     def __init__(self, probe: Probe) -> None:
         self._probe = probe
 
     @override
     def run(self, params: MacroParams) -> None:
-        distance = self._probe.perform_probe()
-        logger.info("Result is z=%.6f", distance)
-        self.last_distance = distance
+        trigger_position = self._probe.perform_probe()
+        logger.info("Result is z=%.6f", trigger_position)
+        self.last_trigger_position = trigger_position
 
 
 @final
@@ -63,8 +63,8 @@ class TouchAccuracyMacro(Macro[MacroParams]):
         self._toolhead.move(z=position.z + retract, speed=lift_speed)
         measurements: list[float] = []
         while len(measurements) < sample_count:
-            distance = self._probe.perform_probe()
-            measurements.append(distance)
+            trigger_pos = self._probe.perform_probe()
+            measurements.append(trigger_pos)
             pos = self._toolhead.get_position()
             self._toolhead.move(z=pos.z + retract, speed=lift_speed)
         logger.debug("Measurements gathered: %s", measurements)
@@ -110,13 +110,13 @@ class TouchHomeMacro(Macro[MacroParams]):
             y=self._home_position.y,
             speed=self._probe.config.move_speed,
         )
-        distance = self._probe.perform_probe()
+        trigger_pos = self._probe.perform_probe()
         pos = self._toolhead.get_position()
-        self._toolhead.set_z_position(pos.z - (distance - self._probe.offset.z))
+        self._toolhead.set_z_position(pos.z - (trigger_pos - self._probe.offset.z))
         logger.info(
             "Touch home at (%.3f,%.3f) adjusted z by %.3f, offset %.3f",
             pos.x,
             pos.y,
-            -distance,
+            -trigger_pos,
             -self._probe.offset.z,
         )

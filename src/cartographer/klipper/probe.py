@@ -10,6 +10,7 @@ from cartographer.klipper.utils import reraise_as_command_error
 if TYPE_CHECKING:
     from gcode import GCodeCommand
 
+    from cartographer.klipper.printer import KlipperToolhead
     from cartographer.macros.probe import ProbeMacro, QueryProbeMacro
     from cartographer.printer_interface import ProbeMode
 
@@ -31,18 +32,22 @@ DEFAULT_PROBE_SPEED = 3
 
 
 class KlipperProbeSession:
-    def __init__(self, probe: ProbeMode) -> None:
-        self.probe: ProbeMode = probe
-        self.positions: list[list[float]] = []
+    def __init__(self, probe: ProbeMode, toolhead: KlipperToolhead) -> None:
+        self._probe: ProbeMode = probe
+        self._results: list[list[float]] = []
+        self.toolhead: KlipperToolhead = toolhead
 
     @reraise_as_command_error
     def run_probe(self, gcmd: GCodeCommand) -> None:
         del gcmd
-        distance = self.probe.perform_probe()
-        self.positions.append([0, 0, distance])
+        pos = self.toolhead.get_position()
+        trigger_pos = self._probe.perform_probe()
+        self._results.append([pos.x, pos.y, trigger_pos])
 
     def pull_probed_results(self):
-        return self.positions
+        result = self._results
+        self._results = []
+        return result
 
     def end_probe_session(self) -> None:
         pass
@@ -51,6 +56,7 @@ class KlipperProbeSession:
 class KlipperCartographerProbe(PrinterProbe):
     def __init__(
         self,
+        toolhead: KlipperToolhead,
         probe: ProbeMode,
         probe_macro: ProbeMacro,
         query_probe_macro: QueryProbeMacro,
@@ -58,6 +64,7 @@ class KlipperCartographerProbe(PrinterProbe):
         self.probe: ProbeMode = probe
         self.probe_macro: ProbeMacro = probe_macro
         self.query_probe_macro: QueryProbeMacro = query_probe_macro
+        self.toolhead: KlipperToolhead = toolhead
 
     @override
     def get_probe_params(self, gcmd: GCodeCommand | None = None) -> ProbeParams:
@@ -77,9 +84,9 @@ class KlipperCartographerProbe(PrinterProbe):
         return ProbeStatus(
             name="cartographer",
             last_query=1 if self.query_probe_macro.last_triggered else 0,
-            last_z_result=self.probe_macro.last_distance,
+            last_z_result=self.probe_macro.last_trigger_position,
         )
 
     @override
     def start_probe_session(self, gcmd: GCodeCommand) -> KlipperProbeSession:
-        return KlipperProbeSession(self.probe)
+        return KlipperProbeSession(self.probe, self.toolhead)
