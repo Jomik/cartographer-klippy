@@ -72,6 +72,8 @@ class PrinterCartographer:
 
         printer.lookup_object("pins").register_chip("probe", homing_chip)
 
+        mesh_config = KlipperMeshConfiguration.from_config(config, self.config)
+
         self.gcode = printer.lookup_object("gcode")
         self._configure_macro_logger()
         probe_macro = ProbeMacro(probe)
@@ -84,14 +86,18 @@ class PrinterCartographer:
 
         self._register_macro(TouchMacro(touch_mode))
         self._register_macro(TouchAccuracyMacro(touch_mode, toolhead))
-        self._register_macro(TouchHomeMacro(touch_mode, toolhead))
+        touch_home = TouchHomeMacro(touch_mode, toolhead, mesh_config.zero_reference_position)
+        self._register_macro(touch_home)
+        self.gcode.register_command(
+            "CARTOGRAHPER_TOUCH", catch_macro_errors(touch_home.run), desc=touch_home.description
+        )
 
         self._register_macro(
             BedMeshCalibrateMacro(
                 scan_mode,
                 toolhead,
                 KlipperMeshHelper(config, self.gcode),
-                KlipperMeshConfiguration.from_config(config, self.config),
+                mesh_config,
             )
         )
 
