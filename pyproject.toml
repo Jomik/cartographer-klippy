@@ -66,7 +66,6 @@ exclude = ["/.github", "/.jj", "/docs"]
 packages = ["src/cartographer"]
 
 [tool.hatch.build.targets.wheel.hooks.custom]
-path = "hatch_build.py"
 
 [build-system]
 requires = ["hatchling", "hatch-vcs"]

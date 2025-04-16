@@ -63,7 +63,7 @@ class CustomBuildHook(BuildHookInterface[BuilderConfig]):
         ref_name = os.getenv("GITHUB_REF_NAME")
         repository = os.getenv("GITHUB_REPOSITORY")
         if ref_name is not None and repository is not None:
-            urls["changelog"] = f"{repository}/releases/tag/{ref_name}"
+            urls["changelog"] = f"https://github.com/{repository}/releases/tag/{ref_name}"
 
         data = ReleaseInfo(
             project_name=project.get("name"),
