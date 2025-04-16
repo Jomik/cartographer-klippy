@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 from enum import Enum
 from typing import Protocol
 
@@ -7,6 +8,12 @@ from typing import Protocol
 class ProbeMethod(Enum):
     SCAN = "scan"
     TOUCH = "touch"
+
+
+@dataclass
+class ScanModelFit:
+    coefficients: list[float]
+    domain: tuple[float, float]
 
 
 class Configuration(Protocol):
@@ -30,6 +37,8 @@ class Configuration(Protocol):
 
     # [cartographer touch_model default]
     touch_models: dict[str, TouchModelConfiguration]
+
+    def save_new_scan_model(self, name: str, model: ScanModelFit) -> ScanModelConfiguration: ...
 
 
 class ScanModelConfiguration(Protocol):

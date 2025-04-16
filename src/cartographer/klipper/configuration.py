@@ -10,6 +10,7 @@ from cartographer.configuration import (
 )
 from cartographer.configuration import (
     ScanModelConfiguration,
+    ScanModelFit,
     TouchModelConfiguration,
 )
 
@@ -30,6 +31,7 @@ def get_enum_choice(config: ConfigWrapper, option: str, enum_type: type[T], defa
 
 class KlipperCartographerConfiguration(CartographerConfiguration):
     def __init__(self, config: ConfigWrapper) -> None:
+        self._config: ConfigWrapper = config
         self.x_offset: float = config.getfloat("x_offset")
         self.y_offset: float = config.getfloat("y_offset")
         self.backlash_compensation: float = config.getfloat("backlash_compensation", 0)
@@ -58,6 +60,22 @@ class KlipperCartographerConfiguration(CartographerConfiguration):
                 KlipperTouchModelConfiguration.from_config, config.get_prefix_sections(f"{config_name} touch_model")
             )
         }
+
+    @override
+    def save_new_scan_model(self, name: str, model: ScanModelFit) -> KlipperScanModelConfiguration:
+        section_name = f"{self._config.get_name()} scan_model {name}"
+        configfile = self._config.get_printer().lookup_object("configfile")
+        configfile.set(section_name, "z_offset", 0)
+        configfile.set(section_name, "coefficients", ", ".join(map(str, model.coefficients)))
+        configfile.set(section_name, "domain", ", ".join(map(str, model.domain)))
+
+        return KlipperScanModelConfiguration(
+            self._config.getsection(section_name),
+            name=name,
+            coefficients=model.coefficients,
+            domain=model.domain,
+            z_offset=0,
+        )
 
 
 class KlipperScanModelConfiguration(ScanModelConfiguration):

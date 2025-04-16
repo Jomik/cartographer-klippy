@@ -1,8 +1,10 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, NamedTuple, Protocol, cast
+from typing import TYPE_CHECKING, Protocol, cast
 
 from numpy.polynomial import Polynomial
+
+from cartographer.configuration import ScanModelFit
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -19,11 +21,6 @@ class Sample(Protocol):
 MAX_TOLERANCE = 1e-8
 ITERATIONS = 50
 DEGREES = 9
-
-
-class Domain(NamedTuple):
-    lower: float
-    upper: float
 
 
 # TODO: Temperature compensation
@@ -52,12 +49,16 @@ class ScanModel:
         self.config = config
 
     @staticmethod
-    def fit(toolhead: Toolhead, samples: Sequence[Sample]) -> Polynomial:
+    def fit(toolhead: Toolhead, samples: Sequence[Sample]) -> ScanModelFit:
         z_offsets = [toolhead.get_requested_position(sample.time).z for sample in samples]
         inverse_frequencies = [1 / sample.frequency for sample in samples]
 
         poly = cast("Polynomial", Polynomial.fit(inverse_frequencies, z_offsets, DEGREES))
-        return poly
+
+        return ScanModelFit(
+            coefficients=poly.coef,
+            domain=poly.domain,
+        )
 
     def frequency_to_distance(self, frequency: float) -> float:
         lower_bound, upper_bound = self.config.domain
@@ -95,12 +96,12 @@ class ScanModel:
         msg = "model convergence error"
         raise RuntimeError(msg)
 
-    _z_range: Domain | None = None
+    _z_range: tuple[float, float] | None = None
 
-    def _get_z_range(self) -> Domain:
+    def _get_z_range(self) -> tuple[float, float]:
         if self._z_range is None:
             min, max = self.config.domain
-            self._z_range = Domain(self._eval(min), self._eval(max))
+            self._z_range = (self._eval(min), self._eval(max))
         return self._z_range
 
     def _eval(self, x: float) -> float:

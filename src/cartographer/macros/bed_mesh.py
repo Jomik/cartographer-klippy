@@ -81,9 +81,12 @@ class BedMeshCalibrateMacro(Macro[P]):
                 path_iter = reversed(path) if is_odd else path
                 for point in path_iter:
                     self._move_to_point(point, speed)
+                self.toolhead.dwell(0.250)
                 self.toolhead.wait_moves()
-            time = self.toolhead.get_last_move_time() + 0.5
+            time = self.toolhead.get_last_move_time()
             session.wait_for(lambda samples: samples[-1].time >= time)
+            count = len(session.items)
+            session.wait_for(lambda samples: len(samples) >= count + 50)
 
         samples = session.get_items()
         positions = self._calculate_positions(self.probe.model, path, samples)
