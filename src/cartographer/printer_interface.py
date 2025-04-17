@@ -137,3 +137,19 @@ class Toolhead(Protocol):
     def set_z_position(self, z: float) -> None:
         """Set the z position of the toolhead."""
         ...
+
+    def get_z_axis_limits(self) -> tuple[float, float]:
+        """Get the limits of the z axis."""
+        ...
+
+    def manual_probe(self, finalize_callback: Callable[[Position | None], None]) -> None:
+        """Start a manual probe."""
+        ...
+
+    def clear_z_homing_state(self) -> None:
+        """Clears z homing state"""
+        ...
+
+    def dwell(self, seconds: float) -> None:
+        """Dwell for the given number of seconds."""
+        ...

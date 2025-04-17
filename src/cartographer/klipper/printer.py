@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, final
+from typing import TYPE_CHECKING, Callable, final
 
+from extras.manual_probe import ManualProbeHelper
 from typing_extensions import override
 
 from cartographer.klipper.endstop import KlipperEndstop
@@ -90,3 +91,27 @@ class KlipperToolhead(Toolhead):
         pos = self.toolhead.get_position()[:]
         pos[2] = z
         self.toolhead.set_position(pos, "z")
+
+    @override
+    def get_z_axis_limits(self) -> tuple[float, float]:
+        time = self.toolhead.get_last_move_time()
+        status = self.toolhead.get_status(time)
+        return status["axis_minimum"][2], status["axis_maximum"][2]
+
+    @override
+    def manual_probe(self, finalize_callback: Callable[[Position | None], None]) -> None:
+        gcode = self.printer.lookup_object("gcode")
+        gcmd = gcode.create_gcode_command("", "", {})
+        _ = ManualProbeHelper(
+            self.printer,
+            gcmd,
+            lambda pos: finalize_callback(Position(pos[0], pos[1], pos[2]) if pos else None),
+        )
+
+    @override
+    def clear_z_homing_state(self) -> None:
+        self.toolhead.get_kinematics().clear_homing_state("z")
+
+    @override
+    def dwell(self, seconds: float) -> None:
+        self.toolhead.dwell(seconds)

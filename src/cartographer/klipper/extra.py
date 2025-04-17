@@ -16,6 +16,7 @@ from cartographer.klipper.temperature import PrinterTemperatureCoil
 from cartographer.lib.alpha_beta_filter import AlphaBetaFilter
 from cartographer.macros import ProbeAccuracyMacro, ProbeMacro, QueryProbeMacro, ZOffsetApplyProbeMacro
 from cartographer.macros.bed_mesh import BedMeshCalibrateMacro
+from cartographer.macros.scan import ScanCalibrateMacro
 from cartographer.macros.touch import TouchAccuracyMacro, TouchHomeMacro, TouchMacro
 from cartographer.probe import Probe, ScanMode, ScanModel, TouchMode
 
@@ -100,6 +101,8 @@ class PrinterCartographer:
                 mesh_config,
             )
         )
+
+        self._register_macro(ScanCalibrateMacro(scan_mode, toolhead, self.config))
 
         printer.add_object(
             "probe",

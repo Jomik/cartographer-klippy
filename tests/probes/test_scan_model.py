@@ -53,9 +53,10 @@ def model(mocker: MockerFixture, config: MockConfiguration) -> ScanModel:
 def test_fit(toolhead: Toolhead) -> None:
     samples = [MockSample(time=i, frequency=1 / i) for i in range(1, 20)]
 
-    poly = ScanModel.fit(toolhead, samples)
+    fit = ScanModel.fit(toolhead, samples)
 
-    assert poly(10) == pytest.approx(10.0)  # pyright: ignore[reportUnknownMemberType]
+    assert fit.domain[0] == 1
+    assert fit.domain[1] == 19
 
 
 def test_from_config(config: ScanModelConfiguration) -> None:
