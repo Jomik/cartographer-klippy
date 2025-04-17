@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, final
 
 from typing_extensions import override
 
+from cartographer.klipper.utils import reraise_as_command_error
 from cartographer.printer_interface import HomingAxis, HomingState
 
 if TYPE_CHECKING:
@@ -65,6 +66,7 @@ class KlipperEndstop(metaclass=_MemoizedEndstop):
         self.endstop = endstop
         self.printer.register_event_handler("homing:home_rails_end", self.home_rails_end)
 
+    @reraise_as_command_error
     def home_rails_end(self, homing: Homing, rails: list[PrinterRail]) -> None:
         endstops = [es.endstop for rail in rails for es, _ in rail.get_endstops() if isinstance(es, KlipperEndstop)]
         self.endstop.on_home_end(KlipperHomingState(homing, endstops))
@@ -78,6 +80,7 @@ class KlipperEndstop(metaclass=_MemoizedEndstop):
     def get_steppers(self) -> list[MCU_stepper]:
         return self.mcu.dispatch.get_steppers()
 
+    @reraise_as_command_error
     def home_start(
         self,
         print_time: float,
@@ -89,9 +92,11 @@ class KlipperEndstop(metaclass=_MemoizedEndstop):
         del sample_time, sample_count, rest_time, triggered
         return self.endstop.home_start(print_time)
 
+    @reraise_as_command_error
     def home_wait(self, home_end_time: float) -> float:
         return self.endstop.home_wait(home_end_time)
 
+    @reraise_as_command_error
     def query_endstop(self, print_time: float) -> int:
         return 1 if self.endstop.query_is_triggered(print_time) else 0
 

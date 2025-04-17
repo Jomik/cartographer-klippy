@@ -5,6 +5,8 @@ from typing import TYPE_CHECKING, TypedDict
 from extras.probe import PrinterProbe
 from typing_extensions import override
 
+from cartographer.klipper.utils import reraise_as_command_error
+
 if TYPE_CHECKING:
     from gcode import GCodeCommand
 
@@ -33,6 +35,7 @@ class KlipperProbeSession:
         self.probe: ProbeMode = probe
         self.positions: list[list[float]] = []
 
+    @reraise_as_command_error
     def run_probe(self, gcmd: GCodeCommand) -> None:
         del gcmd
         distance = self.probe.perform_probe()
