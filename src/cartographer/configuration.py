@@ -39,6 +39,7 @@ class Configuration(Protocol):
     touch_models: dict[str, TouchModelConfiguration]
 
     def save_new_scan_model(self, name: str, model: ScanModelFit) -> ScanModelConfiguration: ...
+    def save_new_touch_model(self, name: str, speed: float, threshold: int) -> TouchModelConfiguration: ...
 
 
 class ScanModelConfiguration(Protocol):

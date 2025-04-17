@@ -17,7 +17,7 @@ from cartographer.lib.alpha_beta_filter import AlphaBetaFilter
 from cartographer.macros import ProbeAccuracyMacro, ProbeMacro, QueryProbeMacro, ZOffsetApplyProbeMacro
 from cartographer.macros.bed_mesh import BedMeshCalibrateMacro
 from cartographer.macros.scan import ScanCalibrateMacro
-from cartographer.macros.touch import TouchAccuracyMacro, TouchHomeMacro, TouchMacro
+from cartographer.macros.touch import TouchAccuracyMacro, TouchCalibrateMacro, TouchHomeMacro, TouchMacro
 from cartographer.probe import Probe, ScanMode, ScanModel, TouchMode
 
 if TYPE_CHECKING:
@@ -103,6 +103,9 @@ class PrinterCartographer:
         )
 
         self._register_macro(ScanCalibrateMacro(scan_mode, toolhead, self.config))
+        self._register_macro(
+            TouchCalibrateMacro(touch_mode, toolhead, self.config, mesh_config.zero_reference_position)
+        )
 
         printer.add_object(
             "probe",

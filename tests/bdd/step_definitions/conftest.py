@@ -30,7 +30,7 @@ class MockParams(MacroParams):
         return float(self.params.get(name, default))
 
     @override
-    def get_int(self, name: str, default: int = ..., *, minval: int = ...) -> int:
+    def get_int(self, name: str, default: int = ..., *, minval: int = ..., maxval: int = ...) -> int:
         return int(self.params.get(name, default))
 
 

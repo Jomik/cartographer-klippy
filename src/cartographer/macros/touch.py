@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, final
+from contextlib import contextmanager
+from typing import TYPE_CHECKING, Protocol, final
 
 import numpy as np
 from typing_extensions import override
 
+from cartographer.configuration import TouchModelConfiguration
 from cartographer.printer_interface import Macro, MacroParams, Position
-from cartographer.probe.touch_mode import TouchMode
+from cartographer.probe.touch_mode import TouchError, TouchMode
 
 if TYPE_CHECKING:
     from cartographer.printer_interface import Toolhead
@@ -16,6 +18,12 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 Probe = TouchMode[object]
+
+logger = logging.getLogger(__name__)
+
+
+class Configuration(Protocol):
+    def save_new_touch_model(self, name: str, speed: float, threshold: int) -> TouchModelConfiguration: ...
 
 
 @final
@@ -120,3 +128,74 @@ class TouchHomeMacro(Macro[MacroParams]):
             -trigger_pos,
             -self._probe.offset.z,
         )
+
+
+@final
+class CalibrationModel(TouchModelConfiguration):
+    name = "calibration"
+    z_offset = 0.0
+
+    def __init__(self, *, speed: float, threshold: int) -> None:
+        self.speed = speed
+        self.threshold = threshold
+
+    @override
+    def save_z_offset(self, new_offset: float) -> None:
+        msg = "calibration model cannot be saved"
+        raise RuntimeError(msg)
+
+
+@final
+class TouchCalibrateMacro(Macro[MacroParams]):
+    name = "TOUCH_CALIBRATE"
+    description = "Run the touch calibration"
+
+    def __init__(self, probe: Probe, toolhead: Toolhead, config: Configuration, home_position: Position) -> None:
+        self._probe = probe
+        self._toolhead = toolhead
+        self._config = config
+        self._home_position = home_position
+
+    @override
+    def run(self, params: MacroParams) -> None:
+        name = params.get("MODEL_NAME", "default")
+        speed = params.get_int("SPEED", default=3, minval=1, maxval=5)
+        threshold_start = params.get_int("THRESHOLD", default=500)
+        threshold_max = params.get_int("MAX_THRESHOLD", default=5000)
+        step = params.get_int("THRESHOLD_STEP", default=500)
+
+        self._toolhead.move(
+            x=self._home_position.x,
+            y=self._home_position.y,
+            speed=self._probe.config.move_speed,
+        )
+
+        logger.info("Touch calibration at speed %d", speed, threshold_start)
+
+        model: TouchModelConfiguration | None = None
+        with self._revert_model():
+            for threshold in range(threshold_start, threshold_max, step):
+                self._probe.model = CalibrationModel(speed=speed, threshold=threshold)
+                try:
+                    logger.info("Attempting touch at threshold %d", threshold)
+                    _ = self._probe.perform_probe()
+                    model = self._config.save_new_touch_model(name, speed, threshold)
+                    break
+
+                except TouchError:
+                    logger.info("Touch failed at threshold %d", threshold)
+                    continue
+        if model is None:
+            msg = "failed to calibrate touch probe"
+            raise RuntimeError(msg)
+
+        logger.info("Touch calibrated at speed %d, threshold %d", model.speed, model.threshold)
+        self._probe.model = model
+
+    @contextmanager
+    def _revert_model(self):
+        old_model = self._probe.model
+        try:
+            yield
+        finally:
+            self._probe.model = old_model
