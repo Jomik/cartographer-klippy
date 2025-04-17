@@ -19,16 +19,16 @@ logger = logging.getLogger(__name__)
 class ProbeMacro(Macro[MacroParams]):
     name = "PROBE"
     description = "Probe the bed to get the height offset at the current position."
-    last_distance: float = 0
+    last_trigger_position: float = 0
 
     def __init__(self, probe: Probe) -> None:
         self._probe = probe
 
     @override
     def run(self, params: MacroParams) -> None:
-        distance = self._probe.perform_scan()
-        logger.info("Result is z=%.6f", distance)
-        self.last_distance = distance
+        trigger_pos = self._probe.perform_scan()
+        logger.info("Result is z=%.6f", trigger_pos)
+        self.last_trigger_position = trigger_pos
 
 
 @final
@@ -60,8 +60,8 @@ class ProbeAccuracyMacro(Macro[MacroParams]):
         self._toolhead.move(z=position.z + retract, speed=lift_speed)
         measurements: list[float] = []
         while len(measurements) < sample_count:
-            distance = self._probe.perform_scan()
-            measurements.append(distance)
+            trigger_pos = self._probe.perform_scan()
+            measurements.append(trigger_pos)
             pos = self._toolhead.get_position()
             self._toolhead.move(z=pos.z + retract, speed=lift_speed)
         logger.debug("Measurements gathered: %s", measurements)

@@ -104,6 +104,7 @@ class PrinterCartographer:
         printer.add_object(
             "probe",
             KlipperCartographerProbe(
+                toolhead,
                 scan_mode,
                 probe_macro,
                 query_probe_macro,

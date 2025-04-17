@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 import math
 from typing import TYPE_CHECKING, Generic, Protocol
 
@@ -11,6 +12,8 @@ from cartographer.printer_interface import C, Endstop, HomingState, Position, Pr
 if TYPE_CHECKING:
     from cartographer.printer_interface import Mcu, Toolhead
     from cartographer.stream import Session
+
+logger = logging.getLogger(__name__)
 
 
 class Model(Protocol):
@@ -46,11 +49,11 @@ class ScanMode(ProbeMode, Endstop[C], Generic[C, S]):
     @override
     def offset(self) -> Position:
         z_offset = self.model.z_offset if self.model else 0.0
-        return Position(self.config.x_offset, self.config.y_offset, z_offset)
+        return Position(self.config.x_offset, self.config.y_offset, self.probe_height + z_offset)
 
     @override
     def save_z_offset(self, new_offset: float) -> None:
-        self.get_model().save_z_offset(new_offset)
+        self.get_model().save_z_offset(new_offset - self.probe_height)
 
     @property
     @override
@@ -79,7 +82,10 @@ class ScanMode(ProbeMode, Endstop[C], Generic[C, S]):
             raise RuntimeError(msg)
         self._toolhead.move(z=self.probe_height, speed=self.config.move_speed)
         self._toolhead.wait_moves()
-        return self.measure_distance()
+        pos = self._toolhead.get_position()
+        dist = pos.z + self.probe_height - self.measure_distance()
+        logger.info("probe at %.3f,%.3f is z=%.6f", pos.x, pos.y, dist)
+        return dist
 
     def distance_to_frequency(self, distance: float) -> float:
         if self.model is None:
@@ -98,7 +104,7 @@ class ScanMode(ProbeMode, Endstop[C], Generic[C, S]):
 
         dist = float(np.median([self.model.frequency_to_distance(sample.frequency) for sample in samples]))
         if math.isinf(dist):
-            msg = "toolhead stopped below model range"
+            msg = "toolhead stopped outside model range"
             raise RuntimeError(msg)
         return dist
 

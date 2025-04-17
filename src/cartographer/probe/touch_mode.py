@@ -85,9 +85,9 @@ class TouchMode(ProbeMode, Endstop[C]):
         collected: list[float] = []
         logger.debug("Starting touch sequence...")
         for i in range(self.config.touch_samples):
-            distance = self._probe_distance()
-            logger.debug("Touch %d of %d: %.6f", i + 1, self.config.touch_samples, distance)
-            collected.append(distance)
+            trigger_pos = self._probe()
+            logger.debug("Touch %d of %d: %.6f", i + 1, self.config.touch_samples, trigger_pos)
+            collected.append(trigger_pos)
             if len(collected) < 3:
                 continue  # Need at least 3 samples for meaningful statistics
 
@@ -100,16 +100,16 @@ class TouchMode(ProbeMode, Endstop[C]):
         final_value = np.median(collected) if len(collected) == 3 else np.mean(collected)
         return float(final_value)
 
-    def _probe_distance(self) -> float:
+    def _probe(self) -> float:
         model = self.get_model()
         self._toolhead.wait_moves()
-        distance = self._toolhead.z_homing_move(self, bottom=-2.0, speed=model.speed)
+        trigger_pos = self._toolhead.z_homing_move(self, bottom=-2.0, speed=model.speed)
         pos = self._toolhead.get_position()
         self._toolhead.move(
             z=pos.z + RETRACT_DISTANCE,
             speed=model.speed,
         )
-        return distance
+        return trigger_pos
 
     @override
     def query_is_triggered(self, print_time: float) -> bool:
