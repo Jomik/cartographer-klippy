@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 from typing_extensions import TypeAlias
 
-from cartographer.printer_interface import HomingState, Mcu, Sample, Toolhead
+from cartographer.printer_interface import HomingState, Mcu, Position, Sample, Toolhead
 from cartographer.probe.touch_mode import Configuration, TouchMode
 
 if TYPE_CHECKING:
@@ -61,12 +61,34 @@ def homing_state(mocker: MockerFixture, probe: Probe) -> HomingState:
 
 def test_probe_success(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
     toolhead.z_homing_move = mocker.Mock(return_value=0.5)
+    toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 1))
 
     assert probe.perform_probe() == 0.5
 
 
+def test_probe_moves_below_5(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
+    toolhead.z_homing_move = mocker.Mock(return_value=0.5)
+    toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 1))
+    move_spy = mocker.spy(toolhead, "manual_move")
+
+    _ = probe.perform_probe()
+
+    assert move_spy.mock_calls[0] == mocker.call(z=5, speed=mocker.ANY)
+
+
+def test_does_not_move_above_5(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
+    toolhead.z_homing_move = mocker.Mock(return_value=0.5)
+    toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 10))
+    move_spy = mocker.spy(toolhead, "manual_move")
+
+    _ = probe.perform_probe()
+
+    assert move_spy.mock_calls[0] != mocker.call(z=5, speed=mocker.ANY)
+
+
 def test_probe_standard_deviation_failure(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
     toolhead.z_homing_move = mocker.Mock(side_effect=[1.000, 1.002, 1.1, 1.016, 1.018])
+    toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 1))
 
     with pytest.raises(RuntimeError, match="failed"):
         _ = probe.perform_probe()
@@ -77,6 +99,7 @@ def test_probe_suceeds_on_retry(
 ) -> None:
     config.touch_retries = 1
     toolhead.z_homing_move = mocker.Mock(side_effect=[1.0, 1.01, 1.5, 0.5, 0.5, 0.5, 0.5, 0.5])
+    toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 1))
 
     assert probe.perform_probe() == 0.5
 
