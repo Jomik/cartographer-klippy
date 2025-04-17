@@ -122,7 +122,7 @@ def test_touch_home_macro_moves(
     macro = TouchHomeMacro(probe, toolhead, Position(10, 10, 0))
     probe.perform_probe = mocker.Mock(return_value=0.1)
     toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 2))
-    move_spy = mocker.spy(toolhead, "manual_move")
+    move_spy = mocker.spy(toolhead, "move")
 
     macro.run(params)
 

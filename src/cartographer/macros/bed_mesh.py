@@ -69,7 +69,7 @@ class BedMeshCalibrateMacro(Macro[P]):
 
         self.helper.prepare(params)
 
-        self.toolhead.manual_move(z=scan_height, speed=5)
+        self.toolhead.move(z=scan_height, speed=5)
         path = self.helper.generate_path()
         self._move_to_point(path[0], speed)
 
@@ -92,7 +92,7 @@ class BedMeshCalibrateMacro(Macro[P]):
 
     def _move_to_point(self, point: MeshPoint, speed: float) -> None:
         offset = self.probe.offset
-        self.toolhead.manual_move(x=point.x - offset.x, y=point.y - offset.y, speed=speed)
+        self.toolhead.move(x=point.x - offset.x, y=point.y - offset.y, speed=speed)
 
     def _key(self, point: MeshPoint) -> tuple[float, float]:
         return round(point.x, 2), round(point.y, 2)

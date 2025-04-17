@@ -77,7 +77,7 @@ class ScanMode(ProbeMode, Endstop[C], Generic[C, S]):
         if not self._toolhead.is_homed("z"):
             msg = "z axis must be homed before probing"
             raise RuntimeError(msg)
-        self._toolhead.manual_move(z=self.probe_height, speed=self.config.move_speed)
+        self._toolhead.move(z=self.probe_height, speed=self.config.move_speed)
         self._toolhead.wait_moves()
         return self.measure_distance()
 

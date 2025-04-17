@@ -74,7 +74,7 @@ def test_run_valid_scan(mocker: MockerFixture, macro: Macro, toolhead: Toolhead,
     params.get = mocker.Mock(return_value="scan")
     params.get_float = mocker.Mock(return_value=42.0)
     prepare_spy = mocker.spy(helper, "prepare")
-    move_spy = mocker.spy(toolhead, "manual_move")
+    move_spy = mocker.spy(toolhead, "move")
     finalize_spy = mocker.spy(helper, "finalize")
 
     macro.run(params)
@@ -100,7 +100,7 @@ def test_applies_offsets(
     params.get_float = mocker.Mock(return_value=42.0)
     offset.x = -5
     offset.y = 5
-    move_spy = mocker.spy(toolhead, "manual_move")
+    move_spy = mocker.spy(toolhead, "move")
 
     macro.run(params)
 
@@ -121,7 +121,7 @@ def test_multiple_runs(
     params.get = mocker.Mock(return_value="scan")
     params.get_int = mocker.Mock(return_value=3)
     params.get_float = mocker.Mock(return_value=42.0)
-    move_spy = mocker.spy(toolhead, "manual_move")
+    move_spy = mocker.spy(toolhead, "move")
 
     macro.run(params)
 

@@ -69,7 +69,7 @@ class TouchMode(ProbeMode, Endstop[C]):
             msg = "z axis must be homed before probing"
             raise RuntimeError(msg)
         if self._toolhead.get_position().z < 5:
-            self._toolhead.manual_move(z=5, speed=self.config.move_speed)
+            self._toolhead.move(z=5, speed=self.config.move_speed)
         self._toolhead.wait_moves()
         tries = self.config.touch_retries + 1
         for i in range(tries):
@@ -105,7 +105,7 @@ class TouchMode(ProbeMode, Endstop[C]):
         self._toolhead.wait_moves()
         distance = self._toolhead.z_homing_move(self, bottom=-2.0, speed=model.speed)
         pos = self._toolhead.get_position()
-        self._toolhead.manual_move(
+        self._toolhead.move(
             z=pos.z + RETRACT_DISTANCE,
             speed=model.speed,
         )

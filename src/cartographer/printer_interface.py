@@ -118,7 +118,7 @@ class Toolhead(Protocol):
         """Get the requested position of the toolhead at the given time."""
         ...
 
-    def manual_move(self, *, x: float = ..., y: float = ..., z: float = ..., speed: float) -> None:
+    def move(self, *, x: float = ..., y: float = ..., z: float = ..., speed: float) -> None:
         """Move to requested position."""
         ...
 
