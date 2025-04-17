@@ -69,7 +69,7 @@ def test_probe_success(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) 
 def test_probe_moves_below_5(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
     toolhead.z_homing_move = mocker.Mock(return_value=0.5)
     toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 1))
-    move_spy = mocker.spy(toolhead, "manual_move")
+    move_spy = mocker.spy(toolhead, "move")
 
     _ = probe.perform_probe()
 
@@ -79,7 +79,7 @@ def test_probe_moves_below_5(mocker: MockerFixture, toolhead: Toolhead, probe: P
 def test_does_not_move_above_5(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
     toolhead.z_homing_move = mocker.Mock(return_value=0.5)
     toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 10))
-    move_spy = mocker.spy(toolhead, "manual_move")
+    move_spy = mocker.spy(toolhead, "move")
 
     _ = probe.perform_probe()
 

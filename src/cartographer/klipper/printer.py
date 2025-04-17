@@ -60,9 +60,7 @@ class KlipperToolhead(Toolhead):
         return Position(x=position[0], y=position[1], z=position[2])
 
     @override
-    def manual_move(
-        self, *, x: float | None = None, y: float | None = None, z: float | None = None, speed: float
-    ) -> None:
+    def move(self, *, x: float | None = None, y: float | None = None, z: float | None = None, speed: float) -> None:
         self.toolhead.manual_move([x, y, z], speed=speed)
 
     @override

@@ -60,13 +60,13 @@ class TouchAccuracyMacro(Macro[MacroParams]):
             lift_speed,
         )
 
-        self._toolhead.manual_move(z=position.z + retract, speed=lift_speed)
+        self._toolhead.move(z=position.z + retract, speed=lift_speed)
         measurements: list[float] = []
         while len(measurements) < sample_count:
             distance = self._probe.perform_probe()
             measurements.append(distance)
             pos = self._toolhead.get_position()
-            self._toolhead.manual_move(z=pos.z + retract, speed=lift_speed)
+            self._toolhead.move(z=pos.z + retract, speed=lift_speed)
         logger.debug("Measurements gathered: %s", measurements)
 
         max_value = max(measurements)
@@ -105,7 +105,7 @@ class TouchHomeMacro(Macro[MacroParams]):
 
     @override
     def run(self, params: MacroParams) -> None:
-        self._toolhead.manual_move(
+        self._toolhead.move(
             x=self._home_position.x,
             y=self._home_position.y,
             speed=self._probe.config.move_speed,
