@@ -78,7 +78,14 @@ class Mcu(Generic[C, S], Protocol):
 class MacroParams(Protocol):
     def get(self, name: str, default: str = ...) -> str: ...
     def get_float(self, name: str, default: float = ..., *, above: float = ..., minval: float = ...) -> float: ...
-    def get_int(self, name: str, default: int = ..., *, minval: int = ...) -> int: ...
+    def get_int(
+        self,
+        name: str,
+        default: int = ...,
+        *,
+        minval: int = ...,
+        maxval: int = ...,
+    ) -> int: ...
 
 
 P = TypeVar("P", bound=MacroParams, contravariant=True)

@@ -25,6 +25,10 @@ class Configuration(Protocol):
     touch_samples: int
 
 
+class TouchError(RuntimeError):
+    pass
+
+
 @final
 class TouchMode(ProbeMode, Endstop[C]):
     """Implementation for Survey Touch."""
@@ -75,11 +79,11 @@ class TouchMode(ProbeMode, Endstop[C]):
         for i in range(tries):
             try:
                 return self._run_probe()
-            except ValueError as err:
+            except TouchError as err:
                 logger.info("Touch attempt %d / %d failed: %s", i + 1, tries, err)
 
         msg = f"touch failed after {tries} attempts"
-        raise RuntimeError(msg)
+        raise TouchError(msg)
 
     def _run_probe(self) -> float:
         collected: list[float] = []
@@ -95,7 +99,7 @@ class TouchMode(ProbeMode, Endstop[C]):
 
             if std_dev > TOLERANCE:
                 msg = f"standard deviation ({std_dev:.6f}) exceeded tolerance ({TOLERANCE:g})"
-                raise ValueError(msg)
+                raise TouchError(msg)
 
         final_value = np.median(collected) if len(collected) == 3 else np.mean(collected)
         return float(final_value)

@@ -77,6 +77,22 @@ class KlipperCartographerConfiguration(CartographerConfiguration):
             z_offset=0,
         )
 
+    @override
+    def save_new_touch_model(self, name: str, speed: float, threshold: int) -> TouchModelConfiguration:
+        section_name = f"{self._config.get_name()} touch_model {name}"
+        configfile = self._config.get_printer().lookup_object("configfile")
+        configfile.set(section_name, "threshold", threshold)
+        configfile.set(section_name, "speed", f"{speed:.1f}")
+        configfile.set(section_name, "z_offset", 0)
+
+        return KlipperTouchModelConfiguration(
+            self._config.getsection(section_name),
+            name=name,
+            threshold=threshold,
+            speed=speed,
+            z_offset=0,
+        )
+
 
 class KlipperScanModelConfiguration(ScanModelConfiguration):
     def __init__(
@@ -126,16 +142,12 @@ class KlipperTouchModelConfiguration(TouchModelConfiguration):
         threshold: int,
         speed: float,
         z_offset: float,
-        samples: int,
-        retries: int,
     ) -> None:
         self._config: ConfigWrapper = config
         self.name: str = name
         self.threshold: int = threshold
         self.speed: float = speed
         self.z_offset: float = z_offset
-        self.samples: int = samples
-        self.retries: int = retries
 
     @override
     def save_z_offset(self, new_offset: float) -> None:
@@ -149,14 +161,10 @@ class KlipperTouchModelConfiguration(TouchModelConfiguration):
         threshold = config.getint("threshold", minval=1)
         speed = config.getfloat("speed", above=0)
         z_offset = config.getfloat("z_offset", maxval=0)
-        samples = config.getint("samples", default=5, minval=3)
-        retries = config.getint("retries", default=3, minval=0)
         return KlipperTouchModelConfiguration(
             config,
             name=name,
             threshold=threshold,
             speed=speed,
             z_offset=z_offset,
-            samples=samples,
-            retries=retries,
         )
