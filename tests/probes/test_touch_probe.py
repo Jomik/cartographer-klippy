@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 import pytest
 from typing_extensions import TypeAlias
 
-from cartographer.printer_interface import HomingState, Mcu, Position, Sample, Toolhead
+from cartographer.printer_interface import HomingState, Mcu, Position, Sample, TemperatureStatus, Toolhead
 from cartographer.probe.touch_mode import Configuration, TouchMode
 
 if TYPE_CHECKING:
@@ -130,3 +130,17 @@ def test_on_home_end(mocker: MockerFixture, probe: Probe, homing_state: HomingSt
     probe.on_home_end(homing_state)
 
     assert homed_position_spy.called == 1
+
+
+def test_abort_if_current_extruder_too_hot(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
+    toolhead.get_extruder_temperature = mocker.Mock(return_value=TemperatureStatus(155, 0))
+
+    with pytest.raises(RuntimeError, match="nozzle temperature must be below 150C"):
+        _ = probe.home_start(print_time=0.0)
+
+
+def test_abort_if_current_extruder_target_too_hot(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
+    toolhead.get_extruder_temperature = mocker.Mock(return_value=TemperatureStatus(0, 151))
+
+    with pytest.raises(RuntimeError, match="nozzle temperature must be below 150C"):
+        _ = probe.home_start(print_time=0.0)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, Generic, Literal, Protocol, TypeVar
+from typing import TYPE_CHECKING, Callable, Generic, Literal, NamedTuple, Protocol, TypeVar
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -108,6 +108,11 @@ class ProbeMode(Protocol):
     def query_is_triggered(self, print_time: float) -> bool: ...
 
 
+class TemperatureStatus(NamedTuple):
+    current: float
+    target: float
+
+
 class Toolhead(Protocol):
     def get_last_move_time(self) -> float:
         """Returns the last time the toolhead moved."""
@@ -159,4 +164,8 @@ class Toolhead(Protocol):
 
     def dwell(self, seconds: float) -> None:
         """Dwell for the given number of seconds."""
+        ...
+
+    def get_extruder_temperature(self) -> TemperatureStatus:
+        """Get the current and target temperature of the extruder."""
         ...
