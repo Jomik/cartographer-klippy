@@ -7,7 +7,7 @@ from extras.manual_probe import ManualProbeHelper
 from typing_extensions import override
 
 from cartographer.klipper.endstop import KlipperEndstop
-from cartographer.printer_interface import Endstop, HomingAxis, Position, Toolhead
+from cartographer.printer_interface import Endstop, HomingAxis, Position, TemperatureStatus, Toolhead
 
 if TYPE_CHECKING:
     from configfile import ConfigWrapper
@@ -115,3 +115,9 @@ class KlipperToolhead(Toolhead):
     @override
     def dwell(self, seconds: float) -> None:
         self.toolhead.dwell(seconds)
+
+    @override
+    def get_extruder_temperature(self) -> TemperatureStatus:
+        eventtime = self.printer.get_reactor().monotonic()
+        heater = self.toolhead.get_extruder().get_heater().get_status(eventtime)
+        return TemperatureStatus(heater["temperature"], heater["target"])
