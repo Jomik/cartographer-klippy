@@ -29,6 +29,11 @@ def get_enum_choice(config: ConfigWrapper, option: str, enum_type: type[T], defa
     return enum_type(choice)
 
 
+def get_coordinate_point(config: ConfigWrapper, option: str) -> tuple[float, float]:
+    x, y = config.getfloatlist(option, count=2)
+    return x, y
+
+
 class KlipperCartographerConfiguration(CartographerConfiguration):
     def __init__(self, config: ConfigWrapper) -> None:
         self._config: ConfigWrapper = config
@@ -60,6 +65,13 @@ class KlipperCartographerConfiguration(CartographerConfiguration):
                 KlipperTouchModelConfiguration.from_config, config.get_prefix_sections(f"{config_name} touch_model")
             )
         }
+
+        mesh_config = config.getsection("bed_mesh")
+        self.scan_speed: float = mesh_config.getfloat("speed", default=50, above=0)
+        self.scan_height: float = mesh_config.getfloat("horizontal_move_z", default=4, minval=1)
+        self.zero_reference_position: tuple[float, float] = get_coordinate_point(mesh_config, "zero_reference_position")
+        self.mesh_min: tuple[float, float] = get_coordinate_point(mesh_config, "mesh_min")
+        self.mesh_max: tuple[float, float] = get_coordinate_point(mesh_config, "mesh_max")
 
     @override
     def save_new_scan_model(self, name: str, model: ScanModelFit) -> KlipperScanModelConfiguration:

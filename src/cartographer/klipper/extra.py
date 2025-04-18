@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Callable, final
 
-from cartographer.klipper.bed_mesh import KlipperMeshConfiguration, KlipperMeshHelper
+from cartographer.klipper.bed_mesh import KlipperMeshHelper
 from cartographer.klipper.configuration import KlipperCartographerConfiguration
 from cartographer.klipper.endstop import KlipperEndstop
 from cartographer.klipper.homing import CartographerHomingChip
@@ -73,8 +73,6 @@ class PrinterCartographer:
 
         printer.lookup_object("pins").register_chip("probe", homing_chip)
 
-        mesh_config = KlipperMeshConfiguration.from_config(config, self.config)
-
         self.gcode = printer.lookup_object("gcode")
         self._configure_macro_logger()
         probe_macro = ProbeMacro(probe)
@@ -87,7 +85,7 @@ class PrinterCartographer:
 
         self._register_macro(TouchMacro(touch_mode))
         self._register_macro(TouchAccuracyMacro(touch_mode, toolhead))
-        touch_home = TouchHomeMacro(touch_mode, toolhead, mesh_config.zero_reference_position)
+        touch_home = TouchHomeMacro(touch_mode, toolhead, self.config.zero_reference_position)
         self._register_macro(touch_home)
         self.gcode.register_command(
             "CARTOGRAHPER_TOUCH", catch_macro_errors(touch_home.run), desc=touch_home.description
@@ -98,14 +96,12 @@ class PrinterCartographer:
                 scan_mode,
                 toolhead,
                 KlipperMeshHelper(config, self.gcode),
-                mesh_config,
+                self.config,
             )
         )
 
         self._register_macro(ScanCalibrateMacro(scan_mode, toolhead, self.config))
-        self._register_macro(
-            TouchCalibrateMacro(touch_mode, toolhead, self.config, mesh_config.zero_reference_position)
-        )
+        self._register_macro(TouchCalibrateMacro(touch_mode, toolhead, self.config))
 
         printer.add_object(
             "probe",

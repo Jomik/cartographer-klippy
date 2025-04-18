@@ -53,8 +53,8 @@ def helper(mocker: MockerFixture) -> Helper:
 
 
 class MockConfiguration(Configuration):
-    speed: float = 400
-    runs: int = 1
+    scan_speed: float = 400
+    scan_mesh_runs: int = 1
     scan_height: float = 5.0
 
 

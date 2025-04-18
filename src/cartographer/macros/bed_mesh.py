@@ -18,9 +18,9 @@ logger = logging.getLogger(__name__)
 
 
 class Configuration(Protocol):
-    speed: float
+    scan_speed: float
     scan_height: float
-    runs: int
+    scan_mesh_runs: int
 
 
 @dataclass
@@ -60,8 +60,8 @@ class BedMeshCalibrateMacro(Macro[P]):
         if method != "scan" and method != "rapid_scan":
             return self.helper.orig_macro(params)
 
-        runs = params.get_int("RUNS", default=self.config.runs, minval=1)
-        speed = params.get_float("SPEED", default=self.config.speed, minval=1)
+        runs = params.get_int("RUNS", default=self.config.scan_mesh_runs, minval=1)
+        speed = params.get_float("SPEED", default=self.config.scan_speed, minval=1)
         scan_height = params.get_float("HEIGHT", default=self.config.scan_height, minval=1)
         if self.probe.model is None:
             msg = "cannot run bed mesh without a model"

@@ -38,6 +38,13 @@ class Configuration(Protocol):
     # [cartographer touch_model default]
     touch_models: dict[str, TouchModelConfiguration]
 
+    # [bed_mesh]
+    mesh_min: tuple[float, float]
+    mesh_max: tuple[float, float]
+    scan_speed: float
+    scan_height: float
+    zero_reference_position: tuple[float, float]
+
     def save_new_scan_model(self, name: str, model: ScanModelFit) -> ScanModelConfiguration: ...
     def save_new_touch_model(self, name: str, speed: float, threshold: int) -> TouchModelConfiguration: ...
 
