@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, final
 
 import pytest
 from typing_extensions import TypeAlias
@@ -17,13 +17,16 @@ if TYPE_CHECKING:
 Probe: TypeAlias = TouchMode[object]
 
 
-class MockConfiguration:
-    x_offset: float = 0.0
-    y_offset: float = 0.0
-    move_speed: float = 42.0
+@final
+class MockConfiguration(Configuration):
+    move_speed = 42.0
 
-    touch_retries: int = 0
-    touch_samples: int = 5
+    touch_retries = 0
+    touch_samples = 5
+    x_offset = 0.0
+    y_offset = 0.0
+    mesh_min = (10, 10)
+    mesh_max = (100, 100)
 
 
 class MockModel:
@@ -144,3 +147,25 @@ def test_abort_if_current_extruder_target_too_hot(mocker: MockerFixture, toolhea
 
     with pytest.raises(RuntimeError, match="nozzle temperature must be below 150C"):
         _ = probe.home_start(print_time=0.0)
+
+
+def test_nozzle_outside_bounds(mocker: MockerFixture, toolhead: Toolhead, probe: Probe, config: Configuration) -> None:
+    config.mesh_min = (10, 10)
+    config.mesh_max = (30, 30)
+    config.x_offset = 20
+    config.y_offset = 20
+    toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 1))
+
+    with pytest.raises(RuntimeError, match="nozzle .* out of touch bounds"):
+        _ = probe.home_start(0)
+
+
+def test_probe_outside_bounds(mocker: MockerFixture, toolhead: Toolhead, probe: Probe, config: Configuration) -> None:
+    config.mesh_min = (10, 10)
+    config.mesh_max = (30, 30)
+    config.x_offset = 20
+    config.y_offset = 20
+    toolhead.get_position = mocker.Mock(return_value=Position(20, 20, 1))
+
+    with pytest.raises(RuntimeError, match="probe .* out of touch bounds"):
+        _ = probe.home_start(0)

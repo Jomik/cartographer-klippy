@@ -21,12 +21,16 @@ if sys.version_info < (3, 9):
 def toolhead(mocker: MockerFixture) -> Toolhead:
     mock = mocker.MagicMock(spec=Toolhead, autospec=True, instance=True)
 
+    def get_position() -> Position:
+        return Position(x=10, y=10, z=5)
+
     def get_requested_position(time: float) -> Position:
         return Position(x=0, y=0, z=time)
 
     def apply_axis_twist_compensation(position: Position) -> Position:
         return position
 
+    mock.get_position = get_position
     mock.get_requested_position = get_requested_position
     mock.apply_axis_twist_compensation = apply_axis_twist_compensation
 

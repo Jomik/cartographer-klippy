@@ -25,6 +25,11 @@ class Configuration(Protocol):
     touch_retries: int
     touch_samples: int
 
+    x_offset: float
+    y_offset: float
+    mesh_min: tuple[float, float]
+    mesh_max: tuple[float, float]
+
 
 class TouchError(RuntimeError):
     pass
@@ -73,9 +78,11 @@ class TouchMode(ProbeMode, Endstop[C]):
         if not self._toolhead.is_homed("z"):
             msg = "z axis must be homed before probing"
             raise RuntimeError(msg)
+
         if self._toolhead.get_position().z < 5:
             self._toolhead.move(z=5, speed=self.config.move_speed)
         self._toolhead.wait_moves()
+
         tries = self.config.touch_retries + 1
         for i in range(tries):
             try:
@@ -117,20 +124,12 @@ class TouchMode(ProbeMode, Endstop[C]):
         return trigger_pos
 
     @override
-    def query_is_triggered(self, print_time: float) -> bool:
-        # Touch endstop is never in a triggered state.
-        return False
-
-    @override
-    def get_endstop_position(self) -> float:
-        return 0
-
-    @override
     def home_start(self, print_time: float) -> C:
         model = self.get_model()
         if model.threshold <= 0:
             msg = "threshold must be greater than 0"
             raise RuntimeError(msg)
+        self._validate_touch_position()
 
         nozzle = self._toolhead.get_extruder_temperature()
         if nozzle.current > MAX_TOUCH_TEMPERATURE or nozzle.target > MAX_TOUCH_TEMPERATURE:
@@ -150,3 +149,31 @@ class TouchMode(ProbeMode, Endstop[C]):
     @override
     def home_wait(self, home_end_time: float) -> float:
         return self._mcu.stop_homing(home_end_time)
+
+    @override
+    def query_is_triggered(self, print_time: float) -> bool:
+        # Touch endstop is never in a triggered state.
+        return False
+
+    @override
+    def get_endstop_position(self) -> float:
+        return self.offset.z
+
+    def _validate_touch_position(self) -> None:
+        nozzle = self._toolhead.get_position()
+        probe_x = nozzle.x + self.config.x_offset
+        probe_y = nozzle.y + self.config.y_offset
+
+        min_x, min_y = self.config.mesh_min
+        max_x, max_y = self.config.mesh_max
+
+        def in_bounds(x: float, y: float) -> bool:
+            return min_x <= x <= max_x and min_y <= y <= max_y
+
+        if not in_bounds(nozzle.x, nozzle.y):
+            msg = f"nozzle position ({nozzle.x}, {nozzle.y}) is out of touch bounds"
+            raise RuntimeError(msg)
+
+        if not in_bounds(probe_x, probe_y):
+            msg = f"probe position ({probe_x}, {probe_y}) is out of touch bounds"
+            raise RuntimeError(msg)
