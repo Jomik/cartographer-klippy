@@ -24,7 +24,11 @@ def toolhead(mocker: MockerFixture) -> Toolhead:
     def get_requested_position(time: float) -> Position:
         return Position(x=0, y=0, z=time)
 
+    def apply_axis_twist_compensation(position: Position) -> Position:
+        return position
+
     mock.get_requested_position = get_requested_position
+    mock.apply_axis_twist_compensation = apply_axis_twist_compensation
 
     return mock
 

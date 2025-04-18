@@ -20,6 +20,9 @@ class Position:
     def as_tuple(self) -> tuple[float, float, float]:
         return (self.x, self.y, self.z)
 
+    def as_list(self) -> list[float]:
+        return list(self.as_tuple())
+
 
 class HomingState(Protocol):
     endstops: Sequence[Endstop[object]]
@@ -168,4 +171,8 @@ class Toolhead(Protocol):
 
     def get_extruder_temperature(self) -> TemperatureStatus:
         """Get the current and target temperature of the extruder."""
+        ...
+
+    def apply_axis_twist_compensation(self, position: Position) -> Position:
+        """Apply axis twist compensation to the given position."""
         ...

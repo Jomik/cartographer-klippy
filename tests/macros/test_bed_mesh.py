@@ -187,3 +187,58 @@ def test_calculate_positions_cluster_no_samples(
 
     with pytest.raises(RuntimeError, match="no samples"):
         macro.run(params)
+
+
+def test_finalize_with_positions(
+    mocker: MockerFixture,
+    macro: Macro,
+    probe: Probe,
+    model: Model,
+    toolhead: Toolhead,
+    helper: Helper,
+    session: Session[Sample],
+):
+    params = mocker.MagicMock()
+    params.get = mocker.Mock(return_value="scan")
+    helper.generate_path = mocker.Mock(return_value=[MeshPoint(10, 10, True), MeshPoint(20, 20, True)])
+    session.get_items = lambda: [Sample(time=0.0, frequency=1) for _ in range(2)]
+
+    distances = [1, 2]
+    positions = [Position(10, 10, 5), Position(20, 20, 5)]
+    model.frequency_to_distance = mocker.Mock(side_effect=distances)
+    toolhead.get_requested_position = mocker.Mock(side_effect=positions)
+
+    finalize_spy = mocker.spy(helper, "finalize")
+    expected_positions = [Position(pos.x, pos.y, probe.probe_height - dist) for pos, dist in zip(positions, distances)]
+
+    macro.run(params)
+
+    assert finalize_spy.mock_calls == [mocker.call(Position(0, 0, 0), expected_positions)]
+
+
+def test_probe_applies_axis_twist_compensation(
+    mocker: MockerFixture,
+    macro: Macro,
+    model: Model,
+    toolhead: Toolhead,
+    helper: Helper,
+    session: Session[Sample],
+):
+    z_comp = 0.5
+    distances = [1, 2]
+    positions = [Position(10, 10, 5), Position(20, 20, 5)]
+
+    params = mocker.MagicMock()
+    params.get = mocker.Mock(return_value="scan")
+    helper.generate_path = mocker.Mock(return_value=[MeshPoint(10, 10, True), MeshPoint(20, 20, True)])
+    session.get_items = lambda: [Sample(time=0.0, frequency=1) for _ in range(2)]
+    model.frequency_to_distance = mocker.Mock(side_effect=distances)
+    toolhead.get_requested_position = mocker.Mock(side_effect=positions)
+    toolhead.apply_axis_twist_compensation = lambda position: Position(position.x, position.y, z_comp)
+
+    finalize_spy = mocker.spy(helper, "finalize")
+    expected_positions = [Position(pos.x, pos.y, z_comp) for pos in positions]
+
+    macro.run(params)
+
+    assert finalize_spy.mock_calls == [mocker.call(Position(0, 0, 0), expected_positions)]
