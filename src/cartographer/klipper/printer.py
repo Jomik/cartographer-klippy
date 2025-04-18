@@ -121,3 +121,9 @@ class KlipperToolhead(Toolhead):
         eventtime = self.printer.get_reactor().monotonic()
         heater = self.toolhead.get_extruder().get_heater().get_status(eventtime)
         return TemperatureStatus(heater["temperature"], heater["target"])
+
+    @override
+    def apply_axis_twist_compensation(self, position: Position) -> Position:
+        pos = position.as_list()
+        self.printer.send_event("probe:update_results", pos)
+        return Position(pos[0], pos[1], pos[2])

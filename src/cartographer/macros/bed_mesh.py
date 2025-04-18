@@ -90,6 +90,7 @@ class BedMeshCalibrateMacro(Macro[P]):
 
         samples = session.get_items()
         positions = self._calculate_positions(self.probe.model, path, samples)
+        positions = list(map(self.toolhead.apply_axis_twist_compensation, positions))
 
         self.helper.finalize(self.probe.offset, positions)
 

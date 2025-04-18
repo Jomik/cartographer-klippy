@@ -112,14 +112,28 @@ def test_probe_errors_when_not_homed(probe: Probe, toolhead: Toolhead):
         _ = probe.perform_probe()
 
 
-def test_probe_returns_distance(probe: Probe, toolhead: Toolhead, session: Session[Sample]):
+def test_probe_returns_trigger_position(probe: Probe, toolhead: Toolhead, session: Session[Sample]):
+    dist = 1
     z_pos = 2
-    session.get_items = lambda: [Sample(time=0.0, frequency=1) for _ in range(11)]
+    session.get_items = lambda: [Sample(time=0.0, frequency=dist) for _ in range(11)]
     toolhead.get_position = lambda: Position(0, 0, z_pos)
 
     trigger_pos = probe.perform_probe()
 
-    assert trigger_pos == probe.probe_height + z_pos - 1
+    assert trigger_pos == probe.probe_height + z_pos - dist
+
+
+def test_probe_applies_axis_twist_compensation(probe: Probe, toolhead: Toolhead, session: Session[Sample]):
+    dist = 1
+    z_pos = 2
+    z_comp = 0.5
+    session.get_items = lambda: [Sample(time=0.0, frequency=dist) for _ in range(11)]
+    toolhead.get_position = lambda: Position(0, 0, z_pos)
+    toolhead.apply_axis_twist_compensation = lambda position: Position(position.x, position.y, z_comp)
+
+    trigger_pos = probe.perform_probe()
+
+    assert trigger_pos == z_comp
 
 
 def test_probe_errors_outside_range(probe: Probe, session: Session[Sample], model: Model):
