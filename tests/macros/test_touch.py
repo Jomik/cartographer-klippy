@@ -119,7 +119,7 @@ def test_touch_home_macro_moves(
     toolhead: Toolhead,
     params: MacroParams,
 ):
-    macro = TouchHomeMacro(probe, toolhead, Position(10, 10, 0))
+    macro = TouchHomeMacro(probe, toolhead, (10, 10))
     probe.perform_probe = mocker.Mock(return_value=0.1)
     toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 2))
     move_spy = mocker.spy(toolhead, "move")
@@ -135,7 +135,7 @@ def test_touch_home_macro(
     toolhead: Toolhead,
     params: MacroParams,
 ):
-    macro = TouchHomeMacro(probe, toolhead, Position(10, 10, 0))
+    macro = TouchHomeMacro(probe, toolhead, (10, 10))
     probe.perform_probe = mocker.Mock(return_value=0.1)
     toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 2))
     set_z_position_spy = mocker.spy(toolhead, "set_z_position")
@@ -152,7 +152,7 @@ def test_touch_home_macro_with_z_offset(
     toolhead: Toolhead,
     params: MacroParams,
 ):
-    macro = TouchHomeMacro(probe, toolhead, Position(10, 10, 0))
+    macro = TouchHomeMacro(probe, toolhead, (10, 10))
     probe.perform_probe = mocker.Mock(return_value=0.0)
     offset.z = -0.1
     toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 2))

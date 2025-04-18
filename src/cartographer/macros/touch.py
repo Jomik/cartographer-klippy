@@ -8,7 +8,7 @@ import numpy as np
 from typing_extensions import override
 
 from cartographer.configuration import TouchModelConfiguration
-from cartographer.printer_interface import Macro, MacroParams, Position
+from cartographer.printer_interface import Macro, MacroParams
 from cartographer.probe.touch_mode import TouchError, TouchMode
 
 if TYPE_CHECKING:
@@ -23,6 +23,8 @@ logger = logging.getLogger(__name__)
 
 
 class Configuration(Protocol):
+    zero_reference_position: tuple[float, float]
+
     def save_new_touch_model(self, name: str, speed: float, threshold: int) -> TouchModelConfiguration: ...
 
 
@@ -105,7 +107,7 @@ class TouchHomeMacro(Macro[MacroParams]):
         self,
         probe: Probe,
         toolhead: Toolhead,
-        home_position: Position,
+        home_position: tuple[float, float],
     ) -> None:
         self._probe = probe
         self._toolhead = toolhead
@@ -114,8 +116,8 @@ class TouchHomeMacro(Macro[MacroParams]):
     @override
     def run(self, params: MacroParams) -> None:
         self._toolhead.move(
-            x=self._home_position.x,
-            y=self._home_position.y,
+            x=self._home_position[0],
+            y=self._home_position[1],
             speed=self._probe.config.move_speed,
         )
         trigger_pos = self._probe.perform_probe()
@@ -150,11 +152,10 @@ class TouchCalibrateMacro(Macro[MacroParams]):
     name = "TOUCH_CALIBRATE"
     description = "Run the touch calibration"
 
-    def __init__(self, probe: Probe, toolhead: Toolhead, config: Configuration, home_position: Position) -> None:
+    def __init__(self, probe: Probe, toolhead: Toolhead, config: Configuration) -> None:
         self._probe = probe
         self._toolhead = toolhead
         self._config = config
-        self._home_position = home_position
 
     @override
     def run(self, params: MacroParams) -> None:
@@ -165,8 +166,8 @@ class TouchCalibrateMacro(Macro[MacroParams]):
         step = params.get_int("THRESHOLD_STEP", default=500)
 
         self._toolhead.move(
-            x=self._home_position.x,
-            y=self._home_position.y,
+            x=self._config.zero_reference_position[0],
+            y=self._config.zero_reference_position[1],
             speed=self._probe.config.move_speed,
         )
 
