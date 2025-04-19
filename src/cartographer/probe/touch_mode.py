@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 TOLERANCE = 0.008
 RETRACT_DISTANCE = 2.0
-MAX_TOUCH_TEMPERATURE = 150.0
+MAX_TOUCH_TEMPERATURE = 155
 
 
 class Configuration(Protocol):
@@ -160,7 +160,7 @@ class TouchMode(ProbeMode, Endstop[C]):
 
         nozzle = self._toolhead.get_extruder_temperature()
         if nozzle.current > MAX_TOUCH_TEMPERATURE or nozzle.target > MAX_TOUCH_TEMPERATURE:
-            msg = "nozzle temperature must be below 150C"
+            msg = f"nozzle temperature must be below {MAX_TOUCH_TEMPERATURE - 5:d}C"
             raise RuntimeError(msg)
         return self._mcu.start_homing_touch(print_time, model.threshold)
 

@@ -143,14 +143,14 @@ def test_on_home_end(mocker: MockerFixture, probe: Probe, homing_state: HomingSt
 
 
 def test_abort_if_current_extruder_too_hot(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
-    toolhead.get_extruder_temperature = mocker.Mock(return_value=TemperatureStatus(155, 0))
+    toolhead.get_extruder_temperature = mocker.Mock(return_value=TemperatureStatus(156, 0))
 
     with pytest.raises(RuntimeError, match="nozzle temperature must be below 150C"):
         _ = probe.home_start(print_time=0.0)
 
 
 def test_abort_if_current_extruder_target_too_hot(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
-    toolhead.get_extruder_temperature = mocker.Mock(return_value=TemperatureStatus(0, 151))
+    toolhead.get_extruder_temperature = mocker.Mock(return_value=TemperatureStatus(0, 156))
 
     with pytest.raises(RuntimeError, match="nozzle temperature must be below 150C"):
         _ = probe.home_start(print_time=0.0)
