@@ -9,7 +9,7 @@ from typing_extensions import override
 
 from cartographer.configuration import TouchModelConfiguration
 from cartographer.printer_interface import Macro, MacroParams
-from cartographer.probe.touch_mode import TouchError, TouchMode
+from cartographer.probe.touch_mode import TouchMode
 
 if TYPE_CHECKING:
     from cartographer.printer_interface import Toolhead
@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 class Configuration(Protocol):
     zero_reference_position: tuple[float, float]
+    touch_samples: int
 
     def save_new_touch_model(self, name: str, speed: float, threshold: int) -> TouchModelConfiguration: ...
 
@@ -147,6 +148,12 @@ class CalibrationModel(TouchModelConfiguration):
         raise RuntimeError(msg)
 
 
+SAFE_TRIGGER_MIN = -0.5
+SAFE_TRIGGER_MAX = 0.5
+THRESHOLD_STEP = 250
+MAX_INSTABILITY_SCORE = 0.01
+
+
 @final
 class TouchCalibrateMacro(Macro[MacroParams]):
     name = "TOUCH_CALIBRATE"
@@ -163,7 +170,6 @@ class TouchCalibrateMacro(Macro[MacroParams]):
         speed = params.get_int("SPEED", default=3, minval=1, maxval=5)
         threshold_start = params.get_int("THRESHOLD", default=500)
         threshold_max = params.get_int("MAX_THRESHOLD", default=5000)
-        step = params.get_int("THRESHOLD_STEP", default=500)
 
         self._toolhead.move(
             x=self._config.zero_reference_position[0],
@@ -171,27 +177,52 @@ class TouchCalibrateMacro(Macro[MacroParams]):
             speed=self._probe.config.move_speed,
         )
 
-        logger.info("Touch calibration at speed %d", speed, threshold_start)
+        best_threshold = self._find_best_threshold(threshold_start, threshold_max, speed)
 
-        model: TouchModelConfiguration | None = None
-        with self._revert_model():
-            for threshold in range(threshold_start, threshold_max, step):
-                self._probe.model = CalibrationModel(speed=speed, threshold=threshold)
-                try:
-                    logger.info("Attempting touch at threshold %d", threshold)
-                    _ = self._probe.perform_probe()
-                    model = self._config.save_new_touch_model(name, speed, threshold)
-                    break
-
-                except TouchError:
-                    logger.info("Touch failed at threshold %d", threshold)
-                    continue
-        if model is None:
+        if best_threshold is None:
             msg = "failed to calibrate touch probe"
             raise RuntimeError(msg)
 
-        logger.info("Touch calibrated at speed %d, threshold %d", model.speed, model.threshold)
-        self._probe.model = model
+        logger.info("Touch calibrated at speed %d, threshold %d", speed, best_threshold)
+        self._probe.model = self._config.save_new_touch_model(name, speed, best_threshold)
+
+    def _find_best_threshold(self, threshold_start: int, threshold_max: int, speed: int) -> int | None:
+        for threshold in range(threshold_start, threshold_max, THRESHOLD_STEP):
+            model = CalibrationModel(speed=speed, threshold=threshold)
+            score, samples = self._evaluate_threshold(model)
+
+            if score is None:
+                logger.info("Threshold %d failed or was unstable", threshold)
+                continue
+
+            logger.debug(
+                "Threshold %d: score %.6f, samples %s",
+                threshold,
+                score,
+                ", ".join(f"{s:.6f}" for s in samples),
+            )
+
+            if score < MAX_INSTABILITY_SCORE:
+                logger.info("Threshold %d with score %.6f is within acceptable range.", threshold, score)
+                return threshold
+
+    def _evaluate_threshold(self, model: CalibrationModel) -> tuple[float | None, list[float]]:
+        with self._revert_model():
+            self._probe.model = model
+            samples: list[float] = []
+            score = float("inf")
+            for _ in range(self._config.touch_samples):
+                pos = self._probe.perform_single_probe()
+                if not (SAFE_TRIGGER_MIN < pos < SAFE_TRIGGER_MAX):
+                    return None, []
+                samples.append(pos)
+
+                stddev = float(np.std(samples))
+                range_val = max(samples) - min(samples)
+                score = stddev + range_val
+                if score >= MAX_INSTABILITY_SCORE:
+                    break
+            return score, samples
 
     @contextmanager
     def _revert_model(self):
