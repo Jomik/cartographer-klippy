@@ -86,7 +86,7 @@ def test_distance_to_frequency_out_of_range(model: ScanModel) -> None:
 
 
 def test_frequency_to_distance_applies_offset(model: ScanModel, config: ScanModelConfiguration) -> None:
-    config.z_offset = 0.5
+    config.z_offset = -0.5
     frequency = 1 / 3.0
 
     distance = model.frequency_to_distance(frequency)
@@ -95,7 +95,7 @@ def test_frequency_to_distance_applies_offset(model: ScanModel, config: ScanMode
 
 
 def test_distance_to_frequency_applies_offset(model: ScanModel, config: ScanModelConfiguration) -> None:
-    config.z_offset = 0.5
+    config.z_offset = -0.5
     distance = 2.5
 
     frequency = model.distance_to_frequency(distance)
