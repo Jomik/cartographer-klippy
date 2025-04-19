@@ -185,6 +185,12 @@ class TouchCalibrateMacro(Macro[MacroParams]):
 
         logger.info("Touch calibrated at speed %d, threshold %d", speed, best_threshold)
         self._probe.model = self._config.save_new_touch_model(name, speed, best_threshold)
+        logger.info(
+            """touch model %s has been saved \
+            for the current session.  The SAVE_CONFIG command will \
+            update the printer config file and restart the printer.""",
+            name,
+        )
 
     def _find_best_threshold(self, threshold_start: int, threshold_max: int, speed: int) -> int | None:
         for threshold in range(threshold_start, threshold_max, THRESHOLD_STEP):
