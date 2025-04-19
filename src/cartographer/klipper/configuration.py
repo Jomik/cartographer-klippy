@@ -51,7 +51,9 @@ class KlipperCartographerConfiguration(CartographerConfiguration):
 
         touch_config = config.getsection(f"{config_name} touch")
         self.touch_samples: int = touch_config.getint("samples", default=5, minval=3)
-        self.touch_retries: int = touch_config.getint("retries", default=3, minval=0)
+        self.touch_max_samples: int = touch_config.getint(
+            "max_samples", default=self.touch_samples * 2, minval=self.touch_samples
+        )
 
         self.scan_models: dict[str, ScanModelConfiguration] = {
             cfg.name: cfg

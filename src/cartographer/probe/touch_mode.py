@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from itertools import combinations
 from typing import TYPE_CHECKING, Protocol, final
 
 import numpy as np
@@ -22,8 +23,8 @@ MAX_TOUCH_TEMPERATURE = 150.0
 class Configuration(Protocol):
     move_speed: float
 
-    touch_retries: int
     touch_samples: int
+    touch_max_samples: int
 
     x_offset: float
     y_offset: float
@@ -83,34 +84,57 @@ class TouchMode(ProbeMode, Endstop[C]):
             self._toolhead.move(z=5, speed=self.config.move_speed)
         self._toolhead.wait_moves()
 
-        tries = self.config.touch_retries + 1
-        for i in range(tries):
-            try:
-                return self._run_probe()
-            except TouchError as err:
-                logger.info("Touch attempt %d / %d failed: %s", i + 1, tries, err)
-
-        msg = f"touch failed after {tries} attempts"
-        raise TouchError(msg)
+        return self._run_probe()
 
     def _run_probe(self) -> float:
         collected: list[float] = []
-        logger.debug("Starting touch sequence...")
-        for i in range(self.config.touch_samples):
+        touch_samples = self.config.touch_samples
+        touch_max_samples = self.config.touch_max_samples
+        logger.debug("Starting touch sequence for %d samples within %d touches...", touch_samples, touch_max_samples)
+
+        for i in range(touch_max_samples):
             trigger_pos = self._probe()
-            logger.debug("Touch %d of %d: %.6f", i + 1, self.config.touch_samples, trigger_pos)
             collected.append(trigger_pos)
-            if len(collected) < 3:
-                continue  # Need at least 3 samples for meaningful statistics
+            logger.debug("Touch %d: %.6f", i + 1, trigger_pos)
 
-            std_dev = np.std(collected)
+            if len(collected) < touch_samples:
+                continue
 
-            if std_dev > TOLERANCE:
-                msg = f"standard deviation ({std_dev:.6f}) exceeded tolerance ({TOLERANCE:g})"
-                raise TouchError(msg)
+            valid_combo = self._find_valid_combination(collected, touch_samples)
+            if valid_combo is None:
+                continue
 
-        final_value = np.median(collected) if len(collected) == 3 else np.mean(collected)
-        return float(final_value)
+            # Compute values for logging
+            max_v, min_v = max(valid_combo), min(valid_combo)
+            mean = np.mean(valid_combo)
+            median = np.median(valid_combo)
+            range_v = max_v - min_v
+            std_dev = np.std(valid_combo)
+
+            logger.debug(
+                """Acceptable touch combination found: (%s) \
+                maximum %.6f, minimum %.6f, range %.6f, \
+                average %.6f, median %.6f, standard deviation %.6f \
+                """,
+                ", ".join(f"{s:.6f}" for s in valid_combo),
+                max_v,
+                min_v,
+                range_v,
+                mean,
+                median,
+                std_dev,
+            )
+
+            return float(median if len(valid_combo) > 3 else mean)
+
+        msg = f"unable to find {touch_samples} samples within tolerance after {touch_max_samples} touches"
+        raise TouchError(msg)
+
+    def _find_valid_combination(self, samples: list[float], size: int) -> tuple[float, ...] | None:
+        for combo in combinations(samples, size):
+            if np.std(combo) <= TOLERANCE:
+                return combo
+        return None
 
     def _probe(self) -> float:
         model = self.get_model()
