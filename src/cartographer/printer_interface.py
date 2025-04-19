@@ -129,7 +129,7 @@ class Toolhead(Protocol):
         """Get the currently commanded position of the toolhead."""
         ...
 
-    def get_requested_position(self, time: float) -> Position:
+    def get_requested_position(self, time: float) -> Position | None:
         """Get the requested position of the toolhead at the given time."""
         ...
 

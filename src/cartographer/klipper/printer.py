@@ -49,15 +49,14 @@ class KlipperToolhead(Toolhead):
         return Position(x=pos[0], y=pos[1], z=pos[2])
 
     @override
-    def get_requested_position(self, time: float) -> Position:
+    def get_requested_position(self, time: float) -> Position | None:
         trapq = self.motion_report.trapqs.get("toolhead")
         if trapq is None:
             msg = "no dump trapq for toolhead"
             raise RuntimeError(msg)
         position, _ = trapq.get_trapq_position(time)
         if position is None:
-            msg = f"no position for time {time}"
-            raise RuntimeError(msg)
+            return None
         return Position(x=position[0], y=position[1], z=position[2])
 
     @override

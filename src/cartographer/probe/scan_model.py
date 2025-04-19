@@ -50,7 +50,12 @@ class ScanModel:
 
     @staticmethod
     def fit(toolhead: Toolhead, samples: Sequence[Sample]) -> ScanModelFit:
-        z_offsets = [toolhead.get_requested_position(sample.time).z for sample in samples]
+        positions = [toolhead.get_requested_position(sample.time) for sample in samples]
+        # TODO: Can we ignore missing positions?
+        if not all(positions):
+            msg = "not all samples are valid, try again"
+            raise RuntimeError(msg)
+        z_offsets = [pos.z for pos in positions if pos is not None]
         inverse_frequencies = [1 / sample.frequency for sample in samples]
 
         poly = cast("Polynomial", Polynomial.fit(inverse_frequencies, z_offsets, DEGREES))
