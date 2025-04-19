@@ -112,9 +112,10 @@ class TouchMode(ProbeMode, Endstop[C]):
             std_dev = np.std(valid_combo)
 
             logger.debug(
-                """Acceptable touch combination found: (%s) \
-                maximum %.6f, minimum %.6f, range %.6f, \
-                average %.6f, median %.6f, standard deviation %.6f \
+                """
+                Acceptable touch combination found: (%s)
+                maximum %.6f, minimum %.6f, range %.6f,
+                average %.6f, median %.6f, standard deviation %.6f
                 """,
                 ", ".join(f"{s:.6f}" for s in valid_combo),
                 max_v,

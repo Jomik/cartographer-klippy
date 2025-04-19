@@ -88,8 +88,10 @@ class TouchAccuracyMacro(Macro[MacroParams]):
         std_dev = np.std(measurements)
 
         logger.info(
-            """touch accuracy results: maximum %.6f, minimum %.6f, range %.6f, \
-            average %.6f, median %.6f, standard deviation %.6f""",
+            """
+            touch accuracy results: maximum %.6f, minimum %.6f, range %.6f,
+            average %.6f, median %.6f, standard deviation %.6f
+            """,
             max_value,
             min_value,
             range_value,
