@@ -97,7 +97,7 @@ class KlipperCartographerConfiguration(CartographerConfiguration):
         configfile = self._config.get_printer().lookup_object("configfile")
         configfile.set(section_name, "threshold", threshold)
         configfile.set(section_name, "speed", f"{speed:.1f}")
-        configfile.set(section_name, "z_offset", 0)
+        configfile.set(section_name, "z_offset", -0.05)
 
         return KlipperTouchModelConfiguration(
             self._config.getsection(section_name),
