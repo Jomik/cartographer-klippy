@@ -175,6 +175,7 @@ class TouchCalibrateMacro(Macro[MacroParams]):
             y=self._config.zero_reference_position[1],
             speed=self._probe.config.move_speed,
         )
+        self._toolhead.wait_moves()
 
         best_threshold = self._find_best_threshold(threshold_start, threshold_max, speed)
 
