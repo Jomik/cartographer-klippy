@@ -74,12 +74,12 @@ class ScanModel:
         elif inverse_frequency < lower_bound:
             return float("-inf")
 
-        return self._eval(inverse_frequency) - self.config.z_offset
+        return self._eval(inverse_frequency) + self.config.z_offset
 
     def distance_to_frequency(self, distance: float) -> float:
         # PERF: We can use brentq if scipy is available
         # https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.brentq.html#scipy.optimize.brentq
-        distance += self.config.z_offset
+        distance -= self.config.z_offset
         min_z, max_z = self._get_z_range()
         if distance < min_z or distance > max_z:
             msg = f"attempted to map out-of-range distance {distance:.3f}, valid range [{min_z:.3f}, {max_z:.3f}]"
