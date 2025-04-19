@@ -46,8 +46,11 @@ curl -s -L https://raw.githubusercontent.com/Jomik/cartographer-klippy/refs/head
 `PROBE`, `PROBE_ACCURACY`, `QUERY_PROBE`, `TOUCH`, `TOUCH_ACCURACY` and `TOUCH_HOME`.
 
 `Z_OFFSET_APPLY_PROBE` is supported for baby-stepping z offset.
+`BED_MESH_CALIBRATE` has a default `METHOD=scan` which does the rapid scan.
 
 ### Calibration
 
 `SCAN_CALIBRATE` and `TOUCH_CALIBRATE` are used to calibrate the probe.
 `TOUCH_CALIBRATE` requires that the printer is homed.
+
+`TOUCH_AXIS_TWIST_COMPENSATION` for using touch to calculate twist compensation

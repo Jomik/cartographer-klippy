@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Callable, final
 
+from cartographer.klipper.axis_twist_compensation import KlipperAxisTwistCompensationHelper
 from cartographer.klipper.bed_mesh import KlipperMeshHelper
 from cartographer.klipper.configuration import KlipperCartographerConfiguration
 from cartographer.klipper.endstop import KlipperEndstop
@@ -15,6 +16,7 @@ from cartographer.klipper.probe import KlipperCartographerProbe
 from cartographer.klipper.temperature import PrinterTemperatureCoil
 from cartographer.lib.alpha_beta_filter import AlphaBetaFilter
 from cartographer.macros import ProbeAccuracyMacro, ProbeMacro, QueryProbeMacro, ZOffsetApplyProbeMacro
+from cartographer.macros.axis_twist_compensation import AxisTwistCompensationMacro
 from cartographer.macros.bed_mesh import BedMeshCalibrateMacro
 from cartographer.macros.scan import ScanCalibrateMacro
 from cartographer.macros.touch import TouchAccuracyMacro, TouchCalibrateMacro, TouchHomeMacro, TouchMacro
@@ -99,6 +101,10 @@ class PrinterCartographer:
 
         self._register_macro(ScanCalibrateMacro(scan_mode, toolhead, self.config))
         self._register_macro(TouchCalibrateMacro(touch_mode, toolhead, self.config))
+
+        self._register_macro(
+            AxisTwistCompensationMacro(probe, toolhead, KlipperAxisTwistCompensationHelper(config), self.config)
+        )
 
         printer.add_object(
             "probe",

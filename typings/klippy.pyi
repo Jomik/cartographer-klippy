@@ -11,6 +11,7 @@ from stepper import PrinterRail
 from toolhead import ToolHead
 
 from cartographer.klipper.extra import PrinterCartographer
+from extras.axis_twist_compensation import AxisTwistCompensation
 from extras.bed_mesh import BedMesh
 from extras.heaters import PrinterHeaters
 from extras.homing import Homing, HomingMove, PrinterHoming
@@ -39,6 +40,12 @@ class Printer:
         config: ConfigWrapper,
         section: Literal["motion_report"],
     ) -> PrinterMotionReport: ...
+    @overload
+    def load_object(
+        self,
+        config: ConfigWrapper,
+        section: Literal["axis_twist_compensation"],
+    ) -> AxisTwistCompensation: ...
     def is_shutdown(self) -> bool: ...
     def invoke_shutdown(self, msg: str) -> None: ...
     def get_reactor(self) -> Reactor: ...
