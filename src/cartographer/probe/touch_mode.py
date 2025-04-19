@@ -93,7 +93,7 @@ class TouchMode(ProbeMode, Endstop[C]):
         logger.debug("Starting touch sequence for %d samples within %d touches...", touch_samples, touch_max_samples)
 
         for i in range(touch_max_samples):
-            trigger_pos = self._probe()
+            trigger_pos = self.perform_single_probe()
             collected.append(trigger_pos)
             logger.debug("Touch %d: %.6f", i + 1, trigger_pos)
 
@@ -136,14 +136,16 @@ class TouchMode(ProbeMode, Endstop[C]):
                 return combo
         return None
 
-    def _probe(self) -> float:
+    def perform_single_probe(self) -> float:
         model = self.get_model()
+        if self._toolhead.get_position().z < RETRACT_DISTANCE:
+            self._toolhead.move(z=RETRACT_DISTANCE, speed=self.config.move_speed)
         self._toolhead.wait_moves()
         trigger_pos = self._toolhead.z_homing_move(self, bottom=-2.0, speed=model.speed)
         pos = self._toolhead.get_position()
         self._toolhead.move(
-            z=pos.z + RETRACT_DISTANCE,
-            speed=model.speed,
+            z=max(pos.z + RETRACT_DISTANCE, RETRACT_DISTANCE),
+            speed=self.config.move_speed,
         )
         return trigger_pos
 
