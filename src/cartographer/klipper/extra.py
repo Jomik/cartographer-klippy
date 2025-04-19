@@ -87,9 +87,6 @@ class PrinterCartographer:
         self._register_macro(TouchAccuracyMacro(touch_mode, toolhead))
         touch_home = TouchHomeMacro(touch_mode, toolhead, self.config.zero_reference_position)
         self._register_macro(touch_home)
-        self.gcode.register_command(
-            "CARTOGRAHPER_TOUCH", catch_macro_errors(touch_home.run), desc=touch_home.description
-        )
 
         self._register_macro(
             BedMeshCalibrateMacro(
