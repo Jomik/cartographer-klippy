@@ -148,8 +148,8 @@ class CalibrationModel(TouchModelConfiguration):
         raise RuntimeError(msg)
 
 
-SAFE_TRIGGER_MIN = -0.5
-SAFE_TRIGGER_MAX = 0.5
+SAFE_TRIGGER_MIN_HEIGHT = -0.3  # Initial home too far
+SAFE_TRIGGER_MAX_HEIGHT = 0.2  # Initial home too close
 THRESHOLD_STEP = 250
 MAX_INSTABILITY_SCORE = 0.01
 
@@ -213,8 +213,11 @@ class TouchCalibrateMacro(Macro[MacroParams]):
             score = float("inf")
             for _ in range(self._config.touch_samples):
                 pos = self._probe.perform_single_probe()
-                if not (SAFE_TRIGGER_MIN < pos < SAFE_TRIGGER_MAX):
+                if not (pos < SAFE_TRIGGER_MAX_HEIGHT):
                     return None, []
+                if pos < SAFE_TRIGGER_MIN_HEIGHT:
+                    msg = "probe triggered far below expected bed level, aborting"
+                    raise RuntimeError(msg)
                 samples.append(pos)
 
                 stddev = float(np.std(samples))
