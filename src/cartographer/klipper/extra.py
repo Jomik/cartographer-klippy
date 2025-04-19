@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from textwrap import dedent
 from typing import TYPE_CHECKING, Callable, final
 
 from cartographer.klipper.axis_twist_compensation import KlipperAxisTwistCompensationHelper
@@ -131,6 +132,6 @@ def catch_macro_errors(func: Callable[[GCodeCommand], None]) -> Callable[[GCodeC
         try:
             return func(gcmd)
         except RuntimeError as e:
-            raise gcmd.error(str(e)) from e
+            raise gcmd.error(dedent(str(e)).replace("\n", " ").strip()) from e
 
     return wrapper

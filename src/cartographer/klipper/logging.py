@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from textwrap import dedent
 from typing import Protocol
 
 from typing_extensions import override
@@ -32,7 +33,7 @@ class GCodeConsoleFormatter(logging.Formatter):
     @override
     def format(self, record: logging.LogRecord) -> str:
         prefix = "!! " if record.levelno >= logging.ERROR else ""
-        return prefix + super().format(record)
+        return prefix + dedent(super().format(record).replace("\n", " ")).strip()
 
 
 class GCodeConsoleFilter(logging.Filter):

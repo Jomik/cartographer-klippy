@@ -53,7 +53,8 @@ class KlipperAxisTwistCompensationHelper(AxisTwistCompensationHelper):
                 and self.compensation.calibrate_end_x
                 and self.compensation.calibrate_y
             ):
-                msg = """AXIS_TWIST_COMPENSATION for X axis requires
+                msg = """
+                    AXIS_TWIST_COMPENSATION for X axis requires
                     calibrate_start_x, calibrate_end_x and calibrate_y
                     to be defined
                     """
@@ -69,7 +70,8 @@ class KlipperAxisTwistCompensationHelper(AxisTwistCompensationHelper):
                 and self.compensation.calibrate_end_y
                 and self.compensation.calibrate_x
             ):
-                msg = """AXIS_TWIST_COMPENSATION for Y axis requires
+                msg = """
+                    AXIS_TWIST_COMPENSATION for Y axis requires
                     calibrate_start_y, calibrate_end_y and calibrate_x
                     to be defined
                     """
