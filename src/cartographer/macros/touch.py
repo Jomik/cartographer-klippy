@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from contextlib import contextmanager
 from typing import TYPE_CHECKING, Protocol, final
 
 import numpy as np
@@ -151,7 +150,6 @@ class CalibrationModel(TouchModelConfiguration):
 
 
 SAFE_TRIGGER_MIN_HEIGHT = -0.3  # Initial home too far
-SAFE_TRIGGER_MAX_HEIGHT = 0.2  # Initial home too close
 THRESHOLD_STEP = 250
 MAX_INSTABILITY_SCORE = 0.01
 
@@ -215,14 +213,13 @@ class TouchCalibrateMacro(Macro[MacroParams]):
                 return threshold
 
     def _evaluate_threshold(self, model: CalibrationModel) -> tuple[float | None, list[float]]:
-        with self._revert_model():
+        old_model = self._probe.model
+        try:
             self._probe.model = model
             samples: list[float] = []
             score = float("inf")
             for _ in range(self._config.touch_samples):
                 pos = self._probe.perform_single_probe()
-                if not (pos < SAFE_TRIGGER_MAX_HEIGHT):
-                    return None, []
                 if pos < SAFE_TRIGGER_MIN_HEIGHT:
                     msg = "probe triggered far below expected bed level, aborting"
                     raise RuntimeError(msg)
@@ -234,11 +231,5 @@ class TouchCalibrateMacro(Macro[MacroParams]):
                 if score >= MAX_INSTABILITY_SCORE:
                     break
             return score, samples
-
-    @contextmanager
-    def _revert_model(self):
-        old_model = self._probe.model
-        try:
-            yield
         finally:
             self._probe.model = old_model
