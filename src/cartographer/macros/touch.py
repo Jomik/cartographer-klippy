@@ -7,8 +7,9 @@ import numpy as np
 from typing_extensions import override
 
 from cartographer.configuration import TouchModelConfiguration
+from cartographer.lib.statistics import compute_mad
 from cartographer.printer_interface import Macro, MacroParams
-from cartographer.probe.touch_mode import TOLERANCE, TouchMode
+from cartographer.probe.touch_mode import STD_TOLERANCE, TouchMode
 
 if TYPE_CHECKING:
     from cartographer.printer_interface import Toolhead
@@ -85,11 +86,13 @@ class TouchAccuracyMacro(Macro[MacroParams]):
         avg_value = np.mean(measurements)
         median = np.median(measurements)
         std_dev = np.std(measurements)
+        mad = compute_mad(measurements)
 
         logger.info(
             """
             touch accuracy results: maximum %.6f, minimum %.6f, range %.6f,
             average %.6f, median %.6f, standard deviation %.6f
+            median absolute deviation %.6f
             """,
             max_value,
             min_value,
@@ -97,6 +100,7 @@ class TouchAccuracyMacro(Macro[MacroParams]):
             avg_value,
             median,
             std_dev,
+            mad,
         )
 
 
@@ -151,6 +155,8 @@ class CalibrationModel(TouchModelConfiguration):
 
 SAFE_TRIGGER_MIN_HEIGHT = -0.3  # Initial home too far
 THRESHOLD_STEP = 250
+OUTLIERS = 1  # Outliers to remove from samples
+MAD_TOLERANCE = STD_TOLERANCE * 0.06725
 
 
 @final
@@ -210,7 +216,7 @@ class TouchCalibrateMacro(Macro[MacroParams]):
                 ", ".join(f"{s:.6f}" for s in samples),
             )
 
-            if score <= TOLERANCE:
+            if score <= MAD_TOLERANCE:
                 logger.info("Threshold %d with score %.6f is within acceptable range.", threshold, score)
                 return threshold
 
@@ -227,9 +233,13 @@ class TouchCalibrateMacro(Macro[MacroParams]):
                     raise RuntimeError(msg)
                 samples.append(pos)
 
-                score = float(np.std(samples))
-                if score > TOLERANCE:
+                score = self._evaluate_samples(samples)
+
+                if score > MAD_TOLERANCE:
                     break
             return score, samples
         finally:
             self._probe.model = old_model
+
+    def _evaluate_samples(self, samples: list[float]) -> float:
+        return compute_mad(samples)
