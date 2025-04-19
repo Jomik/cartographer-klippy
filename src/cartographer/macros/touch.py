@@ -8,7 +8,7 @@ from typing_extensions import override
 
 from cartographer.configuration import TouchModelConfiguration
 from cartographer.printer_interface import Macro, MacroParams
-from cartographer.probe.touch_mode import TouchMode
+from cartographer.probe.touch_mode import TOLERANCE, TouchMode
 
 if TYPE_CHECKING:
     from cartographer.printer_interface import Toolhead
@@ -151,7 +151,6 @@ class CalibrationModel(TouchModelConfiguration):
 
 SAFE_TRIGGER_MIN_HEIGHT = -0.3  # Initial home too far
 THRESHOLD_STEP = 250
-MAX_INSTABILITY_SCORE = 0.01
 
 
 @final
@@ -208,7 +207,7 @@ class TouchCalibrateMacro(Macro[MacroParams]):
                 ", ".join(f"{s:.6f}" for s in samples),
             )
 
-            if score < MAX_INSTABILITY_SCORE:
+            if score <= TOLERANCE:
                 logger.info("Threshold %d with score %.6f is within acceptable range.", threshold, score)
                 return threshold
 
@@ -218,17 +217,15 @@ class TouchCalibrateMacro(Macro[MacroParams]):
             self._probe.model = model
             samples: list[float] = []
             score = float("inf")
-            for _ in range(self._config.touch_samples):
+            for _ in range(self._config.touch_samples * 2):
                 pos = self._probe.perform_single_probe()
                 if pos < SAFE_TRIGGER_MIN_HEIGHT:
                     msg = "probe triggered far below expected bed level, aborting"
                     raise RuntimeError(msg)
                 samples.append(pos)
 
-                stddev = float(np.std(samples))
-                range_val = max(samples) - min(samples)
-                score = stddev + range_val
-                if score >= MAX_INSTABILITY_SCORE:
+                score = float(np.std(samples))
+                if score > TOLERANCE:
                     break
             return score, samples
         finally:
