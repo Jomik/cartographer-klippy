@@ -109,6 +109,8 @@ class BedMeshCalibrateMacro(Macro[P]):
 
         for s in samples:
             position = self.toolhead.get_requested_position(s.time)
+            if position is None:
+                continue
             point = searcher.query(Position(position.x + offset.x, position.y + offset.y, 0))
             if not point.include:
                 continue
