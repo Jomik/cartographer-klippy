@@ -80,8 +80,10 @@ class ScanCalibrateMacro(Macro[MacroParams]):
         new_config = self._config.save_new_scan_model(name, model)
         self._probe.model = ScanModel(new_config)
         logger.info(
-            """scan model %s has been saved \
-            for the current session.  The SAVE_CONFIG command will \
-            update the printer config file and restart the printer.""",
+            """
+            scan model %s has been saved
+            for the current session.  The SAVE_CONFIG command will
+            update the printer config file and restart the printer.
+            """,
             name,
         )
