@@ -30,7 +30,7 @@ class Configuration(Protocol):
 
     # [cartographer touch]
     touch_samples: int
-    touch_retries: int
+    touch_max_samples: int
 
     # [cartographer scan_model default]
     scan_models: dict[str, ScanModelConfiguration]

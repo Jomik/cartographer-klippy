@@ -21,8 +21,8 @@ Probe: TypeAlias = TouchMode[object]
 class MockConfiguration(Configuration):
     move_speed = 42.0
 
-    touch_retries = 0
     touch_samples = 5
+    touch_max_samples = 10
     x_offset = 0.0
     y_offset = 0.0
     mesh_min = (10, 10)
@@ -89,19 +89,26 @@ def test_does_not_move_above_5(mocker: MockerFixture, toolhead: Toolhead, probe:
     assert move_spy.mock_calls[0] != mocker.call(z=5, speed=mocker.ANY)
 
 
-def test_probe_standard_deviation_failure(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
+def test_probe_standard_deviation_failure(
+    mocker: MockerFixture, toolhead: Toolhead, probe: Probe, config: MockConfiguration
+) -> None:
+    config.touch_max_samples = 5
     toolhead.z_homing_move = mocker.Mock(side_effect=[1.000, 1.002, 1.1, 1.016, 1.018])
     toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 1))
 
-    with pytest.raises(RuntimeError, match="failed"):
+    with pytest.raises(RuntimeError, match="unable to find"):
         _ = probe.perform_probe()
 
 
-def test_probe_suceeds_on_retry(
-    mocker: MockerFixture, toolhead: Toolhead, probe: Probe, config: MockConfiguration
-) -> None:
-    config.touch_retries = 1
+def test_probe_suceeds_on_more(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
     toolhead.z_homing_move = mocker.Mock(side_effect=[1.0, 1.01, 1.5, 0.5, 0.5, 0.5, 0.5, 0.5])
+    toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 1))
+
+    assert probe.perform_probe() == 0.5
+
+
+def test_probe_suceeds_on_spread_samples(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
+    toolhead.z_homing_move = mocker.Mock(side_effect=[0.5, 1.0, 1.5, 0.5, 2.5, 0.5, 3.5, 0.5, 4.5, 0.5])
     toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 1))
 
     assert probe.perform_probe() == 0.5
