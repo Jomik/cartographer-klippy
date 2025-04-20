@@ -7,15 +7,18 @@ from typing import TYPE_CHECKING, Protocol, final
 import numpy as np
 from typing_extensions import override
 
+from cartographer.lib.statistics import compute_mad
 from cartographer.printer_interface import C, Endstop, HomingState, Mcu, Position, ProbeMode, S, Toolhead
 
 if TYPE_CHECKING:
+    from collections.abc import Sequence
+
     from cartographer.configuration import TouchModelConfiguration
 
 logger = logging.getLogger(__name__)
 
 
-TOLERANCE = 0.008
+STD_TOLERANCE = 0.008
 RETRACT_DISTANCE = 2.0
 MAX_TOUCH_TEMPERATURE = 155
 
@@ -104,36 +107,17 @@ class TouchMode(ProbeMode, Endstop[C]):
             if valid_combo is None:
                 continue
 
-            # Compute values for logging
-            max_v, min_v = max(valid_combo), min(valid_combo)
-            mean = np.mean(valid_combo)
-            median = np.median(valid_combo)
-            range_v = max_v - min_v
-            std_dev = np.std(valid_combo)
+            self._log_sample_stats("Acceptable touch combination found", valid_combo)
 
-            logger.debug(
-                """
-                Acceptable touch combination found: (%s)
-                maximum %.6f, minimum %.6f, range %.6f,
-                average %.6f, median %.6f, standard deviation %.6f
-                """,
-                ", ".join(f"{s:.6f}" for s in valid_combo),
-                max_v,
-                min_v,
-                range_v,
-                mean,
-                median,
-                std_dev,
-            )
+            return float(np.median(valid_combo) if len(valid_combo) > 3 else np.mean(valid_combo))
 
-            return float(median if len(valid_combo) > 3 else mean)
-
+        self._log_sample_stats("No valid touch combination found in samples", collected)
         msg = f"unable to find {touch_samples} samples within tolerance after {touch_max_samples} touches"
         raise TouchError(msg)
 
     def _find_valid_combination(self, samples: list[float], size: int) -> tuple[float, ...] | None:
         for combo in combinations(samples, size):
-            if np.std(combo) <= TOLERANCE:
+            if np.std(combo) <= STD_TOLERANCE:
                 return combo
         return None
 
@@ -204,3 +188,28 @@ class TouchMode(ProbeMode, Endstop[C]):
         if not in_bounds(probe_x, probe_y):
             msg = f"probe position ({probe_x}, {probe_y}) is out of touch bounds"
             raise RuntimeError(msg)
+
+    def _log_sample_stats(self, message: str, samples: Sequence[float]) -> None:
+        max_v, min_v = max(samples), min(samples)
+        mean = np.mean(samples)
+        median = np.median(samples)
+        range_v = max_v - min_v
+        std_dev = np.std(samples)
+        mad = compute_mad(samples)
+        logger.debug(
+            """
+                %s: (%s)
+                maximum %.6f, minimum %.6f, range %.6f,
+                average %.6f, median %.6f, standard deviation %.6f,
+                median absolute deviation %.6f
+                """,
+            message,
+            ", ".join(f"{s:.6f}" for s in samples),
+            max_v,
+            min_v,
+            range_v,
+            mean,
+            median,
+            std_dev,
+            mad,
+        )
