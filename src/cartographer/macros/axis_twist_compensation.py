@@ -79,7 +79,7 @@ class AxisTwistCompensationMacro(Macro[MacroParams]):
             results.append(result)
 
         avg = float(np.mean(results))
-        results = [offset - avg for offset in results]
+        results = [avg - x for x in results]
 
         self.helper.save_compensations(axis, calibration.start, calibration.end, results)
         logger.info("""
