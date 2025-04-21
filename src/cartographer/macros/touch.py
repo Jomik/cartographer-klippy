@@ -33,7 +33,7 @@ class Configuration(Protocol):
 class TouchMacro(Macro[MacroParams]):
     name = "TOUCH"
     description = "Touch the bed to get the height offset at the current position."
-    last_trigger_position: float = 0
+    last_trigger_position: float | None = None
 
     def __init__(self, probe: Probe) -> None:
         self._probe = probe
