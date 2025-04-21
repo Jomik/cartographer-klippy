@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from textwrap import dedent
-from typing import TYPE_CHECKING, Callable, final
+from typing import TYPE_CHECKING, Callable, TypedDict, final
 
 from cartographer.klipper.axis_twist_compensation import KlipperAxisTwistCompensationHelper
 from cartographer.klipper.bed_mesh import KlipperMeshHelper
@@ -49,6 +49,21 @@ def smooth_with(filter: AlphaBetaFilter) -> Callable[[Sample], Sample]:
     return fn
 
 
+class CartographerStatus(TypedDict):
+    scan: CartographerScanStatus
+    touch: CartographerTouchStatus
+
+
+class CartographerScanStatus(TypedDict):
+    current_model: str | None
+    last_z_result: float | None
+
+
+class CartographerTouchStatus(TypedDict):
+    current_model: str | None
+    last_z_result: float | None
+
+
 @final
 class PrinterCartographer:
     config: KlipperCartographerConfiguration
@@ -65,12 +80,12 @@ class PrinterCartographer:
 
         scan_config = self.config.scan_models.get("default")
         model = ScanModel(scan_config) if scan_config else None
-        scan_mode = ScanMode(self.mcu, toolhead, self.config, model=model)
-        scan_endstop = KlipperEndstop(self.mcu, scan_mode)
+        self.scan_mode = ScanMode(self.mcu, toolhead, self.config, model=model)
+        scan_endstop = KlipperEndstop(self.mcu, self.scan_mode)
 
         touch_config = self.config.touch_models.get("default")
-        touch_mode = TouchMode(self.mcu, toolhead, self.config, model=touch_config)
-        probe = Probe(scan_mode, touch_mode)
+        self.touch_mode = TouchMode(self.mcu, toolhead, self.config, model=touch_config)
+        probe = Probe(self.scan_mode, self.touch_mode)
 
         homing_chip = CartographerHomingChip(printer, scan_endstop)
 
@@ -78,30 +93,31 @@ class PrinterCartographer:
 
         self.gcode = printer.lookup_object("gcode")
         self._configure_macro_logger()
-        probe_macro = ProbeMacro(probe)
-        self._register_macro(probe_macro)
+        self.probe_macro = ProbeMacro(probe)
+        self._register_macro(self.probe_macro)
         self._register_macro(ProbeAccuracyMacro(probe, toolhead))
         query_probe_macro = QueryProbeMacro(probe)
         self._register_macro(query_probe_macro)
 
         self._register_macro(ZOffsetApplyProbeMacro(probe, toolhead))
 
-        self._register_macro(TouchMacro(touch_mode))
-        self._register_macro(TouchAccuracyMacro(touch_mode, toolhead))
-        touch_home = TouchHomeMacro(touch_mode, toolhead, self.config.zero_reference_position)
+        self.touch_macro = TouchMacro(self.touch_mode)
+        self._register_macro(self.touch_macro)
+        self._register_macro(TouchAccuracyMacro(self.touch_mode, toolhead))
+        touch_home = TouchHomeMacro(self.touch_mode, toolhead, self.config.zero_reference_position)
         self._register_macro(touch_home)
 
         self._register_macro(
             BedMeshCalibrateMacro(
-                scan_mode,
+                self.scan_mode,
                 toolhead,
                 KlipperMeshHelper(config, self.gcode),
                 self.config,
             )
         )
 
-        self._register_macro(ScanCalibrateMacro(scan_mode, toolhead, self.config))
-        self._register_macro(TouchCalibrateMacro(touch_mode, toolhead, self.config))
+        self._register_macro(ScanCalibrateMacro(self.scan_mode, toolhead, self.config))
+        self._register_macro(TouchCalibrateMacro(self.touch_mode, toolhead, self.config))
 
         self._register_macro(
             AxisTwistCompensationMacro(probe, toolhead, KlipperAxisTwistCompensationHelper(config), self.config)
@@ -111,8 +127,8 @@ class PrinterCartographer:
             "probe",
             KlipperCartographerProbe(
                 toolhead,
-                scan_mode,
-                probe_macro,
+                self.scan_mode,
+                self.probe_macro,
                 query_probe_macro,
             ),
         )
@@ -125,6 +141,19 @@ class PrinterCartographer:
 
         log_level = logging.DEBUG if self.config.verbose else logging.INFO
         handler.setLevel(log_level)
+
+    def get_status(self, eventtime: float) -> CartographerStatus:
+        del eventtime
+        return CartographerStatus(
+            scan=CartographerScanStatus(
+                current_model=self.scan_mode.model.name if self.scan_mode.model else None,
+                last_z_result=self.probe_macro.last_trigger_position,
+            ),
+            touch=CartographerTouchStatus(
+                current_model=self.touch_mode.model.name if self.touch_mode.model else None,
+                last_z_result=self.touch_macro.last_trigger_position,
+            ),
+        )
 
 
 def catch_macro_errors(func: Callable[[GCodeCommand], None]) -> Callable[[GCodeCommand], None]:

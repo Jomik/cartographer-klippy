@@ -84,7 +84,7 @@ class KlipperCartographerProbe(PrinterProbe):
         return ProbeStatus(
             name="cartographer",
             last_query=1 if self.query_probe_macro.last_triggered else 0,
-            last_z_result=self.probe_macro.last_trigger_position,
+            last_z_result=self.probe_macro.last_trigger_position or 0,
         )
 
     @override
