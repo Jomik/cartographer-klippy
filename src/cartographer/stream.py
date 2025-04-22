@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Callable, Generic, Protocol, TypeVar, final
+from typing import Callable, Generic, Literal, Protocol, TypeVar, final
 
 T = TypeVar("T")
 
@@ -68,7 +68,7 @@ class Stream(ABC, Generic[T]):
         """Initializes a stream with optional smoothing function."""
         self.smoothing_fn: Callable[[T], T] | None = smoothing_fn
         self.sessions: set[Session[T]] = set()
-        self.callbacks: set[Callable[[T], None]] = set()
+        self.callbacks: set[Callable[[T], None | Literal["done"]]] = set()
 
     @abstractmethod
     def condition(self) -> Condition: ...
@@ -94,11 +94,13 @@ class Stream(ABC, Generic[T]):
         if len(self.sessions) == 0:
             self.stop_streaming()
 
-    def register_callback(self, callback: Callable[[T], None]):
-        """Registers a callback to the stream."""
+    def register_callback(self, callback: Callable[[T], None | Literal["done"]]):
+        """Registers a callback to the stream.
+        May return "done" to unregister itself.
+        """
         self.callbacks.add(callback)
 
-    def unregister_callback(self, callback: Callable[[T], None]):
+    def unregister_callback(self, callback: Callable[[T], None | Literal["done"]]):
         """Removes the callback from the stream."""
         self.callbacks.discard(callback)
 
@@ -111,5 +113,9 @@ class Stream(ABC, Generic[T]):
         for session in self.sessions:
             session.add_item(item)
 
-        for callback in self.callbacks:
-            callback(item)
+        for callback in self.callbacks.copy():
+            try:
+                if callback(item) == "done":
+                    self.unregister_callback(callback)
+            except RuntimeError as e:
+                logger.error("Error in stream callback: %s", e)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, TypedDict, final
+from typing import TYPE_CHECKING, Callable, Literal, TypedDict, final
 
 import mcu
 from mcu import MCU_trsync
@@ -135,7 +135,7 @@ class KlipperCartographerMcu(Mcu[ReactorCompletion, Sample], KlipperStreamMcu):
     def start_session(self, start_condition: Callable[[Sample], bool] | None = None) -> Session[Sample]:
         return self._stream.start_session(start_condition)
 
-    def register_callback(self, callback: Callable[[Sample], None]) -> None:
+    def register_callback(self, callback: Callable[[Sample], None | Literal["done"]]) -> None:
         return self._stream.register_callback(callback)
 
     @override

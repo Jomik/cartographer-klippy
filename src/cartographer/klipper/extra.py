@@ -15,6 +15,7 @@ from cartographer.klipper.mcu.mcu import Sample
 from cartographer.klipper.printer import KlipperToolhead
 from cartographer.klipper.probe import KlipperCartographerProbe
 from cartographer.klipper.temperature import PrinterTemperatureCoil
+from cartographer.klipper.webhooks import KlipperCartographerWebhooks
 from cartographer.lib.alpha_beta_filter import AlphaBetaFilter
 from cartographer.macros import ProbeAccuracyMacro, ProbeMacro, QueryProbeMacro, ZOffsetApplyProbeMacro
 from cartographer.macros.axis_twist_compensation import AxisTwistCompensationMacro
@@ -132,6 +133,9 @@ class PrinterCartographer:
                 query_probe_macro,
             ),
         )
+
+        webhooks = KlipperCartographerWebhooks(printer, self.mcu, toolhead, self.scan_mode)
+        webhooks.register()
 
     def _register_macro(self, macro: Macro[GCodeCommand]) -> None:
         self.gcode.register_command(macro.name, catch_macro_errors(macro.run), desc=macro.description)
