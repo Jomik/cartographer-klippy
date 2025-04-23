@@ -43,6 +43,6 @@ class AlphaBetaFilter:
         if dt > MIN_DT:
             self.velocity = self.velocity + (self.beta * residual) / dt
         else:
-            logger.debug("measurement delta time is too small, skipping velocity update, dt=%.2f")
+            logger.debug("Skipping velocity update due to tiny or negative dt: %.6f", dt)
 
         return self.position
