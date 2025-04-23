@@ -12,6 +12,7 @@ if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from cartographer.configuration import TouchModelConfiguration
+    from cartographer.event_bus import EventBus
 
 
 Probe: TypeAlias = TouchMode[object]
@@ -51,8 +52,14 @@ def model() -> TouchModelConfiguration:
 
 
 @pytest.fixture
-def probe(mcu: Mcu[object, Sample], toolhead: Toolhead, config: Configuration, model: TouchModelConfiguration) -> Probe:
-    return Probe(mcu, toolhead, config, model=model)
+def probe(
+    mcu: Mcu[object, Sample],
+    toolhead: Toolhead,
+    config: Configuration,
+    model: TouchModelConfiguration,
+    event_bus: EventBus,
+) -> Probe:
+    return Probe(mcu, toolhead, config, event_bus, model=model)
 
 
 @pytest.fixture
