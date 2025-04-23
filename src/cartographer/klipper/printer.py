@@ -33,7 +33,6 @@ class KlipperToolhead(Toolhead):
         self.mcu = mcu
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
-        self.motion_report = self.printer.load_object(config, "motion_report")
 
     @override
     def get_last_move_time(self) -> float:
@@ -47,17 +46,6 @@ class KlipperToolhead(Toolhead):
     def get_position(self) -> Position:
         pos = self.toolhead.get_position()
         return Position(x=pos[0], y=pos[1], z=pos[2])
-
-    @override
-    def get_requested_position(self, time: float) -> Position | None:
-        trapq = self.motion_report.trapqs.get("toolhead")
-        if trapq is None:
-            msg = "no dump trapq for toolhead"
-            raise RuntimeError(msg)
-        position, _ = trapq.get_trapq_position(time)
-        if position is None:
-            return None
-        return Position(x=position[0], y=position[1], z=position[2])
 
     @override
     def move(self, *, x: float | None = None, y: float | None = None, z: float | None = None, speed: float) -> None:

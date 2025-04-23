@@ -66,6 +66,8 @@ class Endstop(Generic[C], Protocol):
 class Sample(Protocol):
     frequency: float
     time: float
+    position: Position | None
+    velocity: float | None
 
 
 S = TypeVar("S", bound=Sample)
@@ -127,10 +129,6 @@ class Toolhead(Protocol):
 
     def get_position(self) -> Position:
         """Get the currently commanded position of the toolhead."""
-        ...
-
-    def get_requested_position(self, time: float) -> Position | None:
-        """Get the requested position of the toolhead at the given time."""
         ...
 
     def move(self, *, x: float = ..., y: float = ..., z: float = ..., speed: float) -> None:

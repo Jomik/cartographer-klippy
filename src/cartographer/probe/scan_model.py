@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Protocol, cast
+from typing import TYPE_CHECKING, cast
 
 from numpy.polynomial import Polynomial
 
@@ -10,12 +10,7 @@ if TYPE_CHECKING:
     from collections.abc import Sequence
 
     from cartographer.configuration import ScanModelConfiguration
-    from cartographer.printer_interface import Toolhead
-
-
-class Sample(Protocol):
-    time: float
-    frequency: float
+    from cartographer.printer_interface import Sample
 
 
 MAX_TOLERANCE = 1e-8
@@ -49,8 +44,8 @@ class ScanModel:
         self.config = config
 
     @staticmethod
-    def fit(toolhead: Toolhead, samples: Sequence[Sample]) -> ScanModelFit:
-        positions = [toolhead.get_requested_position(sample.time) for sample in samples]
+    def fit(samples: Sequence[Sample]) -> ScanModelFit:
+        positions = [sample.position for sample in samples]
         # TODO: Can we ignore missing positions?
         if not all(positions):
             msg = "not all samples are valid, try again"

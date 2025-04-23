@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 import pytest
@@ -20,6 +20,8 @@ if TYPE_CHECKING:
 class Sample:
     time: float
     frequency: float
+    position: Position | None = field(default_factory=lambda: Position(10, 10, 10))
+    velocity: float | None = None
 
 
 Probe: TypeAlias = ScanMode[object, Sample]
@@ -155,7 +157,6 @@ def test_calculate_positions_no_valid_samples(
     mocker: MockerFixture,
     macro: Macro,
     model: Model,
-    toolhead: Toolhead,
     helper: Helper,
     session: Session[Sample],
 ):
@@ -163,7 +164,6 @@ def test_calculate_positions_no_valid_samples(
     params.get = mocker.Mock(return_value="scan")
     helper.generate_path = mocker.Mock(return_value=[MeshPoint(10, 10, True)])
     model.frequency_to_distance = mocker.Mock(return_value=float("nan"))
-    toolhead.get_requested_position = mocker.Mock(return_value=Position(10, 10, 5))
     session.get_items = lambda: [Sample(time=0.0, frequency=100) for _ in range(2)]
 
     with pytest.raises(RuntimeError, match="no valid samples"):
@@ -174,7 +174,6 @@ def test_calculate_positions_cluster_no_samples(
     mocker: MockerFixture,
     macro: Macro,
     model: Model,
-    toolhead: Toolhead,
     helper: Helper,
     session: Session[Sample],
 ):
@@ -182,7 +181,6 @@ def test_calculate_positions_cluster_no_samples(
     params.get = mocker.Mock(return_value="scan")
     helper.generate_path = mocker.Mock(return_value=[MeshPoint(10, 10, True), MeshPoint(20, 20, True)])
     model.frequency_to_distance = mocker.Mock(return_value=1)
-    toolhead.get_requested_position = mocker.Mock(return_value=Position(10, 10, 5))
     session.get_items = lambda: [Sample(time=0.0, frequency=100) for _ in range(2)]
 
     with pytest.raises(RuntimeError, match="no samples"):
@@ -194,19 +192,19 @@ def test_finalize_with_positions(
     macro: Macro,
     probe: Probe,
     model: Model,
-    toolhead: Toolhead,
     helper: Helper,
     session: Session[Sample],
 ):
     params = mocker.MagicMock()
     params.get = mocker.Mock(return_value="scan")
     helper.generate_path = mocker.Mock(return_value=[MeshPoint(10, 10, True), MeshPoint(20, 20, True)])
-    session.get_items = lambda: [Sample(time=0.0, frequency=1) for _ in range(2)]
+    session.get_items = lambda: [
+        Sample(time=0.0, frequency=1, position=Position(10 + 10 * i, 10 + 10 * i, 5)) for i in range(2)
+    ]
 
     distances = [1, 2]
     positions = [Position(10, 10, 5), Position(20, 20, 5)]
     model.frequency_to_distance = mocker.Mock(side_effect=distances)
-    toolhead.get_requested_position = mocker.Mock(side_effect=positions)
 
     finalize_spy = mocker.spy(helper, "finalize")
     expected_positions = [Position(pos.x, pos.y, probe.probe_height - dist) for pos, dist in zip(positions, distances)]
@@ -231,9 +229,10 @@ def test_probe_applies_axis_twist_compensation(
     params = mocker.MagicMock()
     params.get = mocker.Mock(return_value="scan")
     helper.generate_path = mocker.Mock(return_value=[MeshPoint(10, 10, True), MeshPoint(20, 20, True)])
-    session.get_items = lambda: [Sample(time=0.0, frequency=1) for _ in range(2)]
+    session.get_items = lambda: [
+        Sample(time=0.0, frequency=1, position=Position(10 + 10 * i, 10 + 10 * i, 5)) for i in range(2)
+    ]
     model.frequency_to_distance = mocker.Mock(side_effect=distances)
-    toolhead.get_requested_position = mocker.Mock(side_effect=positions)
     toolhead.apply_axis_twist_compensation = lambda position: Position(position.x, position.y, z_comp)
 
     finalize_spy = mocker.spy(helper, "finalize")
@@ -249,7 +248,6 @@ def test_ignores_unincluded_points(
     probe: Probe,
     macro: Macro,
     model: Model,
-    toolhead: Toolhead,
     helper: Helper,
     session: Session[Sample],
 ):
@@ -259,9 +257,6 @@ def test_ignores_unincluded_points(
     params.get = mocker.Mock(return_value="scan")
     helper.generate_path = mocker.Mock(return_value=[MeshPoint(10, 10, False), MeshPoint(10.3, 10.3, True)])
     session.get_items = lambda: [Sample(time=0.0, frequency=1) for _ in range(2)]
-    toolhead.get_requested_position = mocker.Mock(
-        return_value=Position(10, 10, 5),
-    )
     model.frequency_to_distance = mocker.Mock(side_effect=distances)
 
     finalize_spy = mocker.spy(helper, "finalize")

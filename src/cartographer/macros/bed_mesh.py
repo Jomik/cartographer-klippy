@@ -110,10 +110,9 @@ class BedMeshCalibrateMacro(Macro[P]):
         clusters: dict[tuple[float, float], list[S]] = {self._key(point): [] for point in included_points}
 
         for s in samples:
-            position = self.toolhead.get_requested_position(s.time)
-            if position is None:
+            if s.position is None:
                 continue
-            point = searcher.query(Position(position.x + offset.x, position.y + offset.y, 0))
+            point = searcher.query(MeshPoint(s.position.x + offset.x, s.position.y + offset.y, include=True))
             if point is None or not point.include:
                 continue
             clusters[self._key(point)].append(s)

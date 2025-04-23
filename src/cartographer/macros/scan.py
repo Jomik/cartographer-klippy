@@ -74,7 +74,7 @@ class ScanCalibrateMacro(Macro[MacroParams]):
         samples = session.get_items()
         logger.debug("Collected %d samples", len(samples))
 
-        model = ScanModel.fit(self._toolhead, samples)
+        model = ScanModel.fit(samples)
         logger.debug("Scan calibration fitted model: %s", model)
 
         new_config = self._config.save_new_scan_model(name, model)
