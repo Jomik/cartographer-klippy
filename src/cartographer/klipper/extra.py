@@ -4,6 +4,7 @@ import logging
 from textwrap import dedent
 from typing import TYPE_CHECKING, Callable, TypedDict, final
 
+from cartographer.event_bus import EventBus
 from cartographer.klipper.axis_twist_compensation import KlipperAxisTwistCompensationHelper
 from cartographer.klipper.bed_mesh import KlipperMeshHelper
 from cartographer.klipper.configuration import KlipperCartographerConfiguration
@@ -74,6 +75,7 @@ class PrinterCartographer:
     config: KlipperCartographerConfiguration
 
     def __init__(self, config: ConfigWrapper) -> None:
+        event_bus = EventBus()
         printer = config.get_printer()
         logger.debug("Initializing Cartographer")
         self.config = KlipperCartographerConfiguration(config)
@@ -89,7 +91,7 @@ class PrinterCartographer:
         scan_endstop = KlipperEndstop(self.mcu, self.scan_mode)
 
         touch_config = self.config.touch_models.get("default")
-        self.touch_mode = TouchMode(self.mcu, toolhead, self.config, model=touch_config)
+        self.touch_mode = TouchMode(self.mcu, toolhead, self.config, event_bus, model=touch_config)
         probe = Probe(self.scan_mode, self.touch_mode)
 
         homing_chip = CartographerHomingChip(printer, scan_endstop)
@@ -140,7 +142,7 @@ class PrinterCartographer:
             ),
         )
 
-        webhooks = KlipperCartographerWebhooks(printer, self.mcu, toolhead, self.scan_mode)
+        webhooks = KlipperCartographerWebhooks(event_bus, printer, self.mcu, toolhead, self.scan_mode)
         webhooks.register()
 
     def _register_macro(self, macro: Macro[GCodeCommand]) -> None:
