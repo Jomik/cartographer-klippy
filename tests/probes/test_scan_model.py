@@ -7,19 +7,21 @@ from typing import TYPE_CHECKING
 import pytest
 from numpy.polynomial import Polynomial
 
-from cartographer.probe.scan_model import Sample, ScanModel
+from cartographer.printer_interface import Position, Sample
+from cartographer.probe.scan_model import ScanModel
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from cartographer.configuration import ScanModelConfiguration
-    from cartographer.printer_interface import Toolhead
 
 
 @dataclass
 class MockSample(Sample):
     time: float
     frequency: float
+    position: Position | None
+    velocity: float | None = None
 
 
 class MockConfiguration:
@@ -49,11 +51,10 @@ def model(mocker: MockerFixture, config: MockConfiguration) -> ScanModel:
     return model
 
 
-@pytest.mark.filterwarnings("ignore:The fit may be poorly conditioned")
-def test_fit(toolhead: Toolhead) -> None:
-    samples = [MockSample(time=i, frequency=1 / i) for i in range(1, 20)]
+def test_fit() -> None:
+    samples = [MockSample(time=i, frequency=1 / i, position=Position(0, 0, 0)) for i in range(1, 20)]
 
-    fit = ScanModel.fit(toolhead, samples)
+    fit = ScanModel.fit(samples)
 
     assert fit.domain[0] == 1
     assert fit.domain[1] == 19

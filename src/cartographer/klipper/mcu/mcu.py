@@ -18,7 +18,7 @@ from cartographer.klipper.mcu.constants import (
     KlipperCartographerConstants,
 )
 from cartographer.klipper.mcu.stream import KlipperStream, KlipperStreamMcu
-from cartographer.printer_interface import Mcu
+from cartographer.printer_interface import Mcu, Position
 from cartographer.printer_interface import Sample as CartographerSample
 
 if TYPE_CHECKING:
@@ -44,6 +44,8 @@ class Sample(CartographerSample):
     time: float
     frequency: float
     temperature: float
+    position: Position | None
+    velocity: float | None
 
 
 @final
@@ -74,6 +76,8 @@ class KlipperCartographerMcu(Mcu[ReactorCompletion, Sample], KlipperStreamMcu):
         self.klipper_mcu = mcu.get_printer_mcu(self.printer, config.get("mcu"))
         self._stream = KlipperStream[Sample](self, self.klipper_mcu.get_printer().get_reactor(), smoothing_fn)
         self.dispatch = KlipperTriggerDispatch(self.klipper_mcu)
+
+        self.motion_report = self.printer.load_object(config, "motion_report")
 
         self.printer.register_event_handler("klippy:mcu_identify", self._handle_mcu_identify)
         self.printer.register_event_handler("klippy:connect", self._handle_connect)
@@ -171,8 +175,9 @@ class KlipperCartographerMcu(Mcu[ReactorCompletion, Sample], KlipperStreamMcu):
 
         frequency = self.constants.count_to_frequency(data["data"])
         temperature = self.constants.calculate_temperature(data["temp"])
+        position, velocity = self.get_requested_position(time)
 
-        sample = Sample(time=time, frequency=frequency, temperature=temperature)
+        sample = Sample(time=time, frequency=frequency, temperature=temperature, position=position, velocity=velocity)
         self._stream.add_item(sample)
 
     _data_error: str | None = None
@@ -195,3 +200,13 @@ class KlipperCartographerMcu(Mcu[ReactorCompletion, Sample], KlipperStreamMcu):
         logger.error(error, {"data": data})
         if len(self._stream.sessions) > 0:
             self.klipper_mcu.get_printer().invoke_shutdown(error % {"data": data})
+
+    def get_requested_position(self, time: float) -> tuple[Position | None, float | None]:
+        trapq = self.motion_report.trapqs.get("toolhead")
+        if trapq is None:
+            msg = "no dump trapq for toolhead"
+            raise RuntimeError(msg)
+        position, velocity = trapq.get_trapq_position(time)
+        if position is None:
+            return None, velocity
+        return Position(x=position[0], y=position[1], z=position[2]), velocity

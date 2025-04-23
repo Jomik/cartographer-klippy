@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 import pytest
@@ -19,6 +19,8 @@ if TYPE_CHECKING:
 class Sample:
     time: float
     frequency: float
+    position: Position | None = field(default_factory=lambda: Position(10, 10, 10))
+    velocity: float | None = 5
 
 
 Probe: TypeAlias = ScanMode[object, Sample]

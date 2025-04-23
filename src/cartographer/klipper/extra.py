@@ -44,6 +44,8 @@ def smooth_with(filter: AlphaBetaFilter) -> Callable[[Sample], Sample]:
             sample.time,
             filter.update(measurement=sample.frequency, time=sample.time),
             sample.temperature,
+            sample.position,
+            sample.velocity,
         )
 
     return fn
@@ -75,7 +77,6 @@ class PrinterCartographer:
 
         filter = AlphaBetaFilter()
         self.mcu = KlipperCartographerMcu(config, smooth_with(filter))
-
         toolhead = KlipperToolhead(config, self.mcu)
 
         scan_config = self.config.scan_models.get("default")
