@@ -2,7 +2,6 @@ changelog:
   exclude:
     labels:
       - ignore-for-release
-      - chore
   categories:
     - title: 💥 Breaking Changes
       labels:
