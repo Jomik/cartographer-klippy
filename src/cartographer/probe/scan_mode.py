@@ -35,6 +35,8 @@ class Configuration(Protocol):
     y_offset: float
     move_speed: float
 
+    scan_samples: int
+
 
 class ScanMode(ProbeMode, Endstop[C], Generic[C, S]):
     """Implementation for Scan mode."""
@@ -94,10 +96,11 @@ class ScanMode(ProbeMode, Endstop[C], Generic[C, S]):
             raise RuntimeError(msg)
         return self.model.distance_to_frequency(distance)
 
-    def measure_distance(self, *, time: float | None = None, min_sample_count: int = 10, skip_count: int = 5) -> float:
+    def measure_distance(self, *, time: float | None = None, min_sample_count: int = ..., skip_count: int = 5) -> float:
         if self.model is None:
             msg = "cannot measure distance without a model"
             raise RuntimeError(msg)
+        min_sample_count = min_sample_count or self.config.scan_samples
         time = time or self._toolhead.get_last_move_time()
         with self._mcu.start_session(lambda sample: sample.time >= time) as session:
             session.wait_for(lambda samples: len(samples) >= min_sample_count + skip_count)

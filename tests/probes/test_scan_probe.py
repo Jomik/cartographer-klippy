@@ -55,7 +55,7 @@ class MockConfiguration(Configuration):
     y_offset: float = 0.0
     move_speed: float = 42.0
 
-    scan_samples: float = 10
+    scan_samples: int = 10
     scan_mesh_runs: int = 1
 
 

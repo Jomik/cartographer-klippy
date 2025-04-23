@@ -46,7 +46,7 @@ class KlipperCartographerConfiguration(CartographerConfiguration):
         config_name = config.get_name()
 
         scan_config = config.getsection(f"{config_name} scan")
-        self.scan_samples: int = scan_config.getint("samples", default=50, minval=10)
+        self.scan_samples: int = scan_config.getint("samples", default=50, minval=20)
         self.scan_mesh_runs: int = scan_config.getint("mesh_runs", default=1, minval=1)
 
         touch_config = config.getsection(f"{config_name} touch")
@@ -69,7 +69,7 @@ class KlipperCartographerConfiguration(CartographerConfiguration):
         }
 
         mesh_config = config.getsection("bed_mesh")
-        self.scan_speed: float = mesh_config.getfloat("speed", default=50, above=0)
+        self.scan_speed: float = mesh_config.getfloat("speed", default=50, minval=50)
         self.scan_height: float = mesh_config.getfloat("horizontal_move_z", default=4, minval=1)
         self.zero_reference_position: tuple[float, float] = get_coordinate_point(mesh_config, "zero_reference_position")
         self.mesh_min: tuple[float, float] = get_coordinate_point(mesh_config, "mesh_min")
