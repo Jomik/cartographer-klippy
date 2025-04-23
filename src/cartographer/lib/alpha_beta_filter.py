@@ -1,6 +1,10 @@
 from __future__ import annotations
 
+import logging
 from typing import final
+
+logger = logging.getLogger(__name__)
+MIN_DT = 1e-4
 
 
 @final
@@ -24,19 +28,21 @@ class AlphaBetaFilter:
             return self.position
 
         dt = time - self.last_time
-        if dt <= 0:
-            msg = "timestamps must be strictly increasing"
-            raise ValueError(msg)
+        self.last_time = time  # Update time even if out-of-order, to avoid stalling
 
         # Predict the next position
         predicted_position = self.position + self.velocity * dt
 
-        # Calculate the difference between prediction and measurement
+        # Calculate residual (difference from predicted to actual)
         residual = measurement - predicted_position
 
-        # Update estimates
+        # Always update position
         self.position = predicted_position + self.alpha * residual
-        self.velocity = self.velocity + (self.beta * residual) / dt
-        self.last_time = time
+
+        # Update velocity only if dt > 0
+        if dt > MIN_DT:
+            self.velocity = self.velocity + (self.beta * residual) / dt
+        else:
+            logger.debug("measurement delta time is too small, skipping velocity update, dt=%.2f")
 
         return self.position
