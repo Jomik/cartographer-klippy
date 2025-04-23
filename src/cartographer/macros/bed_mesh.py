@@ -89,6 +89,7 @@ class BedMeshCalibrateMacro(Macro[P]):
             session.wait_for(lambda samples: len(samples) >= count + 50)
 
         samples = session.get_items()
+        logger.debug("Gathered %d samples", len(samples))
         positions = self._calculate_positions(self.probe.model, path, samples)
         positions = list(map(self.toolhead.apply_axis_twist_compensation, positions))
 
@@ -103,16 +104,17 @@ class BedMeshCalibrateMacro(Macro[P]):
 
     def _calculate_positions(self, model: Model, path: list[MeshPoint], samples: list[S]) -> list[Position]:
         offset = self.probe.offset
-        searcher = NearestNeighborSearcher(path)
+        included_points = [point for point in path if point.include]
+        searcher = NearestNeighborSearcher(included_points)
 
-        clusters: dict[tuple[float, float], list[S]] = {self._key(point): [] for point in path if point.include}
+        clusters: dict[tuple[float, float], list[S]] = {self._key(point): [] for point in included_points}
 
         for s in samples:
             position = self.toolhead.get_requested_position(s.time)
             if position is None:
                 continue
             point = searcher.query(Position(position.x + offset.x, position.y + offset.y, 0))
-            if not point.include:
+            if point is None or not point.include:
                 continue
             clusters[self._key(point)].append(s)
 

@@ -242,3 +242,30 @@ def test_probe_applies_axis_twist_compensation(
     macro.run(params)
 
     assert finalize_spy.mock_calls == [mocker.call(Position(0, 0, 0), expected_positions)]
+
+
+def test_ignores_unincluded_points(
+    mocker: MockerFixture,
+    probe: Probe,
+    macro: Macro,
+    model: Model,
+    toolhead: Toolhead,
+    helper: Helper,
+    session: Session[Sample],
+):
+    distances = [1, 1]
+
+    params = mocker.MagicMock()
+    params.get = mocker.Mock(return_value="scan")
+    helper.generate_path = mocker.Mock(return_value=[MeshPoint(10, 10, False), MeshPoint(10.3, 10.3, True)])
+    session.get_items = lambda: [Sample(time=0.0, frequency=1) for _ in range(2)]
+    toolhead.get_requested_position = mocker.Mock(
+        return_value=Position(10, 10, 5),
+    )
+    model.frequency_to_distance = mocker.Mock(side_effect=distances)
+
+    finalize_spy = mocker.spy(helper, "finalize")
+
+    macro.run(params)
+
+    assert finalize_spy.mock_calls == [mocker.call(Position(0, 0, 0), [Position(10.3, 10.3, probe.probe_height - 1)])]
