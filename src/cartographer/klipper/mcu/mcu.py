@@ -192,6 +192,6 @@ class KlipperCartographerMcu(Mcu[ReactorCompletion, Sample], KlipperStreamMcu):
         if error is None:
             return
 
-        logger.error(error, data)
+        logger.error(error, {"data": data})
         if len(self._stream.sessions) > 0:
-            self.klipper_mcu.get_printer().invoke_shutdown(error % data)
+            self.klipper_mcu.get_printer().invoke_shutdown(error % {"data": data})
