@@ -90,7 +90,8 @@ class BedMeshCalibrateMacro(Macro[P]):
 
         samples = session.get_items()
         logger.debug("Gathered %d samples", len(samples))
-        positions = self._calculate_positions(self.probe.model, path, samples)
+
+        positions = self._calculate_positions(self.probe.model, path, samples, scan_height)
         positions = list(map(self.toolhead.apply_axis_twist_compensation, positions))
 
         self.helper.finalize(self.probe.offset, positions)
@@ -102,7 +103,9 @@ class BedMeshCalibrateMacro(Macro[P]):
     def _key(self, point: MeshPoint) -> tuple[float, float]:
         return round(point.x, 2), round(point.y, 2)
 
-    def _calculate_positions(self, model: Model, path: list[MeshPoint], samples: list[S]) -> list[Position]:
+    def _calculate_positions(
+        self, model: Model, path: list[MeshPoint], samples: list[S], scan_height: float
+    ) -> list[Position]:
         offset = self.probe.offset
         included_points = [point for point in path if point.include]
         searcher = NearestNeighborSearcher(included_points)
@@ -126,7 +129,10 @@ class BedMeshCalibrateMacro(Macro[P]):
             dist = float(np.median([model.frequency_to_distance(s.frequency) for s in cluster]))
             if not math.isfinite(dist):
                 msg = f"cluster ({x:.2f},{y:.2f}) has no valid samples"
+
                 raise RuntimeError(msg)
-            positions.append(Position(x, y, self.probe.probe_height - dist))
+            trigger_pos = scan_height + self.probe.probe_height - dist
+
+            positions.append(Position(x - offset.x, y - offset.y, trigger_pos))
 
         return positions
