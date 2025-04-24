@@ -1,15 +1,21 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, TypeVar
 
 import pytest
+from typing_extensions import ParamSpec, override
 
+from cartographer.interfaces import TaskExecutor
 from cartographer.printer_interface import MacroParams, Mcu, Position, Sample, Toolhead
 from cartographer.stream import Session
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
+
+P = ParamSpec("P")
+R = TypeVar("R")
+
 
 collect_ignore: list[str] = []
 if sys.version_info < (3, 9):
@@ -48,3 +54,14 @@ def mcu(mocker: MockerFixture, session: Session[Sample]) -> Mcu[object, Sample]:
 @pytest.fixture
 def params(mocker: MockerFixture) -> MacroParams:
     return mocker.MagicMock(spec=MacroParams, autospec=True, instance=True)
+
+
+class InlineTaskExecutor(TaskExecutor):
+    @override
+    def run(self, fn: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
+        return fn(*args, **kwargs)
+
+
+@pytest.fixture
+def task_executor() -> TaskExecutor:
+    return InlineTaskExecutor()

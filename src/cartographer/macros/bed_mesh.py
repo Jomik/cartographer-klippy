@@ -12,6 +12,7 @@ from cartographer.lib.nearest_neighbor import NearestNeighborSearcher
 from cartographer.printer_interface import C, Macro, P, Position, S, Toolhead
 
 if TYPE_CHECKING:
+    from cartographer.interfaces import TaskExecutor
     from cartographer.probe.scan_mode import Model, ScanMode
 
 logger = logging.getLogger(__name__)
@@ -47,11 +48,13 @@ class BedMeshCalibrateMacro(Macro[P]):
         probe: ScanMode[C, S],
         toolhead: Toolhead,
         helper: MeshHelper[P],
+        task_executor: TaskExecutor,
         config: Configuration,
     ) -> None:
         self.probe = probe
         self.toolhead = toolhead
         self.helper = helper
+        self.task_executor = task_executor
         self.config = config
 
     @override
@@ -91,7 +94,7 @@ class BedMeshCalibrateMacro(Macro[P]):
         samples = session.get_items()
         logger.debug("Gathered %d samples", len(samples))
 
-        positions = self._calculate_positions(self.probe.model, path, samples, scan_height)
+        positions = self.task_executor.run(self._calculate_positions, self.probe.model, path, samples, scan_height)
 
         self.helper.finalize(self.probe.offset, positions)
 
