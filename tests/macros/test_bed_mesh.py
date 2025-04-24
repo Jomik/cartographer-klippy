@@ -195,19 +195,24 @@ def test_finalize_with_positions(
     helper: Helper,
     session: Session[Sample],
 ):
+    scan_height = 5
+
     params = mocker.MagicMock()
     params.get = mocker.Mock(return_value="scan")
+    params.get_float = mocker.Mock(return_value=scan_height)
     helper.generate_path = mocker.Mock(return_value=[MeshPoint(10, 10, True), MeshPoint(20, 20, True)])
     session.get_items = lambda: [
         Sample(time=0.0, frequency=1, position=Position(10 + 10 * i, 10 + 10 * i, 5)) for i in range(2)
     ]
 
     distances = [1, 2]
-    positions = [Position(10, 10, 5), Position(20, 20, 5)]
+    positions = [Position(10, 10, scan_height), Position(20, 20, scan_height)]
     model.frequency_to_distance = mocker.Mock(side_effect=distances)
 
     finalize_spy = mocker.spy(helper, "finalize")
-    expected_positions = [Position(pos.x, pos.y, probe.probe_height - dist) for pos, dist in zip(positions, distances)]
+    expected_positions = [
+        Position(pos.x, pos.y, scan_height + probe.probe_height - dist) for pos, dist in zip(positions, distances)
+    ]
 
     macro.run(params)
 
@@ -252,15 +257,20 @@ def test_ignores_unincluded_points(
     session: Session[Sample],
 ):
     distances = [1, 1]
+    scan_height = 5
+    dist = 1
 
     params = mocker.MagicMock()
     params.get = mocker.Mock(return_value="scan")
+    params.get_float = mocker.Mock(return_value=scan_height)
     helper.generate_path = mocker.Mock(return_value=[MeshPoint(10, 10, False), MeshPoint(10.3, 10.3, True)])
-    session.get_items = lambda: [Sample(time=0.0, frequency=1) for _ in range(2)]
+    session.get_items = lambda: [Sample(time=0.0, frequency=dist) for _ in range(2)]
     model.frequency_to_distance = mocker.Mock(side_effect=distances)
 
     finalize_spy = mocker.spy(helper, "finalize")
 
     macro.run(params)
 
-    assert finalize_spy.mock_calls == [mocker.call(Position(0, 0, 0), [Position(10.3, 10.3, probe.probe_height - 1)])]
+    assert finalize_spy.mock_calls == [
+        mocker.call(Position(0, 0, 0), [Position(10.3, 10.3, scan_height + probe.probe_height - dist)])
+    ]
