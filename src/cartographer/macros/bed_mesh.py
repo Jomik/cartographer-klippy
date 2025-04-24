@@ -62,7 +62,7 @@ class BedMeshCalibrateMacro(Macro[P]):
 
         runs = params.get_int("RUNS", default=self.config.scan_mesh_runs, minval=1)
         speed = params.get_float("SPEED", default=self.config.scan_speed, minval=1)
-        scan_height = params.get_float("HEIGHT", default=self.config.scan_height, minval=1)
+        scan_height = params.get_float("HORIZONTAL_MOVE_Z", default=self.config.scan_height, minval=1)
         if self.probe.model is None:
             msg = "cannot run bed mesh without a model"
             raise RuntimeError(msg)
