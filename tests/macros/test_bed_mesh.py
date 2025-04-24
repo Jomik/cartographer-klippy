@@ -13,6 +13,7 @@ from cartographer.probe.scan_mode import Model, ScanMode
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
+    from cartographer.interfaces import TaskExecutor
     from cartographer.stream import Session
 
 
@@ -66,8 +67,14 @@ def config() -> Configuration:
 
 
 @pytest.fixture
-def macro(probe: Probe, toolhead: Toolhead, helper: Helper, config: Configuration) -> Macro:
-    return BedMeshCalibrateMacro(probe, toolhead, helper, config)
+def macro(
+    probe: Probe,
+    toolhead: Toolhead,
+    helper: Helper,
+    task_executor: TaskExecutor,
+    config: Configuration,
+) -> Macro:
+    return BedMeshCalibrateMacro(probe, toolhead, helper, task_executor, config)
 
 
 def test_run_valid_scan(mocker: MockerFixture, macro: Macro, toolhead: Toolhead, helper: Helper):

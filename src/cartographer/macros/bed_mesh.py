@@ -12,6 +12,7 @@ from cartographer.lib.nearest_neighbor import NearestNeighborSearcher
 from cartographer.printer_interface import C, Macro, P, Position, S, Toolhead
 
 if TYPE_CHECKING:
+    from cartographer.interfaces import TaskExecutor
     from cartographer.probe.scan_mode import Model, ScanMode
 
 logger = logging.getLogger(__name__)
@@ -47,11 +48,13 @@ class BedMeshCalibrateMacro(Macro[P]):
         probe: ScanMode[C, S],
         toolhead: Toolhead,
         helper: MeshHelper[P],
+        task_executor: TaskExecutor,
         config: Configuration,
     ) -> None:
         self.probe = probe
         self.toolhead = toolhead
         self.helper = helper
+        self.task_executor = task_executor
         self.config = config
 
     @override
@@ -91,8 +94,7 @@ class BedMeshCalibrateMacro(Macro[P]):
         samples = session.get_items()
         logger.debug("Gathered %d samples", len(samples))
 
-        positions = self._calculate_positions(self.probe.model, path, samples, scan_height)
-        positions = list(map(self.toolhead.apply_axis_twist_compensation, positions))
+        positions = self.task_executor.run(self._calculate_positions, self.probe.model, path, samples, scan_height)
 
         self.helper.finalize(self.probe.offset, positions)
 
@@ -106,33 +108,68 @@ class BedMeshCalibrateMacro(Macro[P]):
     def _calculate_positions(
         self, model: Model, path: list[MeshPoint], samples: list[S], scan_height: float
     ) -> list[Position]:
-        offset = self.probe.offset
-        included_points = [point for point in path if point.include]
+        included_points = [p for p in path if p.include]
         searcher = NearestNeighborSearcher(included_points)
 
-        clusters: dict[tuple[float, float], list[S]] = {self._key(point): [] for point in included_points}
+        clusters = self._build_clusters(
+            samples,
+            included_points,
+            searcher,
+        )
+        return [
+            self._compute_position(
+                (x, y),
+                cluster,
+                model,
+                scan_height,
+            )
+            for (x, y), cluster in clusters.items()
+        ]
 
-        for s in samples:
+    def _build_clusters(
+        self,
+        samples: list[S],
+        points: list[MeshPoint],
+        searcher: NearestNeighborSearcher[MeshPoint],
+    ) -> dict[tuple[float, float], list[S]]:
+        offset = self.probe.offset
+
+        def classify_sample(s: S) -> tuple[tuple[float, float], S] | None:
             if s.position is None:
-                continue
-            point = searcher.query(MeshPoint(s.position.x + offset.x, s.position.y + offset.y, include=True))
+                return None
+            adjusted = MeshPoint(s.position.x + offset.x, s.position.y + offset.y, include=True)
+            point = searcher.query(adjusted)
             if point is None or not point.include:
-                continue
-            clusters[self._key(point)].append(s)
+                return None
+            return self._key(point), s
 
-        positions: list[Position] = []
-        for (x, y), cluster in clusters.items():
-            if len(cluster) == 0:
-                msg = f"cluster ({x:.2f},{y:.2f}) has no samples"
-                raise RuntimeError(msg)
+        cluster_map: dict[tuple[float, float], list[S]] = {self._key(p): [] for p in points}
+        for result in map(classify_sample, samples):
+            if result is not None:
+                key, sample = result
+                cluster_map[key].append(sample)
+        return cluster_map
 
-            dist = float(np.median([model.frequency_to_distance(s.frequency) for s in cluster]))
-            if not math.isfinite(dist):
-                msg = f"cluster ({x:.2f},{y:.2f}) has no valid samples"
+    def _compute_position(
+        self,
+        key: tuple[float, float],
+        cluster: list[S],
+        model: Model,
+        scan_height: float,
+    ) -> Position:
+        offset = self.probe.offset
+        x, y = key
+        if not cluster:
+            msg = f"cluster ({x:.2f},{y:.2f}) has no samples"
+            raise RuntimeError(msg)
 
-                raise RuntimeError(msg)
-            trigger_pos = scan_height + self.probe.probe_height - dist
+        distances = list(map(lambda s: model.frequency_to_distance(s.frequency), cluster))
+        median_distance = float(np.median(distances))
 
-            positions.append(Position(x - offset.x, y - offset.y, trigger_pos))
+        if not math.isfinite(median_distance):
+            msg = f"cluster ({x:.2f},{y:.2f}) has no valid samples"
+            raise RuntimeError(msg)
 
-        return positions
+        trigger_z = scan_height + self.probe.probe_height - median_distance
+        pos = Position(x - offset.x, y - offset.y, trigger_z)
+        return self.toolhead.apply_axis_twist_compensation(pos)

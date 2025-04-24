@@ -14,6 +14,7 @@ from cartographer.klipper.mcu import KlipperCartographerMcu
 from cartographer.klipper.mcu.mcu import Sample
 from cartographer.klipper.printer import KlipperToolhead
 from cartographer.klipper.probe import KlipperCartographerProbe
+from cartographer.klipper.task_executor import KlipperMultiprocessingExecutor
 from cartographer.klipper.temperature import PrinterTemperatureCoil
 from cartographer.lib.alpha_beta_filter import AlphaBetaFilter
 from cartographer.macros import ProbeAccuracyMacro, ProbeMacro, QueryProbeMacro, ZOffsetApplyProbeMacro
@@ -74,6 +75,7 @@ class PrinterCartographer:
         printer = config.get_printer()
         logger.debug("Initializing Cartographer")
         self.config = KlipperCartographerConfiguration(config)
+        task_executor = KlipperMultiprocessingExecutor(printer.get_reactor())
 
         filter = AlphaBetaFilter()
         self.mcu = KlipperCartographerMcu(config, smooth_with(filter))
@@ -113,6 +115,7 @@ class PrinterCartographer:
                 self.scan_mode,
                 toolhead,
                 KlipperMeshHelper(config, self.gcode),
+                task_executor,
                 self.config,
             )
         )
