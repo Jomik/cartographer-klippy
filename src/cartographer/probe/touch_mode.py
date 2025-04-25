@@ -179,14 +179,15 @@ class TouchMode(ProbeMode, Endstop[C]):
         max_x, max_y = self.config.mesh_max
 
         def in_bounds(x: float, y: float) -> bool:
-            return min_x <= x <= max_x and min_y <= y <= max_y
+            epsilon = 1e-3
+            return (min_x - epsilon) <= x <= (max_x + epsilon) and (min_y - epsilon) <= y <= (max_y + epsilon)
 
         if not in_bounds(nozzle.x, nozzle.y):
-            msg = f"nozzle position ({nozzle.x}, {nozzle.y}) is out of touch bounds"
+            msg = f"nozzle position ({nozzle.x:.2f}, {nozzle.y:.2f}) is out of touch bounds"
             raise RuntimeError(msg)
 
         if not in_bounds(probe_x, probe_y):
-            msg = f"probe position ({probe_x}, {probe_y}) is out of touch bounds"
+            msg = f"probe position ({probe_x:.2f}, {probe_y:.2f}) is out of touch bounds"
             raise RuntimeError(msg)
 
     def _log_sample_stats(self, message: str, samples: Sequence[float]) -> None:
