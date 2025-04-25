@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal, Protocol, final
 
@@ -68,6 +69,7 @@ class AxisTwistCompensationMacro(Macro[MacroParams]):
     def _calibrate(self, axis: Literal["x", "y"], sample_count: int, calibration: CalibrationOptions) -> None:
         step = (calibration.end - calibration.start) / (sample_count - 1)
         results: list[float] = []
+        start_time = time.time()
         for i in range(sample_count):
             position = calibration.start + i * step
             self._move_probe_to(axis, position, calibration.axis)
@@ -77,6 +79,7 @@ class AxisTwistCompensationMacro(Macro[MacroParams]):
             result = scan - touch
             logger.debug("Offset at %:.2f: %.6f", position, result)
             results.append(result)
+        logger.debug("Axis twist measurements completed in %.2f seconds", time.time() - start_time)
 
         avg = float(np.mean(results))
         results = [avg - x for x in results]
