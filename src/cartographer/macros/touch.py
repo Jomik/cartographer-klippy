@@ -107,7 +107,7 @@ class TouchAccuracyMacro(Macro[MacroParams]):
 @final
 class TouchHomeMacro(Macro[MacroParams]):
     name = "TOUCH_HOME"
-    description = "Touch the bed to get the height offset at the current position."
+    description = "Touch the bed to home Z axis"
 
     def __init__(
         self,
@@ -121,12 +121,29 @@ class TouchHomeMacro(Macro[MacroParams]):
 
     @override
     def run(self, params: MacroParams) -> None:
+        if not self._toolhead.is_homed("x") or not self._toolhead.is_homed("y"):
+            msg = "must home x and y before touch homing"
+            raise RuntimeError(msg)
+
         self._toolhead.move(
             x=self._home_position[0],
             y=self._home_position[1],
             speed=self._probe.config.move_speed,
         )
-        trigger_pos = self._probe.perform_probe()
+        self._toolhead.wait_moves()
+
+        forced_z = False
+        if not self._toolhead.is_homed("z"):
+            forced_z = True
+            _, z_max = self._toolhead.get_z_axis_limits()
+            self._toolhead.set_z_position(z=z_max - 10)
+
+        try:
+            trigger_pos = self._probe.perform_probe()
+        finally:
+            if forced_z:
+                self._toolhead.clear_z_homing_state()
+
         pos = self._toolhead.get_position()
         self._toolhead.set_z_position(pos.z - (trigger_pos - self._probe.offset.z))
         logger.info(
