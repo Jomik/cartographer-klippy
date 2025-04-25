@@ -177,6 +177,10 @@ class TouchCalibrateMacro(Macro[MacroParams]):
         threshold_start = params.get_int("THRESHOLD", default=500)
         threshold_max = params.get_int("MAX_THRESHOLD", default=5000)
 
+        if not self._toolhead.is_homed("x") or not self._toolhead.is_homed("y"):
+            msg = "must home x and y before calibration"
+            raise RuntimeError(msg)
+
         self._toolhead.move(
             x=self._config.zero_reference_position[0],
             y=self._config.zero_reference_position[1],
@@ -184,7 +188,17 @@ class TouchCalibrateMacro(Macro[MacroParams]):
         )
         self._toolhead.wait_moves()
 
-        best_threshold = self._find_best_threshold(threshold_start, threshold_max, speed)
+        forced_z = False
+        if not self._toolhead.is_homed("z"):
+            forced_z = True
+            _, z_max = self._toolhead.get_z_axis_limits()
+            self._toolhead.set_z_position(z=z_max - 10)
+
+        try:
+            best_threshold = self._find_best_threshold(threshold_start, threshold_max, speed)
+        finally:
+            if forced_z:
+                self._toolhead.clear_z_homing_state()
 
         if best_threshold is None:
             msg = "failed to calibrate touch probe"
