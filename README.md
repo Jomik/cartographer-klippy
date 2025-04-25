@@ -50,7 +50,11 @@ curl -s -L https://raw.githubusercontent.com/Jomik/cartographer-klippy/refs/head
 
 ### Calibration
 
-`SCAN_CALIBRATE` and `TOUCH_CALIBRATE` are used to calibrate the probe.
-`TOUCH_CALIBRATE` requires that the printer is homed.
+`SCAN_CALIBRATE` to calibrate the frequency response from the probe.
+Initial calibration must be done manual.
+Once `TOUCH` is calibrated,
+a second calibration can be done with `SCAN_CALIBRATE METHOD=touch`.
+
+`TOUCH_CALIBRATE` requires that the printer is home.
 
 `TOUCH_AXIS_TWIST_COMPENSATION` for using touch to calculate twist compensation

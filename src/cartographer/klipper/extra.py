@@ -120,7 +120,7 @@ class PrinterCartographer:
             )
         )
 
-        self._register_macro(ScanCalibrateMacro(self.scan_mode, toolhead, self.config))
+        self._register_macro(ScanCalibrateMacro(probe, toolhead, self.config))
         self._register_macro(TouchCalibrateMacro(self.touch_mode, toolhead, self.config))
 
         self._register_macro(
