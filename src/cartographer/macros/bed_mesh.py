@@ -112,13 +112,11 @@ class BedMeshCalibrateMacro(Macro[P]):
         self, model: Model, path: list[MeshPoint], samples: list[S], scan_height: float
     ) -> list[Position]:
         included_points = [p for p in path if p.include]
-        searcher = NearestNeighborSearcher(included_points)
 
         start_time = time.time()
         clusters = self._build_clusters(
             samples,
             included_points,
-            searcher,
         )
         logger.debug("Sample clustering completed in %.2f seconds", time.time() - start_time)
 
@@ -139,24 +137,32 @@ class BedMeshCalibrateMacro(Macro[P]):
         self,
         samples: list[S],
         points: list[MeshPoint],
-        searcher: NearestNeighborSearcher[MeshPoint],
     ) -> dict[tuple[float, float], list[S]]:
         offset = self.probe.offset
-
-        def classify_sample(s: S) -> tuple[tuple[float, float], S] | None:
-            if s.position is None:
-                return None
-            adjusted = MeshPoint(s.position.x + offset.x, s.position.y + offset.y, include=True)
-            point = searcher.query(adjusted)
-            if point is None or not point.include:
-                return None
-            return self._key(point), s
-
+        searcher = NearestNeighborSearcher(points)
         cluster_map: dict[tuple[float, float], list[S]] = {self._key(p): [] for p in points}
-        for result in map(classify_sample, samples):
-            if result is not None:
-                key, sample = result
-                cluster_map[key].append(sample)
+
+        valid_samples: list[S] = []
+        adjusted_positions: list[tuple[float, float]] = []
+
+        for s in samples:
+            if s.position is None:
+                continue
+            valid_samples.append(s)
+            adjusted_positions.append(
+                (
+                    s.position.x + offset.x,
+                    s.position.y + offset.y,
+                )
+            )
+
+        nearest_points = searcher.batch_query(adjusted_positions)
+
+        for s, point in zip(valid_samples, nearest_points):
+            if point is not None and point.include:
+                key = self._key(point)
+                cluster_map[key].append(s)
+
         return cluster_map
 
     def _compute_position(

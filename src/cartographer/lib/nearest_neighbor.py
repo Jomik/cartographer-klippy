@@ -1,16 +1,13 @@
 from __future__ import annotations
 
 import logging
+from math import floor, sqrt
 from typing import Generic, Protocol, TypeVar, final
 
-import numpy as np
+logger = logging.getLogger(__name__)
 
-try:
-    from scipy.spatial import KDTree
-
-    kd_tree = KDTree
-except ImportError:
-    kd_tree = None
+MAX_CLUSTER_DISTANCE = 1.0
+CELL_SIZE = 0.5  # must be ≤ MAX_CLUSTER_DISTANCE for full coverage
 
 
 class Point(Protocol):
@@ -20,42 +17,35 @@ class Point(Protocol):
 
 P = TypeVar("P", bound=Point, covariant=True)
 
-MAX_CLUSTER_DISTANCE = 1.0
-
-logger = logging.getLogger(__name__)
-
 
 @final
 class NearestNeighborSearcher(Generic[P]):
-    tree: KDTree[None, None] | None = None
+    def __init__(self, points: list[P]) -> None:
+        self.points = points
+        self.grid: dict[tuple[int, int], list[P]] = {}
+        for point in points:
+            cell = self._cell_key(point.x, point.y)
+            self.grid.setdefault(cell, []).append(point)
 
-    def __init__(self, positions: list[P]) -> None:
-        """Build a nearest neighbor searcher using the given positions."""
-        self.positions = positions
+    def batch_query(self, positions: list[tuple[float, float]]) -> list[P | None]:
+        results: list[P | None] = []
 
-        if kd_tree is not None:
-            self.tree = kd_tree([(p.x, p.y) for p in positions])
+        for px, py in positions:
+            best = None
+            best_dist = MAX_CLUSTER_DISTANCE
 
-    def query(self, point: Point) -> P | None:
-        """Find the nearest point to the given point."""
-        if self.tree is not None:
-            _, index = self.tree.query((point.x, point.y), distance_upper_bound=MAX_CLUSTER_DISTANCE)  # pyright: ignore[reportUnknownMemberType]
-            if index == self.tree.n:
-                return None
-        else:
-            index = self._naive_query(point)
-            if index is None:
-                return None
+            cx, cy = self._cell_key(px, py)
+            for dx in (-1, 0, 1):
+                for dy in (-1, 0, 1):
+                    cell = (cx + dx, cy + dy)
+                    for p in self.grid.get(cell, []):
+                        dist = sqrt((px - p.x) ** 2 + (py - p.y) ** 2)
+                        if dist < best_dist:
+                            best_dist = dist
+                            best = p
+            results.append(best)
 
-        return self.positions[index]
+        return results
 
-    def _naive_query(self, point: Point) -> int | None:
-        """Find the nearest point to the given point using a naive approach."""
-        min_distance = MAX_CLUSTER_DISTANCE
-        nearest_point: int | None = None
-        for index, pos in enumerate(self.positions):
-            dist = float(np.sqrt((point.x - pos.x) ** 2 + (point.y - pos.y) ** 2))
-            if dist < min_distance:
-                min_distance: float = dist
-                nearest_point = index
-        return nearest_point
+    def _cell_key(self, x: float, y: float) -> tuple[int, int]:
+        return (floor(x / CELL_SIZE), floor(y / CELL_SIZE))
