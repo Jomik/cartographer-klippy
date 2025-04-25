@@ -1,17 +1,18 @@
 from __future__ import annotations
 
 import logging
+from enum import Enum
 from functools import partial
 from typing import TYPE_CHECKING, Protocol, final
 
-from typing_extensions import override
+from typing_extensions import assert_never, override
 
-from cartographer.printer_interface import C, Macro, MacroParams, Position, S, Toolhead
-from cartographer.probe.scan_model import ScanModel
+from cartographer.macros.utils import get_enum_choice
+from cartographer.printer_interface import Macro, MacroParams, Position, Toolhead
+from cartographer.probe import Probe, ScanModel
 
 if TYPE_CHECKING:
     from cartographer.configuration import ScanModelConfiguration, ScanModelFit
-    from cartographer.probe import ScanMode
 
 logger = logging.getLogger(__name__)
 
@@ -20,12 +21,17 @@ class Configuration(Protocol):
     def save_new_scan_model(self, name: str, model: ScanModelFit) -> ScanModelConfiguration: ...
 
 
+class ScanCalibrateMethod(Enum):
+    TOUCH = "touch"
+    MANUAL = "manual"
+
+
 @final
 class ScanCalibrateMacro(Macro[MacroParams]):
     name = "SCAN_CALIBRATE"
     description = "Run the scan calibration"
 
-    def __init__(self, probe: ScanMode[C, S], toolhead: Toolhead, config: Configuration) -> None:
+    def __init__(self, probe: Probe, toolhead: Toolhead, config: Configuration) -> None:
         self._probe = probe
         self._toolhead = toolhead
         self._config = config
@@ -33,14 +39,29 @@ class ScanCalibrateMacro(Macro[MacroParams]):
     @override
     def run(self, params: MacroParams) -> None:
         name = params.get("MODEL_NAME", "default")
+        method = get_enum_choice(params, "METHOD", ScanCalibrateMethod, default=ScanCalibrateMethod.MANUAL)
 
+        if method == ScanCalibrateMethod.TOUCH:
+            return self._run_touch(name)
+        elif method == ScanCalibrateMethod.MANUAL:
+            return self._run_manual(name)
+
+        assert_never(method)
+
+    def _run_touch(self, name: str) -> None:
+        trigger_pos = self._probe.perform_touch()
+        pos = self._toolhead.get_position()
+        self._toolhead.set_z_position(pos.z - (trigger_pos - self._probe.touch.offset.z))
+        self._calibrate(name)
+
+    def _run_manual(self, name: str) -> None:
         if not self._toolhead.is_homed("x") or not self._toolhead.is_homed("y"):
             msg = "must home x and y before calibration"
             raise RuntimeError(msg)
         _, z_max = self._toolhead.get_z_axis_limits()
         self._toolhead.set_z_position(z=z_max - 10)
 
-        logger.info("Triggering manual probe ")
+        logger.info("Triggering manual probe, please bring nozzle to 0.1mm above the bed")
 
         self._toolhead.manual_probe(partial(self._handle_manual_probe, name))
 
@@ -59,7 +80,7 @@ class ScanCalibrateMacro(Macro[MacroParams]):
         self._toolhead.move(z=5.5, speed=5)
         self._toolhead.wait_moves()
 
-        with self._probe.start_session() as session:
+        with self._probe.scan.start_session() as session:
             session.wait_for(lambda samples: len(samples) > 50)
             self._toolhead.dwell(0.250)
             self._toolhead.move(z=0.1, speed=1)
@@ -78,7 +99,7 @@ class ScanCalibrateMacro(Macro[MacroParams]):
         logger.debug("Scan calibration fitted model: %s", model)
 
         new_config = self._config.save_new_scan_model(name, model)
-        self._probe.model = ScanModel(new_config)
+        self._probe.scan.model = ScanModel(new_config)
         logger.info(
             """
             scan model %s has been saved
