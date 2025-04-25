@@ -78,7 +78,7 @@ class TouchAccuracyMacro(Macro[MacroParams]):
             measurements.append(trigger_pos)
             pos = self._toolhead.get_position()
             self._toolhead.move(z=pos.z + retract, speed=lift_speed)
-        logger.debug("Measurements gathered: %s", measurements)
+        logger.debug("Measurements gathered: %s", ", ".join(f"{m:.6f}" for m in measurements))
 
         max_value = max(measurements)
         min_value = min(measurements)
