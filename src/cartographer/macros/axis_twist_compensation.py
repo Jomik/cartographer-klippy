@@ -91,7 +91,8 @@ class AxisTwistCompensationMacro(Macro[MacroParams]):
             update the printer config file and restart the printer.
             """)
         logger.info(
-            "Touch axis twist compensation calibration complete: mean z_offset: %.6f, offsets: (%s)",
+            "Touch %s axis twist compensation calibration complete: mean z_offset: %.6f, offsets: (%s)",
+            axis.upper(),
             avg,
             ", ".join(f"{s:.6f}" for s in results),
         )
