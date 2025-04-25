@@ -44,7 +44,7 @@ class KlipperHomingState(HomingState):
 
     @override
     def set_z_homed_position(self, position: float) -> None:
-        logger.debug("Setting homed distance for z to %.2F", position)
+        logger.debug("Setting homed distance for z to %.3f", position)
         self.homing.set_homed_position([None, None, position])
 
 

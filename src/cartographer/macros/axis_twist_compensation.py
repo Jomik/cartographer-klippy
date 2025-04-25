@@ -75,7 +75,7 @@ class AxisTwistCompensationMacro(Macro[MacroParams]):
             self._move_nozzle_to(axis, position, calibration.axis)
             touch = self.probe.perform_touch()
             result = scan - touch
-            logger.debug("Offset at %s: %s", position, result)
+            logger.debug("Offset at %:.2f: %.6f", position, result)
             results.append(result)
 
         avg = float(np.mean(results))
@@ -88,7 +88,7 @@ class AxisTwistCompensationMacro(Macro[MacroParams]):
             update the printer config file and restart the printer.
             """)
         logger.info(
-            "Touch axis twist compensation calibration complete: mean z_offset: %f, offsets: (%s)",
+            "Touch axis twist compensation calibration complete: mean z_offset: %.6f, offsets: (%s)",
             avg,
             ", ".join(f"{s:.6f}" for s in results),
         )
