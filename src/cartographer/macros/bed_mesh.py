@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import math
+import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Generic, Protocol, final
 
@@ -76,6 +77,7 @@ class BedMeshCalibrateMacro(Macro[P]):
         path = self.helper.generate_path()
         self._move_to_point(path[0], speed)
 
+        start_time = time.time()
         with self.probe.start_session() as session:
             session.wait_for(lambda samples: len(samples) >= 5)
             for i in range(runs):
@@ -86,10 +88,11 @@ class BedMeshCalibrateMacro(Macro[P]):
                     self._move_to_point(point, speed)
                 self.toolhead.dwell(0.250)
                 self.toolhead.wait_moves()
-            time = self.toolhead.get_last_move_time()
-            session.wait_for(lambda samples: samples[-1].time >= time)
+            move_time = self.toolhead.get_last_move_time()
+            session.wait_for(lambda samples: samples[-1].time >= move_time)
             count = len(session.items)
             session.wait_for(lambda samples: len(samples) >= count + 50)
+        logger.debug("Bed scan completed in %.2f seconds", time.time() - start_time)
 
         samples = session.get_items()
         logger.debug("Gathered %d samples", len(samples))
@@ -111,12 +114,16 @@ class BedMeshCalibrateMacro(Macro[P]):
         included_points = [p for p in path if p.include]
         searcher = NearestNeighborSearcher(included_points)
 
+        start_time = time.time()
         clusters = self._build_clusters(
             samples,
             included_points,
             searcher,
         )
-        return [
+        logger.debug("Sample clustering completed in %.2f seconds", time.time() - start_time)
+
+        start_time = time.time()
+        positions = [
             self._compute_position(
                 (x, y),
                 cluster,
@@ -125,6 +132,8 @@ class BedMeshCalibrateMacro(Macro[P]):
             )
             for (x, y), cluster in clusters.items()
         ]
+        logger.debug("Cluster position computation completed in %.2f seconds", time.time() - start_time)
+        return positions
 
     def _build_clusters(
         self,
