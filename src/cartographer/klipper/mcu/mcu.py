@@ -29,10 +29,6 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class McuError(Exception):
-    pass
-
-
 class _RawData(TypedDict):
     clock: int
     data: int
@@ -127,11 +123,10 @@ class KlipperCartographerMcu(Mcu[ReactorCompletion, Sample], KlipperStreamMcu):
         result = self.dispatch.stop()
         if result >= MCU_trsync.REASON_COMMS_TIMEOUT:
             msg = "communication timeout during homing"
-            raise self.klipper_mcu.error(msg)
+            raise RuntimeError(msg)
         if result != MCU_trsync.REASON_ENDSTOP_HIT:
             return 0.0
-        if self.klipper_mcu.is_fileoutput():
-            return home_end_time
+
         # TODO: Use a query state command for actual end time
         return home_end_time
 
@@ -186,9 +181,9 @@ class KlipperCartographerMcu(Mcu[ReactorCompletion, Sample], KlipperStreamMcu):
         count = data["data"]
         error: str | None = None
         if count == SHORTED_FREQUENCY_VALUE:
-            error = "Coil is shorted or not connected."
+            error = "coil is shorted or not connected."
         elif count > self.constants.minimum_count * FREQUENCY_RANGE_PERCENT:
-            error = "Coil frequency reading exceeded max expected value, received %(data)d"
+            error = "coil frequency reading exceeded max expected value, received %(data)d"
 
         if self._data_error == error:
             return
