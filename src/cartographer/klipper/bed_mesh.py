@@ -46,6 +46,14 @@ class KlipperMeshHelper(MeshHelper[GCodeCommand]):
         return [MeshPoint(p[0], p[1], include) for (p, include) in path]
 
     @override
+    def get_probe_points(self) -> list[MeshPoint]:
+        points = self._bed_mesh.bmc.probe_mgr.probe_helper.probe_points
+        if points is None or len(points) == 0:
+            msg = "probe points are not set"
+            raise RuntimeError(msg)
+        return [MeshPoint(p[0], p[1], True) for (p) in points]
+
+    @override
     def finalize(self, offset: Position, positions: list[Position]):
         self._bed_mesh.bmc.probe_finalize(
             [offset.x, offset.y, offset.z],

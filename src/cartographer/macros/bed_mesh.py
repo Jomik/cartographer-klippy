@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from cartographer.interfaces import TaskExecutor
     from cartographer.probe import Probe
     from cartographer.probe.scan_mode import Model, ScanMode
+    from cartographer.probe.touch_mode import TouchMode
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +38,7 @@ class MeshHelper(Generic[P], Protocol):
     def orig_macro(self, params: P) -> None: ...
     def prepare(self, params: P) -> None: ...
     def generate_scan_path(self) -> list[MeshPoint]: ...
+    def get_probe_points(self) -> list[MeshPoint]: ...
     def finalize(self, offset: Position, positions: list[Position]): ...
 
 
@@ -53,20 +55,53 @@ class BedMeshCalibrateMacro(Macro[P]):
         task_executor: TaskExecutor,
         config: Configuration,
     ) -> None:
-        self.scan_mesh = _ScanMeshRunner(probe.scan, toolhead, task_executor, config)
         self.helper = helper
+        self.scan_mesh = _ScanMeshRunner(probe.scan, toolhead, task_executor, config)
+        self.touch_mesh = _TouchMeshRunner(probe.touch, toolhead, config)
 
     @override
     def run(self, params: P) -> None:
         method = params.get("METHOD", default="scan").lower()
-        if method != "scan" and method != "rapid_scan":
+        if method != "scan" and method != "rapid_scan" and method != "touch":
             return self.helper.orig_macro(params)
 
         self.helper.prepare(params)
 
-        offset, positions = self.scan_mesh.run(params, self.helper.generate_scan_path())
+        if method == "touch":
+            offset, positions = self.touch_mesh.run(params, self.helper.get_probe_points())
+        else:
+            offset, positions = self.scan_mesh.run(params, self.helper.generate_scan_path())
 
         self.helper.finalize(offset, positions)
+
+
+@final
+class _TouchMeshRunner:
+    def __init__(
+        self,
+        probe: TouchMode[object],
+        toolhead: Toolhead,
+        config: Configuration,
+    ) -> None:
+        self.probe = probe
+        self.toolhead = toolhead
+        self.config = config
+
+    def run(self, params: MacroParams, points: list[MeshPoint]) -> tuple[Position, list[Position]]:
+        speed = params.get_float("SPEED", default=self.config.scan_speed, minval=1)
+        move_height = params.get_float("HORIZONTAL_MOVE_Z", default=self.config.scan_height, minval=1)
+        if self.probe.model is None:
+            msg = "cannot run bed mesh without a model"
+            raise RuntimeError(msg)
+
+        self.toolhead.move(z=move_height, speed=5)
+        positions: list[Position] = []
+        for p in points:
+            self.toolhead.move(x=p.x, y=p.y, speed=speed)
+            trigger_pos = self.probe.perform_probe()
+            positions.append(Position(p.x, p.y, trigger_pos))
+
+        return self.probe.offset, positions
 
 
 @final
