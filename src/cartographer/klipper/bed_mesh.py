@@ -41,7 +41,7 @@ class KlipperMeshHelper(MeshHelper[GCodeCommand]):
             raise RuntimeError(str(e)) from e
 
     @override
-    def generate_path(self) -> list[MeshPoint]:
+    def generate_scan_path(self) -> list[MeshPoint]:
         path = self._bed_mesh.bmc.probe_mgr.iter_rapid_path()
         return [MeshPoint(p[0], p[1], include) for (p, include) in path]
 

@@ -10,10 +10,11 @@ import numpy as np
 from typing_extensions import override
 
 from cartographer.lib.nearest_neighbor import NearestNeighborSearcher
-from cartographer.printer_interface import C, Macro, P, Position, S, Toolhead
+from cartographer.printer_interface import C, Macro, MacroParams, P, Position, S, Toolhead
 
 if TYPE_CHECKING:
     from cartographer.interfaces import TaskExecutor
+    from cartographer.probe import Probe
     from cartographer.probe.scan_mode import Model, ScanMode
 
 logger = logging.getLogger(__name__)
@@ -35,7 +36,7 @@ class MeshPoint:
 class MeshHelper(Generic[P], Protocol):
     def orig_macro(self, params: P) -> None: ...
     def prepare(self, params: P) -> None: ...
-    def generate_path(self) -> list[MeshPoint]: ...
+    def generate_scan_path(self) -> list[MeshPoint]: ...
     def finalize(self, offset: Position, positions: list[Position]): ...
 
 
@@ -46,17 +47,14 @@ class BedMeshCalibrateMacro(Macro[P]):
 
     def __init__(
         self,
-        probe: ScanMode[C, S],
+        probe: Probe,
         toolhead: Toolhead,
         helper: MeshHelper[P],
         task_executor: TaskExecutor,
         config: Configuration,
     ) -> None:
-        self.probe = probe
-        self.toolhead = toolhead
+        self.scan_mesh = _ScanMeshRunner(probe.scan, toolhead, task_executor, config)
         self.helper = helper
-        self.task_executor = task_executor
-        self.config = config
 
     @override
     def run(self, params: P) -> None:
@@ -64,6 +62,28 @@ class BedMeshCalibrateMacro(Macro[P]):
         if method != "scan" and method != "rapid_scan":
             return self.helper.orig_macro(params)
 
+        self.helper.prepare(params)
+
+        offset, positions = self.scan_mesh.run(params, self.helper.generate_scan_path())
+
+        self.helper.finalize(offset, positions)
+
+
+@final
+class _ScanMeshRunner:
+    def __init__(
+        self,
+        probe: ScanMode[C, S],
+        toolhead: Toolhead,
+        task_executor: TaskExecutor,
+        config: Configuration,
+    ) -> None:
+        self.probe = probe
+        self.toolhead = toolhead
+        self.task_executor = task_executor
+        self.config = config
+
+    def run(self, params: MacroParams, path: list[MeshPoint]) -> tuple[Position, list[Position]]:
         runs = params.get_int("RUNS", default=self.config.scan_mesh_runs, minval=1)
         speed = params.get_float("SPEED", default=self.config.scan_speed, minval=1)
         scan_height = params.get_float("HORIZONTAL_MOVE_Z", default=self.config.scan_height, minval=1)
@@ -71,10 +91,7 @@ class BedMeshCalibrateMacro(Macro[P]):
             msg = "cannot run bed mesh without a model"
             raise RuntimeError(msg)
 
-        self.helper.prepare(params)
-
         self.toolhead.move(z=scan_height, speed=5)
-        path = self.helper.generate_path()
         self._move_to_point(path[0], speed)
 
         start_time = time.time()
@@ -98,8 +115,7 @@ class BedMeshCalibrateMacro(Macro[P]):
         logger.debug("Gathered %d samples", len(samples))
 
         positions = self.task_executor.run(self._calculate_positions, self.probe.model, path, samples, scan_height)
-
-        self.helper.finalize(self.probe.offset, positions)
+        return self.probe.offset, positions
 
     def _move_to_point(self, point: MeshPoint, speed: float) -> None:
         offset = self.probe.offset
