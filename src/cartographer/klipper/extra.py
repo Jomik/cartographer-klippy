@@ -112,7 +112,7 @@ class PrinterCartographer:
 
         self._register_macro(
             BedMeshCalibrateMacro(
-                self.scan_mode,
+                probe,
                 toolhead,
                 KlipperMeshHelper(config, self.gcode),
                 task_executor,

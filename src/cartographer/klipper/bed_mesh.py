@@ -41,9 +41,17 @@ class KlipperMeshHelper(MeshHelper[GCodeCommand]):
             raise RuntimeError(str(e)) from e
 
     @override
-    def generate_path(self) -> list[MeshPoint]:
+    def generate_scan_path(self) -> list[MeshPoint]:
         path = self._bed_mesh.bmc.probe_mgr.iter_rapid_path()
         return [MeshPoint(p[0], p[1], include) for (p, include) in path]
+
+    @override
+    def get_probe_points(self) -> list[MeshPoint]:
+        points = self._bed_mesh.bmc.probe_mgr.probe_helper.probe_points
+        if points is None or len(points) == 0:
+            msg = "probe points are not set"
+            raise RuntimeError(msg)
+        return [MeshPoint(p[0], p[1], True) for (p) in points]
 
     @override
     def finalize(self, offset: Position, positions: list[Position]):
