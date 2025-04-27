@@ -4,8 +4,6 @@ from typing import Literal, TypedDict
 
 from gcode import GCodeCommand
 
-from extras.probe import ProbePointsHelper
-
 type _Pos = list[float]
 
 class BedMeshError(Exception): ...
@@ -37,5 +35,5 @@ class BedMeshCalibrate:
     def probe_finalize(self, offsets: list[float], positions: list[list[float]]) -> None: ...
 
 class ProbeManager:
-    probe_helper: ProbePointsHelper
     def iter_rapid_path(self) -> Iterator[tuple[tuple[float, float], bool]]: ...
+    def get_std_path(self) -> list[tuple[float, float]]: ...
