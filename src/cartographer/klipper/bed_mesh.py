@@ -47,8 +47,8 @@ class KlipperMeshHelper(MeshHelper[GCodeCommand]):
 
     @override
     def get_probe_points(self) -> list[MeshPoint]:
-        points = self._bed_mesh.bmc.probe_mgr.probe_helper.probe_points
-        if points is None or len(points) == 0:
+        points = self._bed_mesh.bmc.probe_mgr.get_std_path()
+        if len(points) == 0:
             msg = "probe points are not set"
             raise RuntimeError(msg)
         return [MeshPoint(p[0], p[1], True) for (p) in points]
