@@ -67,10 +67,12 @@ class BedMeshCalibrateMacro(Macro[P]):
 
         self.helper.prepare(params)
 
+        start_time = time.time()
         if method == "touch":
             offset, positions = self.touch_mesh.run(params, self.helper.get_probe_points())
         else:
             offset, positions = self.scan_mesh.run(params, self.helper.generate_scan_path())
+        logger.debug("Bed mesh completed in %.2f seconds", time.time() - start_time)
 
         self.helper.finalize(offset, positions)
 
