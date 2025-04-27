@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from itertools import combinations
 from typing import TYPE_CHECKING, Protocol, final
 
@@ -37,6 +38,41 @@ class Configuration(Protocol):
 
 class TouchError(RuntimeError):
     pass
+
+
+@dataclass(frozen=True)
+class TouchBoundaries:
+    min_x: float
+    max_x: float
+    min_y: float
+    max_y: float
+
+    def is_within(self, *, x: float, y: float) -> bool:
+        epsilon = 0.01
+        in_x_bounds = (self.min_x - epsilon) <= x <= (self.max_x + epsilon)
+        in_y_bounds = (self.min_y - epsilon) <= y <= (self.max_y + epsilon)
+        return in_x_bounds and in_y_bounds
+
+    @staticmethod
+    def from_config(config: Configuration) -> TouchBoundaries:
+        mesh_min_x, mesh_min_y = config.mesh_min
+        mesh_max_x, mesh_max_y = config.mesh_max
+        x_offset = config.x_offset
+        y_offset = config.y_offset
+
+        # For negative offsets: increase min bounds, leave max bounds unchanged
+        min_x = mesh_min_x - min(x_offset, 0)  # Only subtract negative offsets
+        min_y = mesh_min_y - min(y_offset, 0)  # Only subtract negative offsets
+        # For positive offsets: reduce max bounds, leave min bounds unchanged
+        max_x = mesh_max_x - max(x_offset, 0)  # Only subtract positive offsets
+        max_y = mesh_max_y - max(y_offset, 0)  # Only subtract positive offsets
+
+        return TouchBoundaries(
+            min_x=min_x,
+            max_x=max_x,
+            min_y=min_y,
+            max_y=max_y,
+        )
 
 
 @final
@@ -76,6 +112,8 @@ class TouchMode(ProbeMode, Endstop[C]):
         self._mcu = mcu
         self.config = config
         self.model = model
+
+        self.boundaries = TouchBoundaries.from_config(config)
 
     @override
     def perform_probe(self) -> float:
@@ -140,13 +178,20 @@ class TouchMode(ProbeMode, Endstop[C]):
         if model.threshold <= 0:
             msg = "threshold must be greater than 0"
             raise RuntimeError(msg)
-        self._validate_touch_position()
+
+        pos = self._toolhead.get_position()
+        if not self.is_within_boundaries(x=pos.x, y=pos.y):
+            msg = f"position ({pos.x:.2f},{pos.y:.2f}) is outside of the touch boundaries"
+            raise RuntimeError(msg)
 
         nozzle = self._toolhead.get_extruder_temperature()
         if nozzle.current > MAX_TOUCH_TEMPERATURE or nozzle.target > MAX_TOUCH_TEMPERATURE:
             msg = f"nozzle temperature must be below {MAX_TOUCH_TEMPERATURE - 5:d}C"
             raise RuntimeError(msg)
         return self._mcu.start_homing_touch(print_time, model.threshold)
+
+    def is_within_boundaries(self, *, x: float, y: float) -> bool:
+        return self.boundaries.is_within(x=x, y=y)
 
     @override
     def on_home_end(self, homing_state: HomingState) -> None:
@@ -169,26 +214,6 @@ class TouchMode(ProbeMode, Endstop[C]):
     @override
     def get_endstop_position(self) -> float:
         return self.offset.z
-
-    def _validate_touch_position(self) -> None:
-        nozzle = self._toolhead.get_position()
-        probe_x = nozzle.x + self.config.x_offset
-        probe_y = nozzle.y + self.config.y_offset
-
-        min_x, min_y = self.config.mesh_min
-        max_x, max_y = self.config.mesh_max
-
-        def in_bounds(x: float, y: float) -> bool:
-            epsilon = 1e-3
-            return (min_x - epsilon) <= x <= (max_x + epsilon) and (min_y - epsilon) <= y <= (max_y + epsilon)
-
-        if not in_bounds(nozzle.x, nozzle.y):
-            msg = f"nozzle position ({nozzle.x:.2f}, {nozzle.y:.2f}) is out of touch bounds"
-            raise RuntimeError(msg)
-
-        if not in_bounds(probe_x, probe_y):
-            msg = f"probe position ({probe_x:.2f}, {probe_y:.2f}) is out of touch bounds"
-            raise RuntimeError(msg)
 
     def _log_sample_stats(self, message: str, samples: Sequence[float]) -> None:
         max_v, min_v = max(samples), min(samples)
