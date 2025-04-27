@@ -170,11 +170,26 @@ class CalibrationModel(TouchModelConfiguration):
         raise RuntimeError(msg)
 
 
-SAFE_TRIGGER_MIN_HEIGHT = -0.3  # Initial home too far
-THRESHOLD_STEP = 250
-OUTLIERS = 1  # Outliers to remove from samples
+SAFE_TRIGGER_MIN_HEIGHT = -0.2  # Initial home too far
 CALIBRATION_MULTIPLIER = 1.1  # Loosen tolerance for calibrations
 MAD_TOLERANCE = STD_TOLERANCE * 0.6745 * CALIBRATION_MULTIPLIER  # Convert std to mad
+
+MIN_ALLOWED_STEP = 75
+MAX_ALLOWED_STEP = 500
+
+
+def compute_step_increase(current_threshold: int, score: float) -> int:
+    # Compute max allowed step from threshold
+    allowed_step = (current_threshold * 0.06) ** 1.15
+    allowed_max_step = max(MIN_ALLOWED_STEP, min(MAX_ALLOWED_STEP, allowed_step))
+
+    # Compute step directly based on how bad the score is
+    ratio = max(1.0, score / MAD_TOLERANCE)
+    raw_step = allowed_max_step * (1 - (1 / ratio))
+
+    # Clamp and return
+    step = int(round(min(allowed_max_step, max(MIN_ALLOWED_STEP, raw_step))))
+    return step
 
 
 @final
@@ -191,8 +206,8 @@ class TouchCalibrateMacro(Macro[MacroParams]):
     def run(self, params: MacroParams) -> None:
         name = params.get("MODEL_NAME", "default")
         speed = params.get_int("SPEED", default=3, minval=1, maxval=5)
-        threshold_start = params.get_int("THRESHOLD", default=500)
-        threshold_max = params.get_int("MAX_THRESHOLD", default=5000)
+        threshold_start = params.get_int("THRESHOLD_START", default=500, minval=100)
+        threshold_max = params.get_int("MAX_THRESHOLD", default=5000, minval=threshold_start)
 
         if not self._toolhead.is_homed("x") or not self._toolhead.is_homed("y"):
             msg = "must home x and y before calibration"
@@ -211,18 +226,24 @@ class TouchCalibrateMacro(Macro[MacroParams]):
             _, z_max = self._toolhead.get_z_axis_limits()
             self._toolhead.set_z_position(z=z_max - 10)
 
+        logger.info(
+            "Starting touch calibration at speed %d, starting threshold %d, max threshold %d",
+            speed,
+            threshold_start,
+            threshold_max,
+        )
         try:
-            best_threshold = self._find_best_threshold(threshold_start, threshold_max, speed)
+            threshold = self._find_acceptable_threshold(threshold_start, threshold_max, speed)
         finally:
             if forced_z:
                 self._toolhead.clear_z_homing_state()
 
-        if best_threshold is None:
+        if threshold is None:
             msg = "failed to calibrate touch probe"
             raise RuntimeError(msg)
 
-        logger.info("Touch calibrated at speed %d, threshold %d", speed, best_threshold)
-        self._probe.model = self._config.save_new_touch_model(name, speed, best_threshold)
+        logger.info("Touch calibrated at speed %d, threshold %d", speed, threshold)
+        self._probe.model = self._config.save_new_touch_model(name, speed, threshold)
         logger.info(
             """
             touch model %s has been saved
@@ -232,44 +253,58 @@ class TouchCalibrateMacro(Macro[MacroParams]):
             name,
         )
 
-    def _find_best_threshold(self, threshold_start: int, threshold_max: int, speed: int) -> int | None:
-        for threshold in range(threshold_start, threshold_max, THRESHOLD_STEP):
-            model = CalibrationModel(speed=speed, threshold=threshold)
+    def _find_acceptable_threshold(self, threshold_start: int, threshold_max: int, speed: int) -> int | None:
+        current_threshold = threshold_start
+        while current_threshold <= threshold_max:
+            model = CalibrationModel(speed=speed, threshold=current_threshold)
             score, samples = self._evaluate_threshold(model)
 
-            if score is None:
-                logger.info("Threshold %d failed or was unstable", threshold)
-                continue
-
-            logger.debug(
-                "Threshold %d: score %.6f, samples %s",
-                threshold,
+            logger.info(
+                "Threshold %d score: %.6f",
+                current_threshold,
                 score,
+            )
+            logger.debug(
+                "Threshold %d samples: %s",
+                current_threshold,
                 ", ".join(f"{s:.6f}" for s in samples),
             )
 
+            # Accept the first threshold within tolerance
             if score <= MAD_TOLERANCE:
-                logger.info("Threshold %d with score %.6f is within acceptable range.", threshold, score)
-                return threshold
+                logger.info("Threshold %d with score %.6f is acceptable.", current_threshold, score)
+                return current_threshold
 
-    def _evaluate_threshold(self, model: CalibrationModel) -> tuple[float | None, list[float]]:
+            step = compute_step_increase(current_threshold, score)
+            current_threshold += step
+            logger.info("Next threshold %d (+%d)", current_threshold, step)
+
+        return None  # No acceptable threshold found
+
+    def _evaluate_threshold(self, model: CalibrationModel) -> tuple[float, list[float]]:
         old_model = self._probe.model
         try:
             self._probe.model = model
             samples: list[float] = []
-            score = float("inf")
-            for _ in range(self._config.touch_samples * 2):
+
+            for _ in range(self._config.touch_samples * 3):
                 pos = self._probe.perform_single_probe()
                 if pos < SAFE_TRIGGER_MIN_HEIGHT:
-                    msg = "probe triggered far below expected bed level, aborting"
+                    msg = f"""
+                        probe triggered at {pos:.3f}, far below expected bed level
+                        Please ensure that z is homed to within {SAFE_TRIGGER_MIN_HEIGHT:.1f}mm of the bed.
+                    """
                     raise RuntimeError(msg)
                 samples.append(pos)
 
-                score = self._evaluate_samples(samples)
+                if len(samples) >= 3:
+                    current_score = self._evaluate_samples(samples)
+                    # Early exit only for clearly unstable thresholds
+                    if current_score > 5 * MAD_TOLERANCE:
+                        return current_score, samples
 
-                if score > MAD_TOLERANCE:
-                    break
-            return score, samples
+            final_score = self._evaluate_samples(samples)
+            return final_score, samples
         finally:
             self._probe.model = old_model
 
