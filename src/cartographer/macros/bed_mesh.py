@@ -36,9 +36,14 @@ class MeshPoint:
 
 class MeshHelper(Generic[P], Protocol):
     def orig_macro(self, params: P) -> None: ...
-    def prepare(self, params: P) -> None: ...
-    def generate_scan_path(self) -> list[MeshPoint]: ...
-    def get_probe_points(self) -> list[MeshPoint]: ...
+    def prepare_scan_path(self, params: P) -> list[MeshPoint]: ...
+    def prepare_touch_points(
+        self,
+        params: P,
+        *,
+        mesh_min: tuple[float, float] | None,
+        mesh_max: tuple[float, float] | None,
+    ) -> list[MeshPoint]: ...
     def finalize(self, offset: Position, positions: list[Position]): ...
 
 
@@ -56,6 +61,7 @@ class BedMeshCalibrateMacro(Macro[P]):
         config: Configuration,
     ) -> None:
         self.helper = helper
+        self.probe = probe
         self.scan_mesh = _ScanMeshRunner(probe.scan, toolhead, task_executor, config)
         self.touch_mesh = _TouchMeshRunner(probe.touch, toolhead, config)
 
@@ -65,13 +71,19 @@ class BedMeshCalibrateMacro(Macro[P]):
         if method != "scan" and method != "rapid_scan" and method != "touch":
             return self.helper.orig_macro(params)
 
-        self.helper.prepare(params)
-
         start_time = time.time()
         if method == "touch":
-            offset, positions = self.touch_mesh.run(params, self.helper.get_probe_points())
+            boundaries = self.probe.touch.boundaries
+            offset, positions = self.touch_mesh.run(
+                params,
+                self.helper.prepare_touch_points(
+                    params,
+                    mesh_min=(boundaries.min_x, boundaries.min_y),
+                    mesh_max=(boundaries.max_x, boundaries.max_y),
+                ),
+            )
         else:
-            offset, positions = self.scan_mesh.run(params, self.helper.generate_scan_path())
+            offset, positions = self.scan_mesh.run(params, self.helper.prepare_scan_path(params))
         logger.debug("Bed mesh completed in %.2f seconds", time.time() - start_time)
 
         self.helper.finalize(offset, positions)
@@ -95,6 +107,12 @@ class _TouchMeshRunner:
         if self.probe.model is None:
             msg = "cannot run bed mesh without a model"
             raise RuntimeError(msg)
+        points = [p for p in points if p.include]
+
+        for p in points:
+            if not self.probe.is_within_boundaries(x=p.x, y=p.y):
+                msg = f"probe point ({p.x:.2f},{p.y:.2f}) is outside of the touch boundaries "
+                raise RuntimeError(msg)
 
         self.toolhead.move(z=move_height, speed=5)
         positions: list[Position] = []

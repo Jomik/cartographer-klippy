@@ -92,17 +92,15 @@ def macro(
 
 
 def test_run_valid_scan(mocker: MockerFixture, macro: Macro, toolhead: Toolhead, helper: Helper):
-    helper.generate_scan_path = mocker.Mock(return_value=[MeshPoint(10, 10, False), MeshPoint(20, 20, False)])
+    helper.prepare_scan_path = mocker.Mock(return_value=[MeshPoint(10, 10, False), MeshPoint(20, 20, False)])
     params = mocker.MagicMock()
     params.get = mocker.Mock(return_value="scan")
     params.get_float = mocker.Mock(return_value=42.0)
-    prepare_spy = mocker.spy(helper, "prepare")
     move_spy = mocker.spy(toolhead, "move")
     finalize_spy = mocker.spy(helper, "finalize")
 
     macro.run(params)
 
-    assert prepare_spy.call_count == 1
     assert [
         mocker.call(x=10, y=10, speed=42.0),
         mocker.call(x=20, y=20, speed=42.0),
@@ -117,7 +115,7 @@ def test_applies_offsets(
     helper: Helper,
     offset: Position,
 ):
-    helper.generate_scan_path = mocker.Mock(return_value=[MeshPoint(10, 10, False), MeshPoint(20, 20, False)])
+    helper.prepare_scan_path = mocker.Mock(return_value=[MeshPoint(10, 10, False), MeshPoint(20, 20, False)])
     params = mocker.MagicMock()
     params.get = mocker.Mock(return_value="scan")
     params.get_float = mocker.Mock(return_value=42.0)
@@ -139,7 +137,7 @@ def test_multiple_runs(
     toolhead: Toolhead,
     helper: Helper,
 ):
-    helper.generate_scan_path = mocker.Mock(return_value=[MeshPoint(10, 10, False), MeshPoint(20, 20, False)])
+    helper.prepare_scan_path = mocker.Mock(return_value=[MeshPoint(10, 10, False), MeshPoint(20, 20, False)])
     params = mocker.MagicMock()
     params.get = mocker.Mock(return_value="scan")
     params.get_int = mocker.Mock(return_value=3)
@@ -164,13 +162,11 @@ def test_multiple_runs(
 def test_run_invalid_method(mocker: MockerFixture, macro: Macro, helper: Helper):
     params = mocker.MagicMock()
     params.get = mocker.Mock(return_value="invalid")
-    prepare_spy = mocker.spy(helper, "prepare")
     orig_macro_spy = mocker.spy(helper, "orig_macro")
     finalize_spy = mocker.spy(helper, "finalize")
 
     macro.run(params)
     assert orig_macro_spy.call_count == 1
-    assert prepare_spy.call_count == 0
     assert finalize_spy.call_count == 0
 
 
@@ -183,7 +179,7 @@ def test_calculate_positions_no_valid_samples(
 ):
     params = mocker.MagicMock()
     params.get = mocker.Mock(return_value="scan")
-    helper.generate_scan_path = mocker.Mock(return_value=[MeshPoint(10, 10, True)])
+    helper.prepare_scan_path = mocker.Mock(return_value=[MeshPoint(10, 10, True)])
     scan_model.frequency_to_distance = mocker.Mock(return_value=float("nan"))
     session.get_items = lambda: [Sample(time=0.0, frequency=100) for _ in range(2)]
 
@@ -200,7 +196,7 @@ def test_calculate_positions_cluster_no_samples(
 ):
     params = mocker.MagicMock()
     params.get = mocker.Mock(return_value="scan")
-    helper.generate_scan_path = mocker.Mock(return_value=[MeshPoint(10, 10, True), MeshPoint(20, 20, True)])
+    helper.prepare_scan_path = mocker.Mock(return_value=[MeshPoint(10, 10, True), MeshPoint(20, 20, True)])
     scan_model.frequency_to_distance = mocker.Mock(return_value=1)
     session.get_items = lambda: [Sample(time=0.0, frequency=100) for _ in range(2)]
 
@@ -221,7 +217,7 @@ def test_finalize_with_positions(
     params = mocker.MagicMock()
     params.get = mocker.Mock(return_value="scan")
     params.get_float = mocker.Mock(return_value=scan_height)
-    helper.generate_scan_path = mocker.Mock(return_value=[MeshPoint(10, 10, True), MeshPoint(20, 20, True)])
+    helper.prepare_scan_path = mocker.Mock(return_value=[MeshPoint(10, 10, True), MeshPoint(20, 20, True)])
     session.get_items = lambda: [
         Sample(time=0.0, frequency=1, position=Position(10 + 10 * i, 10 + 10 * i, 5)) for i in range(2)
     ]
@@ -254,7 +250,7 @@ def test_probe_applies_axis_twist_compensation(
 
     params = mocker.MagicMock()
     params.get = mocker.Mock(return_value="scan")
-    helper.generate_scan_path = mocker.Mock(return_value=[MeshPoint(10, 10, True), MeshPoint(20, 20, True)])
+    helper.prepare_scan_path = mocker.Mock(return_value=[MeshPoint(10, 10, True), MeshPoint(20, 20, True)])
     session.get_items = lambda: [
         Sample(time=0.0, frequency=1, position=Position(10 + 10 * i, 10 + 10 * i, 5)) for i in range(2)
     ]
@@ -284,7 +280,7 @@ def test_ignores_unincluded_points(
     params = mocker.MagicMock()
     params.get = mocker.Mock(return_value="scan")
     params.get_float = mocker.Mock(return_value=scan_height)
-    helper.generate_scan_path = mocker.Mock(return_value=[MeshPoint(10, 10, False), MeshPoint(10.3, 10.3, True)])
+    helper.prepare_scan_path = mocker.Mock(return_value=[MeshPoint(10, 10, False), MeshPoint(10.3, 10.3, True)])
     session.get_items = lambda: [Sample(time=0.0, frequency=dist) for _ in range(2)]
     scan_model.frequency_to_distance = mocker.Mock(side_effect=distances)
 

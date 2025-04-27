@@ -23,8 +23,8 @@ class MockConfiguration(Configuration):
 
     touch_samples = 5
     touch_max_samples = 10
-    x_offset = 0.0
-    y_offset = 0.0
+    x_offset = 10.0
+    y_offset = 10.0
     mesh_min = (10, 10)
     mesh_max = (100, 100)
 
@@ -156,23 +156,15 @@ def test_abort_if_current_extruder_target_too_hot(mocker: MockerFixture, toolhea
         _ = probe.home_start(print_time=0.0)
 
 
-def test_nozzle_outside_bounds(mocker: MockerFixture, toolhead: Toolhead, probe: Probe, config: Configuration) -> None:
-    config.mesh_min = (10, 10)
-    config.mesh_max = (30, 30)
-    config.x_offset = 20
-    config.y_offset = 20
+def test_nozzle_outside_bounds(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
     toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 1))
 
-    with pytest.raises(RuntimeError, match="nozzle .* out of touch bounds"):
+    with pytest.raises(RuntimeError, match="outside .* boundaries"):
         _ = probe.home_start(0)
 
 
-def test_probe_outside_bounds(mocker: MockerFixture, toolhead: Toolhead, probe: Probe, config: Configuration) -> None:
-    config.mesh_min = (10, 10)
-    config.mesh_max = (30, 30)
-    config.x_offset = 20
-    config.y_offset = 20
-    toolhead.get_position = mocker.Mock(return_value=Position(20, 20, 1))
+def test_probe_outside_bounds(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
+    toolhead.get_position = mocker.Mock(return_value=Position(95, 95, 1))
 
-    with pytest.raises(RuntimeError, match="probe .* out of touch bounds"):
+    with pytest.raises(RuntimeError, match="outside .* boundaries"):
         _ = probe.home_start(0)
