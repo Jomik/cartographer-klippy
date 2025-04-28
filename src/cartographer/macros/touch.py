@@ -207,7 +207,7 @@ class TouchCalibrateMacro(Macro[MacroParams]):
         name = params.get("MODEL_NAME", "default")
         speed = params.get_int("SPEED", default=3, minval=1, maxval=5)
         threshold_start = params.get_int("THRESHOLD_START", default=500, minval=100)
-        threshold_max = params.get_int("MAX_THRESHOLD", default=5000, minval=threshold_start)
+        threshold_max = params.get_int("MAX_THRESHOLD", default=3000, minval=threshold_start)
 
         if not self._toolhead.is_homed("x") or not self._toolhead.is_homed("y"):
             msg = "must home x and y before calibration"
