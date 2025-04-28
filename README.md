@@ -1,6 +1,6 @@
 # Cartographer3D
 
-[![codecov](https://codecov.io/gh/Jomik/cartographer-klippy/graph/badge.svg?token=B3APHO301B)](https://codecov.io/gh/Jomik/cartographer-klippy)
+<!--[![codecov](https://codecov.io/gh/Cartographer3D/cartographer3d-plugin/graph/badge.svg?token=B3APHO301B)](https://codecov.io/gh/Jomik/cartographer-klippy)-->
 
 ## Upgrading
 
@@ -18,25 +18,25 @@ Default assumes that klipper is in `~/klipper` and the klippy venv is in `~/klip
 This should be standard on [KIAUH](https://github.com/dw-0/kiauh) and [MainsailOS](https://docs-os.mainsail.xyz/).
 
 ```sh
-curl -s -L https://raw.githubusercontent.com/Jomik/cartographer-klippy/refs/heads/main/scripts/install.sh | bash -s
+curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh | bash -s
 ```
 
 ### Customize paths
 
 ```sh
-curl -s -L https://raw.githubusercontent.com/Jomik/cartographer-klippy/refs/heads/main/scripts/install.sh | bash -s -- --klipper ~/klipper --klippy-env ~/klippy-env
+curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh | bash -s -- --klipper ~/klipper --klippy-env ~/klippy-env
 ```
 
 ### View script options
 
 ```sh
-curl -s -L https://raw.githubusercontent.com/Jomik/cartographer-klippy/refs/heads/main/scripts/install.sh | bash -s -- --help
+curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh | bash -s -- --help
 ```
 
 ## Uninstall
 
 ```sh
-curl -s -L https://raw.githubusercontent.com/Jomik/cartographer-klippy/refs/heads/main/scripts/install.sh | bash -s -- --uninstall
+curl -s -L https://raw.githubusercontent.com/Cartographer3D/cartographer3d-plugin/refs/heads/main/scripts/install.sh | bash -s -- --uninstall
 ```
 
 ## Macros
