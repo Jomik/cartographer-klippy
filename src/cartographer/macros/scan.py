@@ -18,6 +18,9 @@ logger = logging.getLogger(__name__)
 
 
 class Configuration(Protocol):
+    zero_reference_position: tuple[float, float]
+    move_speed: float
+
     def save_new_scan_model(self, name: str, model: ScanModelFit) -> ScanModelConfiguration: ...
 
 
@@ -41,6 +44,17 @@ class ScanCalibrateMacro(Macro[MacroParams]):
         name = params.get("MODEL_NAME", "default")
         method = get_enum_choice(params, "METHOD", ScanCalibrateMethod, default=ScanCalibrateMethod.MANUAL)
 
+        if not self._toolhead.is_homed("x") or not self._toolhead.is_homed("y"):
+            msg = "must home x and y before calibration"
+            raise RuntimeError(msg)
+
+        self._toolhead.move(
+            x=self._config.zero_reference_position[0],
+            y=self._config.zero_reference_position[1],
+            speed=self._config.move_speed,
+        )
+        self._toolhead.wait_moves()
+
         if method == ScanCalibrateMethod.TOUCH:
             return self._run_touch(name)
         elif method == ScanCalibrateMethod.MANUAL:
@@ -55,9 +69,6 @@ class ScanCalibrateMacro(Macro[MacroParams]):
         self._calibrate(name)
 
     def _run_manual(self, name: str) -> None:
-        if not self._toolhead.is_homed("x") or not self._toolhead.is_homed("y"):
-            msg = "must home x and y before calibration"
-            raise RuntimeError(msg)
         _, z_max = self._toolhead.get_z_axis_limits()
         self._toolhead.set_z_position(z=z_max - 10)
 
