@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, Generic, Literal, NamedTuple, Protocol, TypeVar
+from typing import TYPE_CHECKING, Callable, Generic, Literal, NamedTuple, Protocol, TypeVar, overload
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
@@ -82,7 +82,10 @@ class Mcu(Generic[C, S], Protocol):
 
 class MacroParams(Protocol):
     def get(self, name: str, default: str = ...) -> str: ...
+    @overload
     def get_float(self, name: str, default: float = ..., *, above: float = ..., minval: float = ...) -> float: ...
+    @overload
+    def get_float(self, name: str, default: None, *, above: float = ..., minval: float = ...) -> float | None: ...
     def get_int(
         self,
         name: str,
