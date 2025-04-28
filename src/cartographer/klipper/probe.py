@@ -65,13 +65,14 @@ class KlipperCartographerProbe(PrinterProbe):
         self.probe_macro: ProbeMacro = probe_macro
         self.query_probe_macro: QueryProbeMacro = query_probe_macro
         self.toolhead: KlipperToolhead = toolhead
+        self.lift_speed: float = DEFAULT_LIFT_SPEED
 
     @override
     def get_probe_params(self, gcmd: GCodeCommand | None = None) -> ProbeParams:
         if gcmd is None:
-            return ProbeParams(lift_speed=DEFAULT_LIFT_SPEED, probe_speed=DEFAULT_PROBE_SPEED)
+            return ProbeParams(lift_speed=self.lift_speed, probe_speed=DEFAULT_PROBE_SPEED)
 
-        lift_speed = gcmd.get_float("LIFT_SPEED", default=DEFAULT_LIFT_SPEED, above=0)
+        lift_speed = gcmd.get_float("LIFT_SPEED", default=self.lift_speed, above=0)
         probe_speed = gcmd.get_float("SPEED", default=DEFAULT_PROBE_SPEED, above=0)
         return ProbeParams(lift_speed=lift_speed, probe_speed=probe_speed)
 
