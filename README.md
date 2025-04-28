@@ -1,6 +1,8 @@
-# Cartographer3D
+# Cartographer3D WIP
 
-<!--[![codecov](https://codecov.io/gh/Cartographer3D/cartographer3d-plugin/graph/badge.svg?token=B3APHO301B)](https://codecov.io/gh/Jomik/cartographer-klippy)-->
+> [!CAUTION]
+> This is currently being alpha tested and is not ready for production use.
+> Use at your own risk.
 
 ## Upgrading
 
