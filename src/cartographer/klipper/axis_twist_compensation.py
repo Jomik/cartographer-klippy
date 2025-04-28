@@ -48,34 +48,12 @@ class KlipperAxisTwistCompensationHelper(AxisTwistCompensationHelper):
     @override
     def get_calibration_options(self, axis: Literal["x", "y"]) -> CalibrationOptions:
         if axis == "x":
-            if not (
-                self.compensation.calibrate_start_x
-                and self.compensation.calibrate_end_x
-                and self.compensation.calibrate_y
-            ):
-                msg = """
-                    AXIS_TWIST_COMPENSATION for X axis requires
-                    calibrate_start_x, calibrate_end_x and calibrate_y
-                    to be defined
-                    """
-                raise RuntimeError(msg)
             return CalibrationOptions(
                 self.compensation.calibrate_start_x,
                 self.compensation.calibrate_end_x,
                 self.compensation.calibrate_y,
             )
         elif axis == "y":
-            if not (
-                self.compensation.calibrate_start_y
-                and self.compensation.calibrate_end_y
-                and self.compensation.calibrate_x
-            ):
-                msg = """
-                    AXIS_TWIST_COMPENSATION for Y axis requires
-                    calibrate_start_y, calibrate_end_y and calibrate_x
-                    to be defined
-                    """
-                raise RuntimeError(msg)
             return CalibrationOptions(
                 self.compensation.calibrate_start_y,
                 self.compensation.calibrate_end_y,

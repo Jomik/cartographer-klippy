@@ -19,9 +19,9 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class CalibrationOptions:
-    start: float
-    end: float
-    axis: float
+    start: float | None
+    end: float | None
+    line: float | None
 
 
 class AxisTwistCompensationHelper(Protocol):
@@ -53,11 +53,12 @@ class AxisTwistCompensationMacro(Macro[MacroParams]):
             msg = f"invalid axis '{axis}'"
             raise RuntimeError(msg)
         sample_count = params.get_int("SAMPLE_COUNT", default=5)
-        calibration = self.helper.get_calibration_options(axis)
-        self.helper.clear_compensations(axis)
 
+        start_pos, end_pos, line_pos = self._get_calibration_positions(params, axis)
+
+        self.helper.clear_compensations(axis)
         try:
-            self._calibrate(axis, sample_count, calibration)
+            self._calibrate(axis, sample_count, start_pos, end_pos, line_pos)
         except RuntimeError:
             logger.info("""
                 Error during axis twist compensation calibration,
@@ -66,15 +67,59 @@ class AxisTwistCompensationMacro(Macro[MacroParams]):
                 """)
             raise
 
-    def _calibrate(self, axis: Literal["x", "y"], sample_count: int, calibration: CalibrationOptions) -> None:
-        step = (calibration.end - calibration.start) / (sample_count - 1)
+    def _get_calibration_positions(self, params: MacroParams, axis: Literal["x", "y"]) -> tuple[float, float, float]:
+        start_pos = params.get_float("START", default=None)
+        end_pos = params.get_float("END", default=None)
+        line_pos = params.get_float("LINE", default=None)
+
+        options = self.helper.get_calibration_options(axis)
+        boundaries = self.probe.touch.boundaries
+        if axis == "x":
+            if start_pos is None:
+                start_pos = options.start or boundaries.min_x
+            if end_pos is None:
+                end_pos = options.end or boundaries.max_x
+            if line_pos is None:
+                line_pos = options.line or round((boundaries.max_y + boundaries.min_y) / 2, 2)
+            if not boundaries.is_within(x=start_pos, y=line_pos):
+                msg = f"start position {start_pos} is outside of touch boundaries"
+                raise RuntimeError(msg)
+            if not boundaries.is_within(x=end_pos, y=line_pos):
+                msg = f"end position {end_pos} is outside of touch boundaries"
+                raise RuntimeError(msg)
+
+        elif axis == "y":
+            if start_pos is None:
+                start_pos = options.start or boundaries.min_y
+            if end_pos is None:
+                end_pos = options.end or boundaries.max_y
+            if line_pos is None:
+                line_pos = options.line or round((boundaries.max_x + boundaries.min_x) / 2, 2)
+            if not boundaries.is_within(x=line_pos, y=start_pos):
+                msg = f"start position {start_pos} is outside of touch boundaries"
+                raise RuntimeError(msg)
+            if not boundaries.is_within(x=line_pos, y=end_pos):
+                msg = f"end position {end_pos} is outside of touch boundaries"
+                raise RuntimeError(msg)
+
+        return start_pos, end_pos, line_pos
+
+    def _calibrate(
+        self,
+        axis: Literal["x", "y"],
+        sample_count: int,
+        start_pos: float,
+        end_pos: float,
+        line_pos: float,
+    ) -> None:
+        step = (end_pos - start_pos) / (sample_count - 1)
         results: list[float] = []
         start_time = time.time()
         for i in range(sample_count):
-            position = calibration.start + i * step
-            self._move_probe_to(axis, position, calibration.axis)
+            position = start_pos + i * step
+            self._move_probe_to(axis, position, line_pos)
             scan = self.probe.perform_scan()
-            self._move_nozzle_to(axis, position, calibration.axis)
+            self._move_nozzle_to(axis, position, line_pos)
             touch = self.probe.perform_touch()
             result = scan - touch
             logger.debug("Offset at %:.2f: %.6f", position, result)
@@ -84,7 +129,7 @@ class AxisTwistCompensationMacro(Macro[MacroParams]):
         avg = float(np.mean(results))
         results = [avg - x for x in results]
 
-        self.helper.save_compensations(axis, calibration.start, calibration.end, results)
+        self.helper.save_compensations(axis, start_pos, end_pos, results)
         logger.info("""
             AXIS_TWIST_COMPENSATION state has been saved
             for the current session.  The SAVE_CONFIG command will
@@ -97,17 +142,17 @@ class AxisTwistCompensationMacro(Macro[MacroParams]):
             ", ".join(f"{s:.6f}" for s in results),
         )
 
-    def _move_nozzle_to(self, axis: Literal["x", "y"], position: float, calibration_axis: float) -> None:
+    def _move_nozzle_to(self, axis: Literal["x", "y"], position: float, line_pos: float) -> None:
         self.toolhead.move(z=self.helper.move_height, speed=self.helper.speed)
         if axis == "x":
             self.toolhead.move(
                 x=position,
-                y=calibration_axis,
+                y=line_pos,
                 speed=self.helper.speed,
             )
         else:
             self.toolhead.move(
-                x=calibration_axis,
+                x=line_pos,
                 y=position,
                 speed=self.helper.speed,
             )
