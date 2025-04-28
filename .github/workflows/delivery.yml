@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: pypi
-      url: https://pypi.org/p/jomik-cartographer
+      url: https://pypi.org/p/cartographer3d-plugin
     permissions:
       id-token: write # IMPORTANT: mandatory for trusted publishing
     steps:

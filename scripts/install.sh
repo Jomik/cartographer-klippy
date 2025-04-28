@@ -3,7 +3,7 @@
 set -euo pipefail
 
 FILE_NAME="cartographer.py"
-PACKAGE_NAME="jomik-cartographer"
+PACKAGE_NAME="cartographer3d-plugin"
 SCAFFOLDING="from cartographer.klipper.extra import *"
 
 function display_help() {
