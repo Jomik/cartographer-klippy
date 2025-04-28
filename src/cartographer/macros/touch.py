@@ -171,8 +171,7 @@ class CalibrationModel(TouchModelConfiguration):
 
 
 SAFE_TRIGGER_MIN_HEIGHT = -0.2  # Initial home too far
-CALIBRATION_MULTIPLIER = 1.1  # Loosen tolerance for calibrations
-MAD_TOLERANCE = STD_TOLERANCE * 0.6745 * CALIBRATION_MULTIPLIER  # Convert std to mad
+MAD_TOLERANCE = STD_TOLERANCE * 0.6745  # Convert std to mad
 
 MIN_ALLOWED_STEP = 75
 MAX_ALLOWED_STEP = 500
