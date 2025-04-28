@@ -58,3 +58,51 @@ a second calibration can be done with `SCAN_CALIBRATE METHOD=touch`.
 `TOUCH_CALIBRATE` requires that the printer is home.
 
 `TOUCH_AXIS_TWIST_COMPENSATION` for using touch to calculate twist compensation
+
+## Configuration
+
+### Moonraker
+
+Add this section to `moonraker.conf`
+
+```conf
+[update_manager cartographer_alpha]
+type: python
+channel: dev
+virtualenv: ~/klippy-env
+project_name: jomik-cartographer
+is_system_service: False
+managed_services: klipper
+info_tags: desc=Cartographer Alpha
+```
+
+### Klipper config
+
+Include this in your `printer.cfg`
+
+```cfg
+[stepper_z]
+endstop_pin: probe:z_virtual_endstop
+
+[mcu cartographer] # See https://www.klipper3d.org/Config_Reference.html#mcu
+serial: ...
+canbus_uuid: ...
+restart_method: command
+
+[cartographer]
+mcu: cartographer
+x_offset: ...
+y_offset: ...
+verbose: yes # For extra output
+
+[temperature_sensor cartographer]
+sensor_type: temperature_mcu
+sensor_mcu: cartographer
+min_temp: 5
+max_temp: 105
+
+[temperature_sensor cartographer_coil]
+sensor_type: cartographer_coil
+min_temp: 5
+max_temp: 140
+```
