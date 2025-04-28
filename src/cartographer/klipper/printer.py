@@ -22,12 +22,20 @@ logger = logging.getLogger(__name__)
 @final
 class KlipperToolhead(Toolhead):
     __toolhead: KlippyToolhead | None = None
+    __use_str_axes: bool | None = None
 
     @property
     def toolhead(self) -> KlippyToolhead:
         if self.__toolhead is None:
             self.__toolhead = self.printer.lookup_object("toolhead")
         return self.__toolhead
+
+    @property
+    def _use_str_axes(self) -> bool:
+        if self.__use_str_axes is None:
+            kin = self.toolhead.get_kinematics()
+            self.__use_str_axes = not hasattr(kin, "note_z_not_homed")
+        return self.__use_str_axes
 
     def __init__(self, config: ConfigWrapper, mcu: KlipperCartographerMcu) -> None:
         self.mcu = mcu
@@ -77,7 +85,9 @@ class KlipperToolhead(Toolhead):
     def set_z_position(self, z: float) -> None:
         pos = self.toolhead.get_position()[:]
         pos[2] = z
-        self.toolhead.set_position(pos, "z")
+
+        homing_axes = "z" if self._use_str_axes else (2,)
+        self.toolhead.set_position(pos, homing_axes)
 
     @override
     def get_z_axis_limits(self) -> tuple[float, float]:
@@ -97,6 +107,10 @@ class KlipperToolhead(Toolhead):
 
     @override
     def clear_z_homing_state(self) -> None:
+        if not self._use_str_axes:
+            self.toolhead.get_kinematics().note_z_not_homed()
+            return
+
         self.toolhead.get_kinematics().clear_homing_state("z")
 
     @override

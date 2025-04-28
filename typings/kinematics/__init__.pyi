@@ -1,5 +1,4 @@
 # https://github.com/Klipper3d/klipper/blob/master/klippy/kinematics/none.py
-from collections.abc import Sequence
 from typing import Protocol, TypedDict
 
 import gcode
@@ -20,4 +19,7 @@ class Kinematics(Protocol):
     def get_steppers(self) -> list[MCU_stepper]: ...
     def get_status(self, eventtime: float) -> Status: ...
     def calc_position(self, stepper_positions: dict[str, _Pos]) -> _Pos: ...
-    def clear_homing_state(self, axes: Sequence[str]) -> None: ...
+    def clear_homing_state(
+        self, axes: str | tuple[int, ...]
+    ) -> None: ...  # TODO: Kalico and old klippy takes tuple[int,..]
+    def note_z_not_homed(self) -> None: ...  # TODO: Kalico and old klippy has this method
