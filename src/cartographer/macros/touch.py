@@ -25,6 +25,7 @@ logger = logging.getLogger(__name__)
 class Configuration(Protocol):
     zero_reference_position: tuple[float, float]
     touch_samples: int
+    move_speed: float
 
     def save_new_touch_model(self, name: str, speed: float, threshold: int) -> TouchModelConfiguration: ...
 
@@ -215,7 +216,7 @@ class TouchCalibrateMacro(Macro[MacroParams]):
         self._toolhead.move(
             x=self._config.zero_reference_position[0],
             y=self._config.zero_reference_position[1],
-            speed=self._probe.config.move_speed,
+            speed=self._config.move_speed,
         )
         self._toolhead.wait_moves()
 
