@@ -4,10 +4,10 @@
 
 ## Upgrading
 
-You can upgrade by calling pip to install the latest version of the plugin from [pypi](https://pypi.org/project/jomik-cartographer/).
+You can upgrade by calling pip to install the latest version of the plugin from [pypi](https://pypi.org/project/cartographer3d-plugin/).
 
 ```sh
- ~/klippy-env/bin/pip install --upgrade jomik-cartographer
+ ~/klippy-env/bin/pip install --upgrade cartographer3d-plugin
 ```
 
 We are waiting for [Mainsail](https://docs.mainsail.xyz/) and [Fluidd](https://docs.fluidd.xyz/) to release a version with support.
@@ -70,7 +70,7 @@ Add this section to `moonraker.conf`
 type: python
 channel: dev
 virtualenv: ~/klippy-env
-project_name: jomik-cartographer
+project_name: cartographer3d-plugin
 is_system_service: False
 managed_services: klipper
 info_tags: desc=Cartographer Alpha

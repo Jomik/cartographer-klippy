@@ -1,5 +1,5 @@
 [project]
-name = "jomik-cartographer"
+name = "cartographer3d-plugin"
 requires-python = "~= 3.8"
 license = { file = "LICENSE" }
 dependencies = [
@@ -19,8 +19,8 @@ description = "An extras for klipper to integrate with cartographer"
 dynamic = ["version"]
 
 [project.urls]
-homepage = "https://github.com/Jomik/cartographer-klippy"
-repository = "https://github.com/Jomik/cartographer-klippy"
+homepage = "https://cartographer3d.com/"
+repository = "https://github.com/Cartographer3D/cartographer3d-plugin"
 
 [project.optional-dependencies]
 scipy = ["scipy~=1.9"]
