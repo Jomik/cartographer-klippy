@@ -4,20 +4,18 @@
 
 ## Upgrading
 
-You can upgrade by calling pip to install the latest version of the plugin from [pypi](https://pypi.org/project/cartographer3d-plugin/).
+You can upgrade via Update Manager in [Mainsail](https://docs.mainsail.xyz/) or [Fluidd](https://docs.fluidd.xyz/).
+Alternatively upgrade by using pip to install the latest version of the plugin from [pypi](https://pypi.org/project/cartographer3d-plugin/).
 
 ```sh
  ~/klippy-env/bin/pip install --upgrade cartographer3d-plugin
 ```
 
-We are waiting for [Mainsail](https://docs.mainsail.xyz/) and [Fluidd](https://docs.fluidd.xyz/) to release a version with support.
-The pull requests have been made and some merged.
-
 ## Install
 
 This will attempt to install the cartographer plugin.
 Default assumes that klipper is in `~/klipper` and the klippy venv is in `~/klippy-env`.
-This should be standard on [KIAUH](https://github.com/dw-0/kiauh) and [MainsailOS](<https://docs-os.mainsail.xyz/>.
+This should be standard on [KIAUH](https://github.com/dw-0/kiauh) and [MainsailOS](https://docs-os.mainsail.xyz/).
 
 ```sh
 curl -s -L https://raw.githubusercontent.com/Jomik/cartographer-klippy/refs/heads/main/scripts/install.sh | bash -s
