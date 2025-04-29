@@ -206,8 +206,8 @@ class TouchCalibrateMacro(Macro[MacroParams]):
     def run(self, params: MacroParams) -> None:
         name = params.get("MODEL_NAME", "default")
         speed = params.get_int("SPEED", default=3, minval=1, maxval=5)
-        threshold_start = params.get_int("THRESHOLD_START", default=500, minval=100)
-        threshold_max = params.get_int("MAX_THRESHOLD", default=3000, minval=threshold_start)
+        threshold_start = params.get_int("START", default=500, minval=100)
+        threshold_max = params.get_int("MAX", default=3000, minval=threshold_start)
 
         if not self._toolhead.is_homed("x") or not self._toolhead.is_homed("y"):
             msg = "must home x and y before calibration"
@@ -246,8 +246,8 @@ class TouchCalibrateMacro(Macro[MacroParams]):
         self._probe.model = self._config.save_new_touch_model(name, speed, threshold)
         logger.info(
             """
-            touch model %s has been saved
-            for the current session.  The SAVE_CONFIG command will
+            Touch model %s has been saved
+            for the current session. The SAVE_CONFIG command will
             update the printer config file and restart the printer.
             """,
             name,
