@@ -2,7 +2,7 @@
 
 set -euo pipefail
 
-FILE_NAME="cartographer.py"
+MODULE_NAME="cartographer.py"
 PACKAGE_NAME="cartographer3d-plugin"
 SCAFFOLDING="from cartographer.klipper.extra import *"
 
@@ -72,41 +72,44 @@ function uninstall_dependencies() {
 }
 
 function create_scaffolding() {
-  local file_path="$1"
-  if [ -L "$file_path" ]; then
-    echo "Error: '$file_path' is a symlink - scaffolding cannot be created."
-    exit 1
+  if [ -L "$scaffolding_path" ]; then
+    local original_target
+    original_target=$(readlink "$scaffolding_path")
+    echo "Warning: '$scaffolding_path' is a symlink and will be removed."
+    echo "If you need to recover it, you can recreate the symlink with:"
+    echo "  ln -s \"$original_target\" \"$scaffolding_path\""
+    rm "$scaffolding_path"
   fi
-  echo "$SCAFFOLDING" >"$file_path"
-  echo "File '$FILE_NAME' has been created in $file_path."
+  echo "$SCAFFOLDING" >"$scaffolding_path"
+  echo "File '$MODULE_NAME' has been created in '$scaffolding_path'."
 }
 
 function remove_scaffolding() {
-  local file_path="$1"
-  if [ -f "$file_path" ]; then
-    rm "$file_path"
-    echo "Removed file '$file_path'."
+  if [ -f "$scaffolding_path" ]; then
+    rm "$scaffolding_path"
+    echo "Removed file '$scaffolding_path'."
   fi
 }
 
 function exclude_from_git() {
-  local file_path="$1"
-  local klipper_dir="$2"
+  local relative_path
+  relative_path=$(realpath --relative-to="$klipper_dir" "$scaffolding_path")
   local exclude_file="$klipper_dir/.git/info/exclude"
 
-  if [ -d "$klipper_dir/.git" ] && ! grep -qF "$file_path" "$exclude_file" >/dev/null 2>&1; then
-    echo "$file_path" >>"$exclude_file"
+  if [ -d "$klipper_dir/.git" ] && ! grep -qF "$relative_path" "$exclude_file" >/dev/null 2>&1; then
+    echo "$relative_path" >>"$exclude_file"
+    echo "Added '$relative_path' to git exclude."
   fi
 }
 
 function remove_from_git_exclude() {
-  local file_path="$1"
-  local klipper_dir="$2"
+  local relative_path
+  relative_path=$(realpath --relative-to="$klipper_dir" "$scaffolding_path")
   local exclude_file="$klipper_dir/.git/info/exclude"
 
   if [ -f "$exclude_file" ]; then
-    sed -i "\|$file_path|d" "$exclude_file"
-    echo "Removed '$file_path' from git exclude."
+    sed -i "\|^$relative_path\$|d" "$exclude_file"
+    echo "Removed '$relative_path' from git exclude."
   fi
 }
 
@@ -121,16 +124,16 @@ function main() {
 
   extras_dir="$klipper_dir/klippy/extras"
   check_directory_exists "$extras_dir"
-  file_path="$extras_dir/$FILE_NAME"
+  scaffolding_path="$extras_dir/$MODULE_NAME"
 
   if [ "$uninstall" = true ]; then
     uninstall_dependencies
-    remove_scaffolding "$file_path"
-    remove_from_git_exclude "$file_path" "$klipper_dir"
+    remove_scaffolding
+    remove_from_git_exclude
   else
     install_dependencies
-    create_scaffolding "$file_path"
-    exclude_from_git "$file_path" "$klipper_dir"
+    create_scaffolding
+    exclude_from_git
   fi
 }
 
