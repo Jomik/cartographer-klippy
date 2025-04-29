@@ -239,8 +239,19 @@ class TouchCalibrateMacro(Macro[MacroParams]):
                 self._toolhead.clear_z_homing_state()
 
         if threshold is None:
-            msg = "failed to calibrate touch probe"
-            raise RuntimeError(msg)
+            logger.info(
+                """
+                Failed to calibrate touch with thresholds between %d and %d.
+                If you want to continue calibration, increase the max threshold.
+                E.g. %s START=%d MAX=%d
+                """,
+                threshold_start,
+                threshold_max,
+                self.name,
+                threshold_max,
+                threshold_max + 1000,
+            )
+            return
 
         logger.info("Touch calibrated at speed %d, threshold %d", speed, threshold)
         self._probe.model = self._config.save_new_touch_model(name, speed, threshold)
