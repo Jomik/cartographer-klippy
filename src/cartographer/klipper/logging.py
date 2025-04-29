@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import re
 from textwrap import dedent
 from typing import Protocol
 
@@ -26,6 +27,13 @@ def setup_console_logger(console: Console) -> logging.Handler:
     return console_handler
 
 
+MACRO_PATTERN = re.compile(r"\b([A-Z_]+(?:\s+[A-Z0-9_]+=.*?)*)(?=\s|$)")
+
+
+def format_macro(macro: str) -> str:
+    return f'<a class="command">{macro}</a>'
+
+
 class GCodeConsoleFormatter(logging.Formatter):
     def __init__(self) -> None:
         super().__init__("%(message)s")
@@ -33,7 +41,8 @@ class GCodeConsoleFormatter(logging.Formatter):
     @override
     def format(self, record: logging.LogRecord) -> str:
         prefix = "!! " if record.levelno >= logging.ERROR else ""
-        return prefix + dedent(super().format(record)).replace("\n", " ").strip()
+        message = dedent(super().format(record)).replace("\n", " ").strip()
+        return prefix + MACRO_PATTERN.sub(lambda m: format_macro(m.group(0)), message)
 
 
 class GCodeConsoleFilter(logging.Filter):
