@@ -89,6 +89,7 @@ class KlipperCartographerMcu(Mcu[ReactorCompletion, Sample], KlipperStreamMcu):
     def start_homing_scan(self, print_time: float, frequency: float) -> ReactorCompletion:
         self._set_threshold(frequency)
         completion = self.dispatch.start(print_time)
+        logger.debug("Starting homing scan")
 
         self.commands.send_home(
             HomeCommand(
@@ -118,9 +119,11 @@ class KlipperCartographerMcu(Mcu[ReactorCompletion, Sample], KlipperStreamMcu):
 
     @override
     def stop_homing(self, home_end_time: float) -> float:
+        logger.debug("Stopping homing")
         self.dispatch.wait_end(home_end_time)
         self.commands.send_stop_home()
         result = self.dispatch.stop()
+        logger.debug("Homing stopped with result %d", result)
         if result >= MCU_trsync.REASON_COMMS_TIMEOUT:
             msg = "communication timeout during homing"
             raise RuntimeError(msg)

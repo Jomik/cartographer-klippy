@@ -69,12 +69,14 @@ class KlipperEndstop(metaclass=_MemoizedEndstop):
     @reraise_as_command_error
     def home_rails_end(self, homing: Homing, rails: list[PrinterRail]) -> None:
         endstops = [es.endstop for rail in rails for es, _ in rail.get_endstops() if isinstance(es, KlipperEndstop)]
+        logger.debug("Home rails end %s", endstops)
         self.endstop.on_home_end(KlipperHomingState(homing, endstops))
 
     def get_mcu(self) -> MCU:
         return self.mcu.klipper_mcu
 
     def add_stepper(self, stepper: MCU_stepper) -> None:
+        logger.debug("Adding stepper %s to endstop %s", stepper, self.endstop)
         return self.mcu.dispatch.add_stepper(stepper)
 
     def get_steppers(self) -> list[MCU_stepper]:
@@ -90,15 +92,19 @@ class KlipperEndstop(metaclass=_MemoizedEndstop):
         triggered: bool = True,
     ) -> ReactorCompletion:
         del sample_time, sample_count, rest_time, triggered
+        logger.debug("Starting homing for endstop %s", self.endstop)
         return self.endstop.home_start(print_time)
 
     @reraise_as_command_error
     def home_wait(self, home_end_time: float) -> float:
+        logger.debug("Waiting for endstop %s to finish homing", self.endstop)
         return self.endstop.home_wait(home_end_time)
 
     @reraise_as_command_error
     def query_endstop(self, print_time: float) -> int:
-        return 1 if self.endstop.query_is_triggered(print_time) else 0
+        status = 1 if self.endstop.query_is_triggered(print_time) else 0
+        logger.debug("Endstop %s triggered: %d", self.endstop, status)
+        return status
 
     def get_position_endstop(self) -> float:
         return self.endstop.get_endstop_position()
