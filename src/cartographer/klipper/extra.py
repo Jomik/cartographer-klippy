@@ -19,6 +19,7 @@ from cartographer.klipper.temperature import PrinterTemperatureCoil
 from cartographer.lib.alpha_beta_filter import AlphaBetaFilter
 from cartographer.macros import ProbeAccuracyMacro, ProbeMacro, QueryProbeMacro, ZOffsetApplyProbeMacro
 from cartographer.macros.axis_twist_compensation import AxisTwistCompensationMacro
+from cartographer.macros.backlash import EstimateBacklashMacro
 from cartographer.macros.bed_mesh import BedMeshCalibrateMacro
 from cartographer.macros.scan import ScanCalibrateMacro
 from cartographer.macros.touch import TouchAccuracyMacro, TouchCalibrateMacro, TouchHomeMacro, TouchMacro
@@ -126,6 +127,7 @@ class PrinterCartographer:
         self._register_macro(
             AxisTwistCompensationMacro(probe, toolhead, KlipperAxisTwistCompensationHelper(config), self.config)
         )
+        self._register_macro(EstimateBacklashMacro(toolhead, self.scan_mode))
 
         printer.add_object(
             "probe",
