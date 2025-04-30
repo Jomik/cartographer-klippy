@@ -17,7 +17,7 @@ class Probe:
         self.touch = touch
 
     def query_is_triggered(self) -> bool:
-        return self.scan.query_is_triggered()
+        return self.scan.query_is_triggered(0)
 
     def perform_scan(self) -> float:
         return self.scan.perform_probe()

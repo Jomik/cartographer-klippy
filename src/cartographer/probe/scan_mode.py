@@ -104,6 +104,7 @@ class ScanMode(ProbeMode, Endstop[C], Generic[C, S]):
             msg = "cannot measure distance without a model"
             raise RuntimeError(msg)
         time = time or self._toolhead.get_last_move_time()
+
         with self._mcu.start_session(lambda sample: sample.time >= time) as session:
             session.wait_for(lambda samples: len(samples) >= min_sample_count + skip_count)
         samples = session.get_items()[skip_count:]
@@ -115,7 +116,7 @@ class ScanMode(ProbeMode, Endstop[C], Generic[C, S]):
         return dist
 
     @override
-    def query_is_triggered(self, print_time: float = ...) -> bool:
+    def query_is_triggered(self, print_time: float) -> bool:
         distance = self.measure_distance(time=print_time)
         return distance <= self.get_endstop_position()
 
