@@ -86,6 +86,11 @@ class ScanMode(ProbeMode, Endstop[C], Generic[C, S]):
         self._toolhead.wait_moves()
         toolhead_pos = self._toolhead.get_position()
         dist = toolhead_pos.z + self.probe_height - self.measure_distance()
+
+        if math.isinf(dist):
+            msg = "toolhead stopped outside model range"
+            raise RuntimeError(msg)
+
         pos = self._toolhead.apply_axis_twist_compensation(Position(toolhead_pos.x, toolhead_pos.y, dist))
         logger.info("probe at %.3f,%.3f is z=%.6f", pos.x, pos.y, pos.z)
         return pos.z
@@ -110,9 +115,6 @@ class ScanMode(ProbeMode, Endstop[C], Generic[C, S]):
         samples = session.get_items()[skip_count:]
 
         dist = float(np.median([self.model.frequency_to_distance(sample.frequency) for sample in samples]))
-        if math.isinf(dist):
-            msg = "toolhead stopped outside model range"
-            raise RuntimeError(msg)
         return dist
 
     @override
@@ -136,6 +138,9 @@ class ScanMode(ProbeMode, Endstop[C], Generic[C, S]):
         if not homing_state.is_homing_z():
             return
         distance = self.measure_distance()
+        if math.isinf(distance):
+            msg = "toolhead stopped outside model range"
+            raise RuntimeError(msg)
 
         homing_state.set_z_homed_position(distance)
 
