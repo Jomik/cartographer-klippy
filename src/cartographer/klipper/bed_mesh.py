@@ -60,16 +60,16 @@ class KlipperMeshHelper(MeshHelper[GCodeCommand]):
         raw = params.get_command_parameters()
 
         if mesh_min is not None and "MESH_MIN" not in raw:
-            cfg_mesh_min = [round(x, 2) for x in self.mesh_config.getfloatlist("mesh_min", count=2)]
+            cfg_mesh_min = tuple([round(x, 2) for x in self.mesh_config.getfloatlist("mesh_min", count=2)])
             rounded_min = (round(mesh_min[0], 2), round(mesh_min[1], 2))
-            if tuple(cfg_mesh_min) != rounded_min:
+            if cfg_mesh_min != rounded_min:
                 raw["MESH_MIN"] = f"{mesh_min[0]:.2f},{mesh_min[1]:.2f}"
                 logger.info("Updating MESH_MIN from config value %s to %s", cfg_mesh_min, rounded_min)
 
         if mesh_max is not None and "MESH_MAX" not in raw:
-            cfg_mesh_max = [round(x, 2) for x in self.mesh_config.getfloatlist("mesh_max", count=2)]
+            cfg_mesh_max = tuple(round(x, 2) for x in self.mesh_config.getfloatlist("mesh_max", count=2))
             rounded_max = (round(mesh_max[0], 2), round(mesh_max[1], 2))
-            if tuple(cfg_mesh_max) != rounded_max:
+            if cfg_mesh_max != rounded_max:
                 raw["MESH_MAX"] = f"{mesh_max[0]:.2f},{mesh_max[1]:.2f}"
                 logger.info("Updating MESH_MAX from config value %s to %s", cfg_mesh_max, rounded_max)
 
