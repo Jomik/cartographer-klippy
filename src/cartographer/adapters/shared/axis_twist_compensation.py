@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 
 @final
-class KlipperAxisTwistCompensationHelper(AxisTwistCompensationHelper):
+class KlipperAxisTwistCompensationHelper(AxisTwistCompensationAdapter):
     def __init__(self, config: ConfigWrapper) -> None:
         self.config = config.getsection("axis_twist_compensation")
         self.compensation = config.get_printer().load_object(self.config, "axis_twist_compensation")

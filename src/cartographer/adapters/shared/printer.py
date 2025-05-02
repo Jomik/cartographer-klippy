@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Callable, final
 from extras.manual_probe import ManualProbeHelper
 from typing_extensions import override
 
-from cartographer.klipper.endstop import KlipperEndstop
+from cartographer.adapters.shared.endstop import KlipperEndstop
 from cartographer.printer_interface import Endstop, HomingAxis, Position, TemperatureStatus, Toolhead
 
 if TYPE_CHECKING:
@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from reactor import ReactorCompletion
     from toolhead import ToolHead as KlippyToolhead
 
-    from cartographer.klipper.mcu.mcu import KlipperCartographerMcu
+    from cartographer.adapters.shared.mcu.mcu import KlipperCartographerMcu
 
 logger = logging.getLogger(__name__)
 

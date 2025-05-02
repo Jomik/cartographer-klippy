@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, final
 
 from typing_extensions import override
 
-from cartographer.klipper.utils import reraise_as_command_error
+from cartographer.adapters.shared.utils import reraise_as_command_error
 from cartographer.printer_interface import HomingAxis, HomingState
 
 if TYPE_CHECKING:
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from reactor import ReactorCompletion
     from stepper import MCU_stepper, PrinterRail
 
-    from cartographer.klipper.mcu import KlipperCartographerMcu
+    from cartographer.adapters.shared.mcu import KlipperCartographerMcu
     from cartographer.printer_interface import Endstop
 
 logger = logging.getLogger(__name__)

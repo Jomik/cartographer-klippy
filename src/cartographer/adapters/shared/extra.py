@@ -4,18 +4,18 @@ import logging
 from textwrap import dedent
 from typing import TYPE_CHECKING, Callable, TypedDict, final
 
-from cartographer.klipper.axis_twist_compensation import KlipperAxisTwistCompensationHelper
-from cartographer.klipper.bed_mesh import KlipperMeshHelper
-from cartographer.klipper.configuration import KlipperCartographerConfiguration
-from cartographer.klipper.endstop import KlipperEndstop
-from cartographer.klipper.homing import CartographerHomingChip
-from cartographer.klipper.logging import setup_console_logger
-from cartographer.klipper.mcu import KlipperCartographerMcu
-from cartographer.klipper.mcu.mcu import Sample
-from cartographer.klipper.printer import KlipperToolhead
-from cartographer.klipper.probe import KlipperCartographerProbe
-from cartographer.klipper.task_executor import KlipperMultiprocessingExecutor
-from cartographer.klipper.temperature import PrinterTemperatureCoil
+from cartographer.adapters.shared.axis_twist_compensation import KlipperAxisTwistCompensationHelper
+from cartographer.adapters.shared.bed_mesh import KlipperMeshHelper
+from cartographer.adapters.shared.configuration import KlipperCartographerConfiguration
+from cartographer.adapters.shared.endstop import KlipperEndstop
+from cartographer.adapters.shared.homing import CartographerHomingChip
+from cartographer.adapters.shared.logging import setup_console_logger
+from cartographer.adapters.shared.mcu import KlipperCartographerMcu
+from cartographer.adapters.shared.mcu.mcu import Sample
+from cartographer.adapters.shared.printer import KlipperToolhead
+from cartographer.adapters.shared.probe import KlipperCartographerProbe
+from cartographer.adapters.shared.task_executor import KlipperMultiprocessingExecutor
+from cartographer.adapters.shared.temperature import PrinterTemperatureCoil
 from cartographer.lib.alpha_beta_filter import AlphaBetaFilter
 from cartographer.macros import ProbeAccuracyMacro, ProbeMacro, QueryProbeMacro, ZOffsetApplyProbeMacro
 from cartographer.macros.axis_twist_compensation import AxisTwistCompensationMacro
