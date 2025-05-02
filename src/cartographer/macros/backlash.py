@@ -52,13 +52,13 @@ class EstimateBacklashMacro(Macro[MacroParams]):
 
         logger.info(
             """
-                    Backlash estimation results over %d iterations:
-                    Median up: %.3f
-                    Median down: %.3f
-                    Standard deviation up: %.3f
-                    Standard deviation down: %.3f
-                    Delta: %.3f 
-                    """,
+            Backlash estimation results over %d iterations:
+            Median up: %.3f
+            Median down: %.3f
+            Standard deviation up: %.3f
+            Standard deviation down: %.3f
+            Delta: %.3f
+            """,
             iterations,
             median_up,
             median_down,
