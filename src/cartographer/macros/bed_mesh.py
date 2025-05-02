@@ -9,11 +9,11 @@ from typing import TYPE_CHECKING, Generic, Protocol, final
 import numpy as np
 from typing_extensions import override
 
+from cartographer.interfaces.printer import Macro, MacroParams, P, Position, Sample, Toolhead
 from cartographer.lib.nearest_neighbor import NearestNeighborSearcher
-from cartographer.printer_interface import C, Macro, MacroParams, P, Position, S, Toolhead
 
 if TYPE_CHECKING:
-    from cartographer.interfaces import TaskExecutor
+    from cartographer.interfaces.multiprocessing import TaskExecutor
     from cartographer.probe import Probe
     from cartographer.probe.scan_mode import Model, ScanMode
     from cartographer.probe.touch_mode import TouchMode
@@ -93,7 +93,7 @@ class BedMeshCalibrateMacro(Macro[P]):
 class _TouchMeshRunner:
     def __init__(
         self,
-        probe: TouchMode[object],
+        probe: TouchMode,
         toolhead: Toolhead,
         config: Configuration,
     ) -> None:
@@ -128,7 +128,7 @@ class _TouchMeshRunner:
 class _ScanMeshRunner:
     def __init__(
         self,
-        probe: ScanMode[C, S],
+        probe: ScanMode,
         toolhead: Toolhead,
         task_executor: TaskExecutor,
         config: Configuration,
@@ -180,7 +180,7 @@ class _ScanMeshRunner:
         return round(point.x, 2), round(point.y, 2)
 
     def _calculate_positions(
-        self, model: Model, path: list[MeshPoint], samples: list[S], scan_height: float
+        self, model: Model, path: list[MeshPoint], samples: list[Sample], scan_height: float
     ) -> list[Position]:
         included_points = [p for p in path if p.include]
 
@@ -206,14 +206,14 @@ class _ScanMeshRunner:
 
     def _build_clusters(
         self,
-        samples: list[S],
+        samples: list[Sample],
         points: list[MeshPoint],
-    ) -> dict[tuple[float, float], list[S]]:
+    ) -> dict[tuple[float, float], list[Sample]]:
         offset = self.probe.offset
         searcher = NearestNeighborSearcher(points)
-        cluster_map: dict[tuple[float, float], list[S]] = {self._key(p): [] for p in points}
+        cluster_map: dict[tuple[float, float], list[Sample]] = {self._key(p): [] for p in points}
 
-        valid_samples: list[S] = []
+        valid_samples: list[Sample] = []
         adjusted_positions: list[tuple[float, float]] = []
 
         for s in samples:
@@ -239,7 +239,7 @@ class _ScanMeshRunner:
     def _compute_position(
         self,
         key: tuple[float, float],
-        cluster: list[S],
+        cluster: list[Sample],
         model: Model,
         scan_height: float,
     ) -> Position:

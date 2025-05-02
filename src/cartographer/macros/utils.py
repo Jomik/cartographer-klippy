@@ -4,7 +4,7 @@ from enum import Enum
 from typing import TYPE_CHECKING, TypeVar
 
 if TYPE_CHECKING:
-    from cartographer.printer_interface import MacroParams
+    from cartographer.interfaces.printer import MacroParams
 
 T = TypeVar("T", bound=Enum)
 

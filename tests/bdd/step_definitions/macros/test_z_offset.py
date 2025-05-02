@@ -8,7 +8,7 @@ from pytest_bdd import given, parsers, scenarios, then, when
 from typing_extensions import TypeAlias
 
 import cartographer.probe as probe
-from cartographer.printer_interface import Position, Sample
+from cartographer.interfaces.printer import Position, Sample
 from cartographer.probe import Probe
 
 if TYPE_CHECKING:
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     from pytest import LogCaptureFixture
     from pytest_mock import MockerFixture
 
-    from cartographer.printer_interface import MacroParams, Toolhead
+    from cartographer.interfaces.printer import MacroParams, Toolhead
 
 
 scenarios("../../features/z_offset.feature")

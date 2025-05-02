@@ -25,7 +25,7 @@ class Position:
 
 
 class HomingState(Protocol):
-    endstops: Sequence[Endstop[object]]
+    endstops: Sequence[Endstop]
 
     def is_homing_z(self) -> bool:
         """Check if the z axis is currently being homed."""
@@ -36,17 +36,14 @@ class HomingState(Protocol):
         ...
 
 
-C = TypeVar("C", covariant=True)
-
-
-class Endstop(Generic[C], Protocol):
+class Endstop(Protocol):
     """Endstop interface for homing operations."""
 
     def query_is_triggered(self, print_time: float) -> bool:
         """Return true if endstop is currently triggered"""
         ...
 
-    def home_start(self, print_time: float) -> C:
+    def home_start(self, print_time: float) -> object:
         """Start the homing process"""
         ...
 
@@ -63,21 +60,20 @@ class Endstop(Generic[C], Protocol):
         ...
 
 
-class Sample(Protocol):
+@dataclass(frozen=True)
+class Sample:
     frequency: float
     time: float
     position: Position | None
     velocity: float | None
+    temperature: float
 
 
-S = TypeVar("S", bound=Sample)
-
-
-class Mcu(Generic[C, S], Protocol):
-    def start_homing_scan(self, print_time: float, frequency: float) -> C: ...
-    def start_homing_touch(self, print_time: float, threshold: int) -> C: ...
+class Mcu(Protocol):
+    def start_homing_scan(self, print_time: float, frequency: float) -> object: ...
+    def start_homing_touch(self, print_time: float, threshold: int) -> object: ...
     def stop_homing(self, home_end_time: float) -> float: ...
-    def start_session(self, start_condition: Callable[[S], bool] | None = None) -> Session[S]: ...
+    def start_session(self, start_condition: Callable[[Sample], bool] | None = None) -> Session[Sample]: ...
 
 
 class MacroParams(Protocol):
@@ -111,7 +107,6 @@ class ProbeMode(Protocol):
     def offset(self) -> Position: ...
     @property
     def is_ready(self) -> bool: ...
-    def save_z_offset(self, new_offset: float) -> None: ...
     def perform_probe(self) -> float: ...
     def query_is_triggered(self, print_time: float) -> bool: ...
 
@@ -146,7 +141,7 @@ class Toolhead(Protocol):
         """Returns currently applied gcode offset for the z axis."""
         ...
 
-    def z_homing_move(self, endstop: Endstop[object], *, bottom: float, speed: float) -> float:
+    def z_homing_move(self, endstop: Endstop, *, bottom: float, speed: float) -> float:
         """Starts homing move towards the given endstop."""
         ...
 

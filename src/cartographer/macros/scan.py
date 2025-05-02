@@ -7,12 +7,12 @@ from typing import TYPE_CHECKING, Protocol, final
 
 from typing_extensions import assert_never, override
 
+from cartographer.interfaces.printer import Macro, MacroParams, Position, Toolhead
 from cartographer.macros.utils import get_enum_choice
-from cartographer.printer_interface import Macro, MacroParams, Position, Toolhead
 from cartographer.probe import Probe, ScanModel
 
 if TYPE_CHECKING:
-    from cartographer.configuration import ScanModelConfiguration, ScanModelFit
+    from cartographer.interfaces.configuration import ScanModelConfiguration, ScanModelFit
 
 logger = logging.getLogger(__name__)
 

@@ -8,10 +8,10 @@ from typing import TYPE_CHECKING, Literal, Protocol, final
 import numpy as np
 from typing_extensions import override
 
-from cartographer.printer_interface import Macro, MacroParams, Toolhead
+from cartographer.interfaces.printer import Macro, MacroParams, Toolhead
 
 if TYPE_CHECKING:
-    from cartographer.configuration import Configuration
+    from cartographer.interfaces.configuration import Configuration
     from cartographer.probe import Probe
 
 logger = logging.getLogger(__name__)

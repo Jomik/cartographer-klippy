@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 import pytest
 from typing_extensions import TypeAlias
 
+from cartographer.interfaces.printer import MacroParams, Position, Toolhead
 from cartographer.macros.bed_mesh import BedMeshCalibrateMacro, Configuration, MeshHelper, MeshPoint
-from cartographer.printer_interface import MacroParams, Position, Toolhead
 from cartographer.probe import Probe, ScanMode
 from cartographer.probe.scan_mode import Model
 from cartographer.probe.touch_mode import TouchMode
@@ -15,7 +15,7 @@ from cartographer.probe.touch_mode import TouchMode
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
-    from cartographer.interfaces import TaskExecutor
+    from cartographer.interfaces.multiprocessing import TaskExecutor
     from cartographer.stream import Session
 
 

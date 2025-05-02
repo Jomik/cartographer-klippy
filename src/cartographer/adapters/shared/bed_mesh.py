@@ -12,7 +12,7 @@ from cartographer.macros.bed_mesh import MeshHelper, MeshPoint
 if TYPE_CHECKING:
     from configfile import ConfigWrapper
 
-    from cartographer.printer_interface import Position
+    from cartographer.interfaces.printer import Position
 
 logger = logging.getLogger(__name__)
 
