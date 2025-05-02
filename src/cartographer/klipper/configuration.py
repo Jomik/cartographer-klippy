@@ -46,7 +46,8 @@ class KlipperCartographerConfiguration(CartographerConfiguration):
         config_name = config.get_name()
 
         scan_config = config.getsection(f"{config_name} scan")
-        self.scan_samples: int = scan_config.getint("samples", default=50, minval=20)
+        # self.scan_samples: int = scan_config.getint("samples", default=20, minval=20)
+        self.scan_samples: int = 20
         self.scan_mesh_runs: int = scan_config.getint("mesh_runs", default=1, minval=1)
 
         touch_config = config.getsection(f"{config_name} touch")
