@@ -8,13 +8,13 @@ from typing import TYPE_CHECKING, Protocol, final
 import numpy as np
 from typing_extensions import override
 
+from cartographer.interfaces.printer import Endstop, HomingState, Mcu, Position, ProbeMode, Toolhead
 from cartographer.lib.statistics import compute_mad
-from cartographer.printer_interface import C, Endstop, HomingState, Mcu, Position, ProbeMode, S, Toolhead
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from cartographer.configuration import TouchModelConfiguration
+    from cartographer.interfaces.configuration import TouchModelConfiguration
 
 logger = logging.getLogger(__name__)
 
@@ -76,7 +76,7 @@ class TouchBoundaries:
 
 
 @final
-class TouchMode(ProbeMode, Endstop[C]):
+class TouchMode(ProbeMode, Endstop):
     """Implementation for Survey Touch."""
 
     def get_model(self) -> TouchModelConfiguration:
@@ -91,10 +91,6 @@ class TouchMode(ProbeMode, Endstop[C]):
         z_offset = self.model.z_offset if self.model else 0.0
         return Position(0.0, 0.0, z_offset)
 
-    @override
-    def save_z_offset(self, new_offset: float) -> None:
-        self.get_model().save_z_offset(new_offset)
-
     @property
     @override
     def is_ready(self) -> bool:
@@ -102,7 +98,7 @@ class TouchMode(ProbeMode, Endstop[C]):
 
     def __init__(
         self,
-        mcu: Mcu[C, S],
+        mcu: Mcu,
         toolhead: Toolhead,
         config: Configuration,
         *,
@@ -173,7 +169,7 @@ class TouchMode(ProbeMode, Endstop[C]):
         return trigger_pos
 
     @override
-    def home_start(self, print_time: float) -> C:
+    def home_start(self, print_time: float) -> object:
         model = self.get_model()
         if model.threshold <= 0:
             msg = "threshold must be greater than 0"

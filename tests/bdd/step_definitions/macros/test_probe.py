@@ -10,7 +10,7 @@ from typing_extensions import TypeAlias
 
 import cartographer.probe.scan_mode as scan_mode
 import cartographer.probe.touch_mode as touch_mode
-from cartographer.printer_interface import Sample
+from cartographer.interfaces.printer import Sample
 from cartographer.probe import Probe
 
 if TYPE_CHECKING:
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from pytest import LogCaptureFixture
     from pytest_mock import MockerFixture
 
-    from cartographer.printer_interface import MacroParams, Toolhead
+    from cartographer.interfaces.printer import MacroParams, Toolhead
 
 
 scenarios("../../features/probe.feature")

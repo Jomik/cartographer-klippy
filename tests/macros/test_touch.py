@@ -6,9 +6,9 @@ from typing import TYPE_CHECKING
 import pytest
 from typing_extensions import TypeAlias
 
-from cartographer.configuration import TouchModelConfiguration
+from cartographer.interfaces.configuration import TouchModelConfiguration
+from cartographer.interfaces.printer import MacroParams, Position, Toolhead
 from cartographer.macros.touch import TouchAccuracyMacro, TouchHomeMacro, TouchMacro
-from cartographer.printer_interface import MacroParams, Position, Toolhead
 from cartographer.probe.touch_mode import TouchMode
 
 if TYPE_CHECKING:

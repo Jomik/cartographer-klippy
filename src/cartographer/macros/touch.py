@@ -6,18 +6,14 @@ from typing import TYPE_CHECKING, Protocol, final
 import numpy as np
 from typing_extensions import override
 
-from cartographer.configuration import TouchModelConfiguration
+from cartographer.interfaces.configuration import TouchModelConfiguration
+from cartographer.interfaces.printer import Macro, MacroParams
 from cartographer.lib.statistics import compute_mad
-from cartographer.printer_interface import Macro, MacroParams
 from cartographer.probe.touch_mode import STD_TOLERANCE, TouchMode
 
 if TYPE_CHECKING:
-    from cartographer.printer_interface import Toolhead
+    from cartographer.interfaces.printer import Toolhead
 
-
-logger = logging.getLogger(__name__)
-
-Probe = TouchMode[object]
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +32,7 @@ class TouchMacro(Macro[MacroParams]):
     description = "Touch the bed to get the height offset at the current position."
     last_trigger_position: float | None = None
 
-    def __init__(self, probe: Probe) -> None:
+    def __init__(self, probe: TouchMode) -> None:
         self._probe = probe
 
     @override
@@ -51,7 +47,7 @@ class TouchAccuracyMacro(Macro[MacroParams]):
     name = "TOUCH_ACCURACY"
     description = "Touch the bed multiple times to measure the accuracy of the probe."
 
-    def __init__(self, probe: Probe, toolhead: Toolhead) -> None:
+    def __init__(self, probe: TouchMode, toolhead: Toolhead) -> None:
         self._probe = probe
         self._toolhead = toolhead
 
@@ -112,7 +108,7 @@ class TouchHomeMacro(Macro[MacroParams]):
 
     def __init__(
         self,
-        probe: Probe,
+        probe: TouchMode,
         toolhead: Toolhead,
         home_position: tuple[float, float],
     ) -> None:
@@ -156,21 +152,6 @@ class TouchHomeMacro(Macro[MacroParams]):
         )
 
 
-@final
-class CalibrationModel(TouchModelConfiguration):
-    name = "calibration"
-    z_offset = 0.0
-
-    def __init__(self, *, speed: float, threshold: int) -> None:
-        self.speed = speed
-        self.threshold = threshold
-
-    @override
-    def save_z_offset(self, new_offset: float) -> None:
-        msg = "calibration model cannot be saved"
-        raise RuntimeError(msg)
-
-
 SAFE_TRIGGER_MIN_HEIGHT = -0.2  # Initial home too far
 MAD_TOLERANCE = STD_TOLERANCE * 0.6745  # Convert std to mad
 
@@ -197,7 +178,7 @@ class TouchCalibrateMacro(Macro[MacroParams]):
     name = "TOUCH_CALIBRATE"
     description = "Run the touch calibration"
 
-    def __init__(self, probe: Probe, toolhead: Toolhead, config: Configuration) -> None:
+    def __init__(self, probe: TouchMode, toolhead: Toolhead, config: Configuration) -> None:
         self._probe = probe
         self._toolhead = toolhead
         self._config = config
@@ -267,7 +248,7 @@ class TouchCalibrateMacro(Macro[MacroParams]):
     def _find_acceptable_threshold(self, threshold_start: int, threshold_max: int, speed: int) -> int | None:
         current_threshold = threshold_start
         while current_threshold <= threshold_max:
-            model = CalibrationModel(speed=speed, threshold=current_threshold)
+            model = TouchModelConfiguration(name="calibration", speed=speed, threshold=current_threshold, z_offset=0)
             score, samples = self._evaluate_threshold(model)
 
             logger.info(
@@ -292,7 +273,7 @@ class TouchCalibrateMacro(Macro[MacroParams]):
 
         return None  # No acceptable threshold found
 
-    def _evaluate_threshold(self, model: CalibrationModel) -> tuple[float, list[float]]:
+    def _evaluate_threshold(self, model: TouchModelConfiguration) -> tuple[float, list[float]]:
         old_model = self._probe.model
         try:
             self._probe.model = model

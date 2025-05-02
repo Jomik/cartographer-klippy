@@ -4,13 +4,12 @@ from typing import TYPE_CHECKING, cast
 
 from numpy.polynomial import Polynomial
 
-from cartographer.configuration import ScanModelFit
+from cartographer.interfaces.configuration import ScanModelConfiguration, ScanModelFit
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from cartographer.configuration import ScanModelConfiguration
-    from cartographer.printer_interface import Sample
+    from cartographer.interfaces.printer import Sample
 
 
 MAX_TOLERANCE = 1e-8
@@ -30,9 +29,6 @@ class ScanModel:
     @property
     def z_offset(self) -> float:
         return self.config.z_offset
-
-    def save_z_offset(self, new_offset: float) -> None:
-        self.config.save_z_offset(new_offset)
 
     @property
     def poly(self) -> Polynomial:

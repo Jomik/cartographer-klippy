@@ -11,8 +11,8 @@ if TYPE_CHECKING:
     from gcode import GCodeCommand
 
     from cartographer.adapters.shared.printer import KlipperToolhead
+    from cartographer.interfaces.printer import ProbeMode
     from cartographer.macros.probe import ProbeMacro, QueryProbeMacro
-    from cartographer.printer_interface import ProbeMode
 
 
 class ProbeStatus(TypedDict):

@@ -7,7 +7,7 @@ import pytest
 from typing_extensions import override
 
 from cartographer.adapters.shared.endstop import KlipperEndstop
-from cartographer.printer_interface import Endstop, HomingState
+from cartographer.interfaces.printer import Endstop, HomingState
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
