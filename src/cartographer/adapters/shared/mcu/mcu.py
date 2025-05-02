@@ -10,14 +10,19 @@ from mcu import TriggerDispatch as KlipperTriggerDispatch
 from reactor import ReactorCompletion
 from typing_extensions import override
 
-from cartographer.klipper.mcu.commands import HomeCommand, KlipperCartographerCommands, ThresholdCommand, TriggerMethod
-from cartographer.klipper.mcu.constants import (
+from cartographer.adapters.shared.mcu.commands import (
+    HomeCommand,
+    KlipperCartographerCommands,
+    ThresholdCommand,
+    TriggerMethod,
+)
+from cartographer.adapters.shared.mcu.constants import (
     FREQUENCY_RANGE_PERCENT,
     SHORTED_FREQUENCY_VALUE,
     TRIGGER_HYSTERESIS,
     KlipperCartographerConstants,
 )
-from cartographer.klipper.mcu.stream import KlipperStream, KlipperStreamMcu
+from cartographer.adapters.shared.mcu.stream import KlipperStream, KlipperStreamMcu
 from cartographer.printer_interface import Mcu, Position
 from cartographer.printer_interface import Sample as CartographerSample
 

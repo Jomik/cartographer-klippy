@@ -5,12 +5,12 @@ from typing import TYPE_CHECKING, TypedDict
 from extras.probe import PrinterProbe
 from typing_extensions import override
 
-from cartographer.klipper.utils import reraise_as_command_error
+from cartographer.adapters.shared.utils import reraise_as_command_error
 
 if TYPE_CHECKING:
     from gcode import GCodeCommand
 
-    from cartographer.klipper.printer import KlipperToolhead
+    from cartographer.adapters.shared.printer import KlipperToolhead
     from cartographer.macros.probe import ProbeMacro, QueryProbeMacro
     from cartographer.printer_interface import ProbeMode
 

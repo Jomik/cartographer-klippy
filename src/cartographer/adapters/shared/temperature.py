@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Callable, final
 if TYPE_CHECKING:
     from configfile import ConfigWrapper
 
-    from cartographer.klipper.mcu.mcu import Sample
+    from cartographer.adapters.shared.mcu.mcu import Sample
 
 REPORT_TIME = 0.300
 
