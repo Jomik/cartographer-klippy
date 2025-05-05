@@ -80,7 +80,7 @@ class PrinterCartographer:
 
         filter = AlphaBetaFilter()
         self.mcu = KlipperCartographerMcu(config, smooth_with(filter))
-        toolhead = KlipperToolhead(config, self.mcu)
+        toolhead = KlipperToolhead(config, self.mcu, self.config.backlash_compensation)
 
         scan_config = self.config.scan_models.get("default")
         model = ScanModel(scan_config) if scan_config else None

@@ -62,3 +62,11 @@ class EstimateBacklashMacro(Macro[MacroParams]):
             std_down,
             backlash,
         )
+        if backlash < 0:
+            logger.warning(
+                """
+                Backlash is negative, which is unexpected.
+                This could be due to a loose or worn out part that is causing unintentional slack.
+                Please check your printer's mechanical components.
+                """
+            )
