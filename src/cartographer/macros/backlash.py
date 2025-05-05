@@ -32,7 +32,8 @@ class EstimateBacklashMacro(Macro[MacroParams]):
         with self._scan.start_session():
             for _ in range(iterations):
                 for direction in samples:
-                    dir = 1 if direction == "up" else -1
+                    # When moving up, approach from below
+                    dir = -1 if direction == "up" else 1
                     self._toolhead.move(z=height + delta * dir, speed=speed)
                     self._toolhead.move(z=height, speed=speed)
                     self._toolhead.wait_moves()
@@ -48,12 +49,12 @@ class EstimateBacklashMacro(Macro[MacroParams]):
 
         logger.info(
             """
-            Backlash estimation results (normalized) over %d iterations:
-            Mean up: %.5f mm
-            Mean down: %.5f mm
-            Std dev up: %.5f mm
-            Std dev down: %.5f mm
-            Estimated backlash (down - up): %.5f mm
+            Backlash estimation results over %d iterations:
+            Mean moving upwards: %.5f mm
+            Mean moving down: %.5f mm
+            Std dev moving upwards: %.5f mm
+            Std dev moing downwards: %.5f mm
+            Estimated backlash: %.5f mm
             """,
             iterations,
             mean_up,
@@ -62,3 +63,12 @@ class EstimateBacklashMacro(Macro[MacroParams]):
             std_down,
             backlash,
         )
+        if backlash < 0:
+            logger.warning(
+                """
+                Backlash is negative, which is unexpected.
+                This means the position after moving UP was measured as higher (or further)
+                than the position after moving DOWN.
+                Please check your printer's mechanical components (e.g., for slop, binding).
+                """
+            )
