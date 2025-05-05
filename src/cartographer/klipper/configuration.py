@@ -39,7 +39,7 @@ class KlipperCartographerConfiguration(CartographerConfiguration):
         self._config: ConfigWrapper = config
         self.x_offset: float = config.getfloat("x_offset")
         self.y_offset: float = config.getfloat("y_offset")
-        self.backlash_compensation: float = config.getfloat("backlash_compensation", 0)
+        self.backlash_compensation: float = config.getfloat("backlash_compensation", 0.02, minval=0)
         self.move_speed: float = config.getfloat("move_speed", default=50, above=0)
         self.verbose: bool = config.getboolean("verbose", default=False)
 

@@ -37,10 +37,11 @@ class KlipperToolhead(Toolhead):
             self.__use_str_axes = not hasattr(kin, "note_z_not_homed")
         return self.__use_str_axes
 
-    def __init__(self, config: ConfigWrapper, mcu: KlipperCartographerMcu) -> None:
+    def __init__(self, config: ConfigWrapper, mcu: KlipperCartographerMcu, backlash: float) -> None:
         self.mcu = mcu
         self.printer = config.get_printer()
         self.reactor = self.printer.get_reactor()
+        self.backlash = backlash
 
     @override
     def get_last_move_time(self) -> float:
@@ -57,7 +58,15 @@ class KlipperToolhead(Toolhead):
 
     @override
     def move(self, *, x: float | None = None, y: float | None = None, z: float | None = None, speed: float) -> None:
-        self.toolhead.manual_move([x, y, z], speed=speed)
+        current_z = self.toolhead.get_position()[2]
+        if z is not None and z > current_z:
+            # We are moving UP — backlash could affect final Z
+            # So we overshoot slightly above and then land back down
+            self.toolhead.manual_move([x, y, z + self.backlash], speed=speed)
+            self.toolhead.manual_move([x, y, z], speed=speed)
+        else:
+            # Moving down or horizontally — no compensation needed
+            self.toolhead.manual_move([x, y, z], speed=speed)
 
     @override
     def is_homed(self, axis: HomingAxis) -> bool:
