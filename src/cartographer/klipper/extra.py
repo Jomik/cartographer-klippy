@@ -16,7 +16,6 @@ from cartographer.klipper.printer import KlipperToolhead
 from cartographer.klipper.probe import KlipperCartographerProbe
 from cartographer.klipper.task_executor import KlipperMultiprocessingExecutor
 from cartographer.klipper.temperature import PrinterTemperatureCoil
-from cartographer.lib.alpha_beta_filter import AlphaBetaFilter
 from cartographer.macros import ProbeAccuracyMacro, ProbeMacro, QueryProbeMacro, ZOffsetApplyProbeMacro
 from cartographer.macros.axis_twist_compensation import AxisTwistCompensationMacro
 from cartographer.macros.backlash import EstimateBacklashMacro
@@ -29,6 +28,7 @@ if TYPE_CHECKING:
     from configfile import ConfigWrapper
     from gcode import GCodeCommand
 
+    from cartographer.lib.alpha_beta_filter import AlphaBetaFilter
     from cartographer.printer_interface import Macro
 
 logger = logging.getLogger(__name__)
@@ -78,8 +78,7 @@ class PrinterCartographer:
         self.config = KlipperCartographerConfiguration(config)
         task_executor = KlipperMultiprocessingExecutor(printer.get_reactor())
 
-        filter = AlphaBetaFilter()
-        self.mcu = KlipperCartographerMcu(config, smooth_with(filter))
+        self.mcu = KlipperCartographerMcu(config)
         toolhead = KlipperToolhead(config, self.mcu)
 
         scan_config = self.config.scan_models.get("default")
