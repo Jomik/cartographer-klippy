@@ -53,7 +53,7 @@ class EstimateBacklashMacro(Macro[MacroParams]):
             Mean moving upwards: %.5f mm
             Mean moving down: %.5f mm
             Std dev moving upwards: %.5f mm
-            Std dev moing downwards: %.5f mm
+            Std dev moving downwards: %.5f mm
             Estimated backlash: %.5f mm
             """,
             iterations,
