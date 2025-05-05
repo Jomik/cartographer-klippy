@@ -24,9 +24,8 @@ class EstimateBacklashMacro(Macro[MacroParams]):
         iterations = params.get_int("ITERATIONS", 10, minval=1)
         speed = 5
         height = 2
-        delta = 1
+        delta = 0.2  # Smaller delta is better for detecting subtle backlash
 
-        # TODO: Maybe this should be a probing move?
         self._toolhead.move(z=height, speed=speed)
         samples: dict[Literal["up", "down"], list[float]] = {"up": [], "down": []}
 
@@ -40,29 +39,26 @@ class EstimateBacklashMacro(Macro[MacroParams]):
                     dist = self._scan.measure_distance()
                     samples[direction].append(dist)
 
-        logger.debug("Samples up: %s", samples["up"])
-        logger.debug("Samples down: %s", samples["down"])
-
-        mean_up = np.mean(samples["up"])
-        mean_down = np.mean(samples["down"])
-        median_up = np.median(samples["up"]) - mean_up
-        median_down = np.median(samples["down"]) - mean_down
+        global_mean = np.mean(samples["up"] + samples["down"])
+        mean_up = np.mean(samples["up"]) - global_mean
+        mean_down = np.mean(samples["down"]) - global_mean
         std_up = np.std(samples["up"])
         std_down = np.std(samples["down"])
+        backlash = mean_down - mean_up  # Positive = down sits lower than up
 
         logger.info(
             """
-            Backlash estimation results over %d iterations:
-            Median up: %.3f
-            Median down: %.3f
-            Standard deviation up: %.3f
-            Standard deviation down: %.3f
-            Delta: %.3f
+            Backlash estimation results (normalized) over %d iterations:
+            Mean up: %.5f mm
+            Mean down: %.5f mm
+            Std dev up: %.5f mm
+            Std dev down: %.5f mm
+            Estimated backlash (down - up): %.5f mm
             """,
             iterations,
-            median_up,
-            median_down,
+            mean_up,
+            mean_down,
             std_up,
             std_down,
-            median_down - median_up,
+            backlash,
         )
