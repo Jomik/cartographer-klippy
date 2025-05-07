@@ -4,8 +4,6 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable, Generic, Literal, NamedTuple, Protocol, TypeVar, overload
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
     from cartographer.stream import Session
 
 HomingAxis = Literal["x", "y", "z"]
@@ -25,8 +23,6 @@ class Position:
 
 
 class HomingState(Protocol):
-    endstops: Sequence[Endstop]
-
     def is_homing_z(self) -> bool:
         """Check if the z axis is currently being homed."""
         ...

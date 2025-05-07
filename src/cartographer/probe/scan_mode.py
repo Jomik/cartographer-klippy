@@ -134,8 +134,6 @@ class ScanMode(ProbeMode, Endstop):
 
     @override
     def on_home_end(self, homing_state: HomingState) -> None:
-        if self not in homing_state.endstops:
-            return
         if not homing_state.is_homing_z():
             return
         distance = self.measure_distance()

@@ -4,18 +4,16 @@ import logging
 from typing import TYPE_CHECKING, cast, final
 
 from mcu import MCU_endstop
-from reactor import ReactorCompletion
 from typing_extensions import override
 
 from cartographer.adapters.shared.utils import reraise_as_command_error
 from cartographer.interfaces.printer import HomingAxis, HomingState
 
 if TYPE_CHECKING:
-    from collections.abc import Sequence
-
     from extras.homing import Homing
     from mcu import MCU
-    from stepper import MCU_stepper, PrinterRail
+    from reactor import ReactorCompletion
+    from stepper import MCU_stepper
 
     from cartographer.adapters.shared.mcu import KlipperCartographerMcu
     from cartographer.interfaces.printer import Endstop
@@ -35,9 +33,8 @@ def axis_to_index(axis: HomingAxis) -> int:
 
 @final
 class KlipperHomingState(HomingState):
-    def __init__(self, homing: Homing, endstops: Sequence[Endstop]) -> None:
+    def __init__(self, homing: Homing) -> None:
         self.homing = homing
-        self.endstops = endstops
 
     @override
     def is_homing_z(self) -> bool:
@@ -49,28 +46,11 @@ class KlipperHomingState(HomingState):
         self.homing.set_homed_position([None, None, position])
 
 
-class _MemoizedEndstop(type):
-    _endstops: dict[Endstop, KlipperEndstop] = {}
-
-    @override
-    def __call__(cls, mcu: KlipperCartographerMcu, endstop: Endstop):
-        if endstop not in cls._endstops:
-            cls._endstops[endstop] = super().__call__(mcu, endstop)
-        return cls._endstops[endstop]
-
-
 @final
-class KlipperEndstop(MCU_endstop, metaclass=_MemoizedEndstop):
+class KlipperEndstop(MCU_endstop):
     def __init__(self, mcu: KlipperCartographerMcu, endstop: Endstop):
-        self.printer = mcu.klipper_mcu.get_printer()
         self.mcu = mcu
         self.endstop = endstop
-        self.printer.register_event_handler("homing:home_rails_end", self.home_rails_end)
-
-    @reraise_as_command_error
-    def home_rails_end(self, homing: Homing, rails: list[PrinterRail]) -> None:
-        endstops = [es.endstop for rail in rails for es, _ in rail.get_endstops() if isinstance(es, KlipperEndstop)]
-        self.endstop.on_home_end(KlipperHomingState(homing, endstops))
 
     @override
     def get_mcu(self) -> MCU:
