@@ -34,7 +34,7 @@ class AxisTwistCompensationHelper(Protocol):
 
 
 @final
-class AxisTwistCompensationMacro(Macro[MacroParams]):
+class AxisTwistCompensationMacro(Macro):
     name = "TOUCH_AXIS_TWIST_COMPENSATION"
     description = "Scan and touch to calculate axis twist compensation values."
 

@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 @final
-class EstimateBacklashMacro(Macro[MacroParams]):
+class EstimateBacklashMacro(Macro):
     name = "ESTIMATE_BACKLASH"
     description = "Do a series of moves to estimate backlash on the Z axis."
 

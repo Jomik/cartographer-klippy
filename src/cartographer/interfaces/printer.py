@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, Generic, Literal, NamedTuple, Protocol, TypeVar, overload
+from typing import TYPE_CHECKING, Callable, Literal, NamedTuple, Protocol, overload
 
 if TYPE_CHECKING:
     from cartographer.stream import Session
@@ -88,14 +88,11 @@ class MacroParams(Protocol):
     ) -> int: ...
 
 
-P = TypeVar("P", bound=MacroParams, contravariant=True)
-
-
-class Macro(Generic[P], Protocol):
+class Macro(Protocol):
     name: str
     description: str
 
-    def run(self, params: P) -> None: ...
+    def run(self, params: MacroParams) -> None: ...
 
 
 class ProbeMode(Protocol):

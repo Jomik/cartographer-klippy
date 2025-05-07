@@ -18,6 +18,9 @@ from extras.homing import Homing, HomingMove, PrinterHoming
 from extras.motion_report import PrinterMotionReport
 from extras.probe import PrinterProbe
 
+# TODO: Kalico specific
+APP_NAME: str
+
 class Printer:
     config_error: type[configfile.error]
     command_error: type[CommandError]

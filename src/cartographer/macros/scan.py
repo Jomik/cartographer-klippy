@@ -30,7 +30,7 @@ class ScanCalibrateMethod(Enum):
 
 
 @final
-class ScanCalibrateMacro(Macro[MacroParams]):
+class ScanCalibrateMacro(Macro):
     name = "SCAN_CALIBRATE"
     description = "Run the scan calibration"
 
