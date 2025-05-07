@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from pytest import LogCaptureFixture
     from pytest_mock import MockerFixture
 
-Probe: TypeAlias = TouchMode[object]
+Probe: TypeAlias = TouchMode
 
 
 @pytest.fixture

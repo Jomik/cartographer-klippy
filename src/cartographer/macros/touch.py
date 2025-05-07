@@ -27,7 +27,7 @@ class Configuration(Protocol):
 
 
 @final
-class TouchMacro(Macro[MacroParams]):
+class TouchMacro(Macro):
     name = "TOUCH"
     description = "Touch the bed to get the height offset at the current position."
     last_trigger_position: float | None = None
@@ -43,7 +43,7 @@ class TouchMacro(Macro[MacroParams]):
 
 
 @final
-class TouchAccuracyMacro(Macro[MacroParams]):
+class TouchAccuracyMacro(Macro):
     name = "TOUCH_ACCURACY"
     description = "Touch the bed multiple times to measure the accuracy of the probe."
 
@@ -102,7 +102,7 @@ class TouchAccuracyMacro(Macro[MacroParams]):
 
 
 @final
-class TouchHomeMacro(Macro[MacroParams]):
+class TouchHomeMacro(Macro):
     name = "TOUCH_HOME"
     description = "Touch the bed to home Z axis"
 
@@ -125,7 +125,7 @@ class TouchHomeMacro(Macro[MacroParams]):
         self._toolhead.move(
             x=self._home_position[0],
             y=self._home_position[1],
-            speed=self._probe.config.move_speed,
+            speed=50,
         )
         self._toolhead.wait_moves()
 
@@ -174,7 +174,7 @@ def compute_step_increase(current_threshold: int, score: float) -> int:
 
 
 @final
-class TouchCalibrateMacro(Macro[MacroParams]):
+class TouchCalibrateMacro(Macro):
     name = "TOUCH_CALIBRATE"
     description = "Run the touch calibration"
 

@@ -4,13 +4,13 @@ import logging
 from typing import TYPE_CHECKING, final
 
 from extras.bed_mesh import BedMeshError
-from gcode import GCodeCommand, GCodeDispatch
 from typing_extensions import override
 
 from cartographer.macros.bed_mesh import MeshHelper, MeshPoint
 
 if TYPE_CHECKING:
     from configfile import ConfigWrapper
+    from gcode import GCodeCommand, GCodeDispatch
 
     from cartographer.interfaces.printer import Position
 
@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 
 @final
-class KlipperMeshHelper(MeshHelper[GCodeCommand]):
+class KlipperMeshHelper(MeshHelper):
     def __init__(self, config: ConfigWrapper, gcode: GCodeDispatch) -> None:
         self.mesh_config = config.getsection("bed_mesh")
         self._bed_mesh = config.get_printer().load_object(self.mesh_config, "bed_mesh")

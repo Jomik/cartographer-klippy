@@ -14,7 +14,7 @@ if TYPE_CHECKING:
     from cartographer.interfaces.configuration import TouchModelConfiguration
 
 
-Probe: TypeAlias = TouchMode[object]
+Probe: TypeAlias = TouchMode
 
 
 @final

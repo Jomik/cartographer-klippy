@@ -4,12 +4,12 @@ import logging
 import math
 import time
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Generic, Protocol, final
+from typing import TYPE_CHECKING, Protocol, final
 
 import numpy as np
 from typing_extensions import override
 
-from cartographer.interfaces.printer import Macro, MacroParams, P, Position, Sample, Toolhead
+from cartographer.interfaces.printer import Macro, MacroParams, Position, Sample, Toolhead
 from cartographer.lib.nearest_neighbor import NearestNeighborSearcher
 
 if TYPE_CHECKING:
@@ -34,12 +34,12 @@ class MeshPoint:
     include: bool
 
 
-class MeshHelper(Generic[P], Protocol):
-    def orig_macro(self, params: P) -> None: ...
-    def prepare_scan_path(self, params: P) -> list[MeshPoint]: ...
+class MeshHelper(Protocol):
+    def orig_macro(self, params: MacroParams) -> None: ...
+    def prepare_scan_path(self, params: MacroParams) -> list[MeshPoint]: ...
     def prepare_touch_points(
         self,
-        params: P,
+        params: MacroParams,
         *,
         mesh_min: tuple[float, float] | None,
         mesh_max: tuple[float, float] | None,
@@ -48,7 +48,7 @@ class MeshHelper(Generic[P], Protocol):
 
 
 @final
-class BedMeshCalibrateMacro(Macro[P]):
+class BedMeshCalibrateMacro(Macro):
     name = "BED_MESH_CALIBRATE"
     description = "Gather samples across the bed to calibrate the bed mesh."
 
@@ -56,7 +56,7 @@ class BedMeshCalibrateMacro(Macro[P]):
         self,
         probe: Probe,
         toolhead: Toolhead,
-        helper: MeshHelper[P],
+        helper: MeshHelper,
         task_executor: TaskExecutor,
         config: Configuration,
     ) -> None:
@@ -66,7 +66,7 @@ class BedMeshCalibrateMacro(Macro[P]):
         self.touch_mesh = _TouchMeshRunner(probe.touch, toolhead, config)
 
     @override
-    def run(self, params: P) -> None:
+    def run(self, params: MacroParams) -> None:
         method = params.get("METHOD", default="scan").lower()
         if method != "scan" and method != "rapid_scan" and method != "touch":
             return self.helper.orig_macro(params)

@@ -6,12 +6,10 @@ from typing import TYPE_CHECKING, cast
 
 import pytest
 from pytest_bdd import given, parsers, scenarios, then, when
-from typing_extensions import TypeAlias
 
-import cartographer.probe.scan_mode as scan_mode
-import cartographer.probe.touch_mode as touch_mode
-from cartographer.interfaces.printer import Sample
 from cartographer.probe import Probe
+from cartographer.probe.scan_mode import ScanMode
+from cartographer.probe.touch_mode import TouchMode
 
 if TYPE_CHECKING:
     from unittest.mock import Mock
@@ -23,9 +21,6 @@ if TYPE_CHECKING:
 
 
 scenarios("../../features/probe.feature")
-
-ScanMode: TypeAlias = scan_mode.ScanMode[object, Sample]
-TouchMode: TypeAlias = touch_mode.TouchMode[object]
 
 
 @pytest.fixture

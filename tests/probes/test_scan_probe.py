@@ -7,7 +7,7 @@ import pytest
 from typing_extensions import TypeAlias, override
 
 from cartographer.interfaces.printer import HomingState, Mcu, Position, Toolhead
-from cartographer.probe.scan_mode import ScanModeConfiguration, Model, ScanMode
+from cartographer.probe.scan_mode import Model, ScanMode, ScanModeConfiguration
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
@@ -23,7 +23,7 @@ class Sample:
     velocity: float | None = 5
 
 
-Probe: TypeAlias = ScanMode[object, Sample]
+Probe: TypeAlias = ScanMode
 
 
 class MockModel(Model):

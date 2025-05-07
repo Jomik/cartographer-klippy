@@ -3,7 +3,7 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from itertools import combinations
-from typing import TYPE_CHECKING, Protocol, final
+from typing import TYPE_CHECKING, final
 
 import numpy as np
 from typing_extensions import override
@@ -14,7 +14,7 @@ from cartographer.lib.statistics import compute_mad
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from cartographer.interfaces.configuration import TouchModelConfiguration
+    from cartographer.interfaces.configuration import Configuration, TouchModelConfiguration
 
 logger = logging.getLogger(__name__)
 
@@ -24,16 +24,26 @@ RETRACT_DISTANCE = 2.0
 MAX_TOUCH_TEMPERATURE = 155
 
 
-class Configuration(Protocol):
-    move_speed: float
-
-    touch_samples: int
-    touch_max_samples: int
+@dataclass(frozen=True)
+class TouchModeConfiguration:
+    samples: int
+    max_samples: int
 
     x_offset: float
     y_offset: float
     mesh_min: tuple[float, float]
     mesh_max: tuple[float, float]
+
+    @staticmethod
+    def from_config(config: Configuration):
+        return TouchModeConfiguration(
+            samples=config.touch.samples,
+            max_samples=config.touch.max_samples,
+            x_offset=config.general.x_offset,
+            y_offset=config.general.y_offset,
+            mesh_min=config.bed_mesh.mesh_min,
+            mesh_max=config.bed_mesh.mesh_max,
+        )
 
 
 class TouchError(RuntimeError):
@@ -54,7 +64,7 @@ class TouchBoundaries:
         return in_x_bounds and in_y_bounds
 
     @staticmethod
-    def from_config(config: Configuration) -> TouchBoundaries:
+    def from_config(config: TouchModeConfiguration) -> TouchBoundaries:
         mesh_min_x, mesh_min_y = config.mesh_min
         mesh_max_x, mesh_max_y = config.mesh_max
         x_offset = config.x_offset
@@ -100,9 +110,9 @@ class TouchMode(ProbeMode, Endstop):
         self,
         mcu: Mcu,
         toolhead: Toolhead,
-        config: Configuration,
+        config: TouchModeConfiguration,
         *,
-        model: TouchModelConfiguration | None,
+        model: TouchModelConfiguration | None = None,
     ) -> None:
         self._toolhead = toolhead
         self._mcu = mcu
@@ -118,15 +128,15 @@ class TouchMode(ProbeMode, Endstop):
             raise RuntimeError(msg)
 
         if self._toolhead.get_position().z < 5:
-            self._toolhead.move(z=5, speed=self.config.move_speed)
+            self._toolhead.move(z=5, speed=5)
         self._toolhead.wait_moves()
 
         return self._run_probe()
 
     def _run_probe(self) -> float:
         collected: list[float] = []
-        touch_samples = self.config.touch_samples
-        touch_max_samples = self.config.touch_max_samples
+        touch_samples = self.config.samples
+        touch_max_samples = self.config.max_samples
         logger.debug("Starting touch sequence for %d samples within %d touches...", touch_samples, touch_max_samples)
 
         for i in range(touch_max_samples):
@@ -158,14 +168,11 @@ class TouchMode(ProbeMode, Endstop):
     def perform_single_probe(self) -> float:
         model = self.get_model()
         if self._toolhead.get_position().z < RETRACT_DISTANCE:
-            self._toolhead.move(z=RETRACT_DISTANCE, speed=self.config.move_speed)
+            self._toolhead.move(z=RETRACT_DISTANCE, speed=5)
         self._toolhead.wait_moves()
         trigger_pos = self._toolhead.z_homing_move(self, bottom=-2.0, speed=model.speed)
         pos = self._toolhead.get_position()
-        self._toolhead.move(
-            z=max(pos.z + RETRACT_DISTANCE, RETRACT_DISTANCE),
-            speed=self.config.move_speed,
-        )
+        self._toolhead.move(z=max(pos.z + RETRACT_DISTANCE, RETRACT_DISTANCE), speed=5)
         return trigger_pos
 
     @override
