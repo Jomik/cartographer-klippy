@@ -24,12 +24,20 @@ class CalibrationOptions:
     line: float | None
 
 
-class AxisTwistCompensationHelper(Protocol):
+@dataclass
+class CompensationResult:
+    axis: Literal["x", "y"]
+    start: float
+    end: float
+    values: list[float]
+
+
+class AxisTwistCompensationAdapter(Protocol):
     move_height: float
     speed: float
 
     def clear_compensations(self, axis: Literal["x", "y"]) -> None: ...
-    def save_compensations(self, axis: Literal["x", "y"], start: float, end: float, values: list[float]) -> None: ...
+    def apply_compensation(self, result: CompensationResult) -> None: ...
     def get_calibration_options(self, axis: Literal["x", "y"]) -> CalibrationOptions: ...
 
 
@@ -39,11 +47,11 @@ class AxisTwistCompensationMacro(Macro):
     description = "Scan and touch to calculate axis twist compensation values."
 
     def __init__(
-        self, probe: Probe, toolhead: Toolhead, helper: AxisTwistCompensationHelper, config: Configuration
+        self, probe: Probe, toolhead: Toolhead, adapter: AxisTwistCompensationAdapter, config: Configuration
     ) -> None:
         self.probe = probe
         self.toolhead = toolhead
-        self.helper = helper
+        self.adapter = adapter
         self.config = config
 
     @override
@@ -56,7 +64,7 @@ class AxisTwistCompensationMacro(Macro):
 
         start_pos, end_pos, line_pos = self._get_calibration_positions(params, axis)
 
-        self.helper.clear_compensations(axis)
+        self.adapter.clear_compensations(axis)
         try:
             self._calibrate(axis, sample_count, start_pos, end_pos, line_pos)
         except RuntimeError:
@@ -72,7 +80,7 @@ class AxisTwistCompensationMacro(Macro):
         end_pos = params.get_float("END", default=None)
         line_pos = params.get_float("LINE", default=None)
 
-        options = self.helper.get_calibration_options(axis)
+        options = self.adapter.get_calibration_options(axis)
         boundaries = self.probe.touch.boundaries
         if axis == "x":
             if start_pos is None:
@@ -129,7 +137,7 @@ class AxisTwistCompensationMacro(Macro):
         avg = float(np.mean(results))
         results = [avg - x for x in results]
 
-        self.helper.save_compensations(axis, start_pos, end_pos, results)
+        self.adapter.apply_compensation(CompensationResult(axis=axis, start=start_pos, end=end_pos, values=results))
         logger.info("""
             AXIS_TWIST_COMPENSATION state has been saved
             for the current session.  The SAVE_CONFIG command will
@@ -143,30 +151,30 @@ class AxisTwistCompensationMacro(Macro):
         )
 
     def _move_nozzle_to(self, axis: Literal["x", "y"], position: float, line_pos: float) -> None:
-        self.toolhead.move(z=self.helper.move_height, speed=self.helper.speed)
+        self.toolhead.move(z=self.adapter.move_height, speed=self.adapter.speed)
         if axis == "x":
             self.toolhead.move(
                 x=position,
                 y=line_pos,
-                speed=self.helper.speed,
+                speed=self.adapter.speed,
             )
         else:
             self.toolhead.move(
                 x=line_pos,
                 y=position,
-                speed=self.helper.speed,
+                speed=self.adapter.speed,
             )
 
     def _move_probe_to(self, axis: Literal["x", "y"], position: float, calibration_axis: float) -> None:
         if axis == "x":
             self.toolhead.move(
-                x=position - self.config.x_offset,
-                y=calibration_axis - self.config.y_offset,
-                speed=self.helper.speed,
+                x=position - self.config.general.x_offset,
+                y=calibration_axis - self.config.general.y_offset,
+                speed=self.adapter.speed,
             )
         else:
             self.toolhead.move(
-                x=calibration_axis - self.config.x_offset,
-                y=position - self.config.y_offset,
-                speed=self.helper.speed,
+                x=calibration_axis - self.config.general.x_offset,
+                y=position - self.config.general.y_offset,
+                speed=self.adapter.speed,
             )
