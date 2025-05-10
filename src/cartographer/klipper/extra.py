@@ -4,6 +4,7 @@ import logging
 from textwrap import dedent
 from typing import TYPE_CHECKING, Callable, TypedDict, final
 
+from cartographer.event_bus import EventBus
 from cartographer.klipper.axis_twist_compensation import KlipperAxisTwistCompensationHelper
 from cartographer.klipper.bed_mesh import KlipperMeshHelper
 from cartographer.klipper.configuration import KlipperCartographerConfiguration
@@ -16,6 +17,7 @@ from cartographer.klipper.printer import KlipperToolhead
 from cartographer.klipper.probe import KlipperCartographerProbe
 from cartographer.klipper.task_executor import KlipperMultiprocessingExecutor
 from cartographer.klipper.temperature import PrinterTemperatureCoil
+from cartographer.klipper.webhooks import KlipperCartographerWebhooks
 from cartographer.lib.alpha_beta_filter import AlphaBetaFilter
 from cartographer.macros import ProbeAccuracyMacro, ProbeMacro, QueryProbeMacro, ZOffsetApplyProbeMacro
 from cartographer.macros.axis_twist_compensation import AxisTwistCompensationMacro
@@ -73,6 +75,7 @@ class PrinterCartographer:
     config: KlipperCartographerConfiguration
 
     def __init__(self, config: ConfigWrapper) -> None:
+        event_bus = EventBus()
         printer = config.get_printer()
         logger.debug("Initializing Cartographer")
         self.config = KlipperCartographerConfiguration(config)
@@ -88,7 +91,7 @@ class PrinterCartographer:
         scan_endstop = KlipperEndstop(self.mcu, self.scan_mode)
 
         touch_config = self.config.touch_models.get("default")
-        self.touch_mode = TouchMode(self.mcu, toolhead, self.config, model=touch_config)
+        self.touch_mode = TouchMode(self.mcu, toolhead, self.config, event_bus, model=touch_config)
         probe = Probe(self.scan_mode, self.touch_mode)
 
         homing_chip = CartographerHomingChip(printer, scan_endstop)
@@ -138,6 +141,9 @@ class PrinterCartographer:
                 query_probe_macro,
             ),
         )
+
+        webhooks = KlipperCartographerWebhooks(event_bus, printer, self.mcu, toolhead, self.scan_mode)
+        webhooks.register()
 
     def _register_macro(self, macro: Macro[GCodeCommand]) -> None:
         self.gcode.register_command(macro.name, catch_macro_errors(macro.run), desc=macro.description)

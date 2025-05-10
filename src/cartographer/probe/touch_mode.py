@@ -8,6 +8,7 @@ from typing import TYPE_CHECKING, Protocol, final
 import numpy as np
 from typing_extensions import override
 
+from cartographer.event_bus import Event, EventBus
 from cartographer.lib.statistics import compute_mad
 from cartographer.printer_interface import C, Endstop, HomingState, Mcu, Position, ProbeMode, S, Toolhead
 
@@ -75,6 +76,16 @@ class TouchBoundaries:
         )
 
 
+@dataclass
+class TouchTriggeredEvent(Event):
+    time: float
+
+
+@dataclass
+class TouchStartedEvent(Event):
+    time: float
+
+
 @final
 class TouchMode(ProbeMode, Endstop[C]):
     """Implementation for Survey Touch."""
@@ -105,12 +116,14 @@ class TouchMode(ProbeMode, Endstop[C]):
         mcu: Mcu[C, S],
         toolhead: Toolhead,
         config: Configuration,
+        event_bus: EventBus,
         *,
         model: TouchModelConfiguration | None,
     ) -> None:
         self._toolhead = toolhead
         self._mcu = mcu
         self.config = config
+        self._event_bus = event_bus
         self.model = model
 
         self.boundaries = TouchBoundaries.from_config(config)
@@ -188,6 +201,8 @@ class TouchMode(ProbeMode, Endstop[C]):
         if nozzle.current > MAX_TOUCH_TEMPERATURE or nozzle.target > MAX_TOUCH_TEMPERATURE:
             msg = f"nozzle temperature must be below {MAX_TOUCH_TEMPERATURE - 5:d}C"
             raise RuntimeError(msg)
+
+        self._event_bus.publish(TouchStartedEvent(print_time))
         return self._mcu.start_homing_touch(print_time, model.threshold)
 
     def is_within_boundaries(self, *, x: float, y: float) -> bool:
@@ -204,7 +219,9 @@ class TouchMode(ProbeMode, Endstop[C]):
 
     @override
     def home_wait(self, home_end_time: float) -> float:
-        return self._mcu.stop_homing(home_end_time)
+        trigger_time = self._mcu.stop_homing(home_end_time)
+        self._event_bus.publish(TouchTriggeredEvent(trigger_time))
+        return trigger_time
 
     @override
     def query_is_triggered(self, print_time: float) -> bool:

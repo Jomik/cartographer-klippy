@@ -7,6 +7,7 @@ import pytest
 from typing_extensions import ParamSpec, override
 
 from cartographer.interfaces import TaskExecutor
+from cartographer.event_bus import EventBus
 from cartographer.printer_interface import MacroParams, Mcu, Position, Sample, Toolhead
 from cartographer.stream import Session
 
@@ -65,3 +66,8 @@ class InlineTaskExecutor(TaskExecutor):
 @pytest.fixture
 def task_executor() -> TaskExecutor:
     return InlineTaskExecutor()
+
+
+@pytest.fixture
+def event_bus() -> EventBus:
+    return EventBus()
