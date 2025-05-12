@@ -7,12 +7,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Protocol, final
 
 import numpy as np
-from typing_extensions import override
+from typing_extensions import TypeAlias, override
 
 from cartographer.interfaces.printer import Macro, MacroParams, Position, Sample, Toolhead
 from cartographer.lib.nearest_neighbor import NearestNeighborSearcher
 
 if TYPE_CHECKING:
+    from cartographer.interfaces.configuration import Configuration
     from cartographer.interfaces.multiprocessing import TaskExecutor
     from cartographer.probe import Probe
     from cartographer.probe.scan_mode import Model, ScanMode
@@ -21,30 +22,32 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-class Configuration(Protocol):
-    scan_speed: float
-    scan_height: float
-    scan_mesh_runs: int
+HeightMatrix: TypeAlias = "list[list[float]]"
 
 
-@dataclass
-class MeshPoint:
-    x: float
-    y: float
-    include: bool
+class BedMeshAdapter(Protocol):
+    def build_and_set_mesh(self, matrix: HeightMatrix, profile_name: str | None = None): ...
+
+    def original_macro(self, params: MacroParams) -> None: ...
+
+    # def orig_macro(self, params: MacroParams) -> None: ...
+    # def prepare_scan_path(self, params: MacroParams) -> list[MeshPoint]: ...
+    # def prepare_touch_points(
+    #     self,
+    #     params: MacroParams,
+    #     *,
+    #     mesh_min: tuple[float, float] | None,
+    #     mesh_max: tuple[float, float] | None,
+    # ) -> list[MeshPoint]: ...
+    # def finalize(self, offset: Position, positions: list[Position]): ...
 
 
-class MeshHelper(Protocol):
-    def orig_macro(self, params: MacroParams) -> None: ...
-    def prepare_scan_path(self, params: MacroParams) -> list[MeshPoint]: ...
-    def prepare_touch_points(
+class MeshMethodStrategy(Protocol):
+    def run(
         self,
         params: MacroParams,
-        *,
-        mesh_min: tuple[float, float] | None,
-        mesh_max: tuple[float, float] | None,
-    ) -> list[MeshPoint]: ...
-    def finalize(self, offset: Position, positions: list[Position]): ...
+        config: Configuration,
+    ) -> HeightMatrix: ...
 
 
 @final
@@ -56,11 +59,11 @@ class BedMeshCalibrateMacro(Macro):
         self,
         probe: Probe,
         toolhead: Toolhead,
-        helper: MeshHelper,
+        adapter: BedMeshAdapter,
         task_executor: TaskExecutor,
         config: Configuration,
     ) -> None:
-        self.helper = helper
+        self.adapter = adapter
         self.probe = probe
         self.scan_mesh = _ScanMeshRunner(probe.scan, toolhead, task_executor, config)
         self.touch_mesh = _TouchMeshRunner(probe.touch, toolhead, config)
@@ -68,25 +71,15 @@ class BedMeshCalibrateMacro(Macro):
     @override
     def run(self, params: MacroParams) -> None:
         method = params.get("METHOD", default="scan").lower()
-        if method != "scan" and method != "rapid_scan" and method != "touch":
-            return self.helper.orig_macro(params)
+        if method != "scan" and method != "rapid_scan":
+            return self.adapter.original_macro(params)
+        profile = params.get("PROFILE", default="default")
 
         start_time = time.time()
-        if method == "touch":
-            boundaries = self.probe.touch.boundaries
-            offset, positions = self.touch_mesh.run(
-                params,
-                self.helper.prepare_touch_points(
-                    params,
-                    mesh_min=(boundaries.min_x, boundaries.min_y),
-                    mesh_max=(boundaries.max_x, boundaries.max_y),
-                ),
-            )
-        else:
-            offset, positions = self.scan_mesh.run(params, self.helper.prepare_scan_path(params))
+        offset, positions = self.scan_mesh.run(params, self.helper.prepare_scan_path(params))
         logger.debug("Bed mesh completed in %.2f seconds", time.time() - start_time)
 
-        self.helper.finalize(offset, positions)
+        self.adapter.build_and_set_mesh(matrix, profile)
 
 
 @final
