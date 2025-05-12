@@ -3,10 +3,11 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, cast, final
 
+from gcode import CommandError
 from mcu import MCU_endstop
 from typing_extensions import override
 
-from cartographer.adapters.shared.utils import reraise_as_command_error
+from cartographer.adapters.shared.utils import reraise_as
 from cartographer.interfaces.printer import HomingAxis, HomingState
 
 if TYPE_CHECKING:
@@ -65,7 +66,7 @@ class KlipperEndstop(MCU_endstop):
         return self.mcu.dispatch.get_steppers()
 
     @override
-    @reraise_as_command_error
+    @reraise_as(CommandError)
     def home_start(
         self,
         print_time: float,
@@ -78,12 +79,12 @@ class KlipperEndstop(MCU_endstop):
         return cast("ReactorCompletion", self.endstop.home_start(print_time))
 
     @override
-    @reraise_as_command_error
+    @reraise_as(CommandError)
     def home_wait(self, home_end_time: float) -> float:
         return self.endstop.home_wait(home_end_time)
 
     @override
-    @reraise_as_command_error
+    @reraise_as(CommandError)
     def query_endstop(self, print_time: float) -> int:
         return 1 if self.endstop.query_is_triggered(print_time) else 0
 

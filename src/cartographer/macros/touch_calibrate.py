@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 
 MIN_ALLOWED_STEP = 75
 MAX_ALLOWED_STEP = 500
+DEFAULT_TOUCH_MODEL_NAME = "default"
 
 
 class CalibrationStrategy(ABC):
@@ -146,7 +147,7 @@ class TouchCalibrateMacro(Macro):
 
     @override
     def run(self, params: MacroParams) -> None:
-        name = params.get("MODEL_NAME", "default")
+        name = params.get("MODEL_NAME", DEFAULT_TOUCH_MODEL_NAME)
         speed = params.get_int("SPEED", default=3, minval=1, maxval=5)
         threshold_start = params.get_int("START", default=500, minval=100)
         threshold_max = params.get_int("MAX", default=3000, minval=threshold_start)

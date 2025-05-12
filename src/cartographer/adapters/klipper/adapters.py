@@ -25,5 +25,6 @@ class KlipperAdapters(Adapters):
         self.mcu = KlipperCartographerMcu(config)
         self.toolhead = KlipperToolhead(config, self.mcu)
 
+        self.axis_twist_compensation = None
         if config.has_section("axis_twist_compensation"):
             self.axis_twist_compensation = KlipperAxisTwistCompensationHelper(config)
