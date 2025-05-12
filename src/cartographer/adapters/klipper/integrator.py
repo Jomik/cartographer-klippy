@@ -10,6 +10,7 @@ from typing_extensions import override
 
 from cartographer.adapters.shared.endstop import KlipperEndstop, KlipperHomingState
 from cartographer.adapters.shared.homing import CartographerHomingChip
+from cartographer.adapters.shared.logging import setup_console_logger
 from cartographer.adapters.shared.mcu.mcu import KlipperCartographerMcu
 from cartographer.adapters.shared.printer import KlipperToolhead
 from cartographer.adapters.shared.probe import KlipperCartographerProbe
@@ -44,6 +45,7 @@ class KlipperIntegrator(Integrator):
     @override
     def setup(self) -> None:
         self._printer.register_event_handler("homing:home_rails_end", self._handle_home_rails_end)
+        self._configure_macro_logger()
 
     @override
     def register_cartographer(self, cartographer: PrinterCartographer) -> None:
@@ -82,6 +84,12 @@ class KlipperIntegrator(Integrator):
         ]
         for endstop in klipper_endstops:
             endstop.on_home_end(homing_state)
+
+    def _configure_macro_logger(self) -> None:
+        handler = setup_console_logger(self._gcode)
+
+        log_level = logging.DEBUG if self._adapters.config.general.verbose else logging.INFO
+        handler.setLevel(log_level)
 
 
 def _catch_macro_errors(func: Callable[[GCodeCommand], None]) -> Callable[[GCodeCommand], None]:
