@@ -7,7 +7,7 @@ import pytest
 from typing_extensions import TypeAlias
 
 from cartographer.interfaces.printer import Position, Toolhead
-from cartographer.macros.bed_mesh import BedMeshCalibrateMacro, Configuration, MeshHelper, MeshPoint
+from cartographer.macros.bed_mesh import ScanBedMeshCalibrateMacro, Configuration, MeshHelper, MeshPoint
 from cartographer.probe import Probe, ScanMode
 from cartographer.probe.scan_mode import Model
 from cartographer.probe.touch_mode import TouchMode
@@ -27,7 +27,7 @@ class Sample:
     velocity: float | None = None
 
 
-Macro: TypeAlias = BedMeshCalibrateMacro
+Macro: TypeAlias = ScanBedMeshCalibrateMacro
 Helper: TypeAlias = MeshHelper
 
 
@@ -86,7 +86,7 @@ def macro(
     task_executor: TaskExecutor,
     config: Configuration,
 ) -> Macro:
-    return BedMeshCalibrateMacro(probe, toolhead, helper, task_executor, config)
+    return ScanBedMeshCalibrateMacro(probe, toolhead, helper, task_executor, config)
 
 
 def test_run_valid_scan(mocker: MockerFixture, macro: Macro, toolhead: Toolhead, helper: Helper):

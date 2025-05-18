@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Callable, Literal, NamedTuple, Protocol, overload
+from typing import TYPE_CHECKING, Callable, Literal, NamedTuple, Protocol, overload, runtime_checkable
+from typing_extensions import Self
 
 if TYPE_CHECKING:
     from cartographer.stream import Session
@@ -86,6 +87,11 @@ class MacroParams(Protocol):
         minval: int = ...,
         maxval: int = ...,
     ) -> int: ...
+
+
+@runtime_checkable
+class SupportsFallbackMacro(Protocol):
+    def set_fallback_macro(self, macro: Macro) -> None: ...
 
 
 class Macro(Protocol):

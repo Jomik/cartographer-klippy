@@ -125,6 +125,10 @@ class ScanMode(ScanModelSelectorMixin, ProbeMode, Endstop):
         dist = float(np.median([model.frequency_to_distance(sample.frequency) for sample in samples]))
         return dist
 
+    def calculate_sample_distance(self, sample: Sample) -> float:
+        model = self.get_model()
+        return model.frequency_to_distance(sample.frequency)
+
     @override
     def query_is_triggered(self, print_time: float) -> bool:
         distance = self.measure_distance(time=print_time)
