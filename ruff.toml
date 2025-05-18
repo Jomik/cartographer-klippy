@@ -12,6 +12,8 @@ extend-safe-fixes = [
   "TC002",
   # f-string-in-exception
   "EM102",
+  # non-pep585-annotation
+  "UP006",
 ]
 select = [
   # pycodestyle
