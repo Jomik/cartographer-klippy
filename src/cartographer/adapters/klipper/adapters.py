@@ -3,8 +3,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, final
 
+from cartographer.adapters.klipper.axis_twist_compensation import KlipperAxisTwistCompensationHelper
 from cartographer.adapters.klipper.bed_mesh import KlipperBedMesh
-from cartographer.adapters.shared.axis_twist_compensation import KlipperAxisTwistCompensationHelper
 from cartographer.adapters.shared.configuration import KlipperConfiguration
 from cartographer.adapters.shared.mcu.mcu import KlipperCartographerMcu
 from cartographer.adapters.shared.printer import KlipperToolhead

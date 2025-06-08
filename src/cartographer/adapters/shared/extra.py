@@ -4,7 +4,7 @@ import logging
 from textwrap import dedent
 from typing import TYPE_CHECKING, Callable, TypedDict, final
 
-from cartographer.adapters.shared.axis_twist_compensation import KlipperAxisTwistCompensationHelper
+from cartographer.adapters.klipper.axis_twist_compensation import KlipperAxisTwistCompensationHelper
 from cartographer.adapters.shared.bed_mesh import KlipperMeshHelper
 from cartographer.adapters.shared.configuration import KlipperConfiguration
 from cartographer.adapters.shared.endstop import KlipperEndstop
