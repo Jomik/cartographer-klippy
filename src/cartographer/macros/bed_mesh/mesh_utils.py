@@ -42,7 +42,7 @@ class GridPointResult:
 
 
 def assign_samples_to_grid(
-    grid: list[Point], samples: list[Sample], calculate_distance: Callable[[Sample], float], max_distance: float = 0.5
+    grid: list[Point], samples: list[Sample], calculate_height: Callable[[Sample], float], max_distance: float = 1.0
 ) -> list[GridPointResult]:
     # Extract sorted unique coordinates
     mesh_array: np.ndarray[float, np.dtype[np.float64]] = np.array(grid)
@@ -77,9 +77,11 @@ def assign_samples_to_grid(
         if 0 <= i < x_res and 0 <= j < y_res:
             gx: float = x_vals[i]
             gy: float = y_vals[j]
-            if np.hypot(sx - gx, sy - gy) <= max_distance:
-                sz = calculate_distance(sample)
-                accumulator[(j, i)].append(sz)
+            if np.hypot(sx - gx, sy - gy) > max_distance:
+                continue
+
+            sz = calculate_height(sample)
+            accumulator[(j, i)].append(sz)
 
     results: list[GridPointResult] = []
 

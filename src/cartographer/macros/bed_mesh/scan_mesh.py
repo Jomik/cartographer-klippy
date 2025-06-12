@@ -41,8 +41,8 @@ class BedMeshCalibrateConfiguration:
 
 
 _directions: list[Literal["x", "y"]] = ["x", "y"]
-MINIMUM_SAMPLE_COUNT = 5
-WARNING_SAMPLE_COUNT = 10
+MINIMUM_SAMPLE_COUNT = 3
+WARNING_SAMPLE_COUNT = 5
 
 
 @final
@@ -82,13 +82,14 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
         profile = params.get("PROFILE", "default")
         speed = params.get_float("SPEED", default=self.config.travel_speed, minval=50)
         passes = params.get_int("PASSES", default=1, minval=1)
+        height = params.get_float("HEIGHT", default=4.0, minval=0.5, maxval=5)
         direction: Literal["x", "y"] = get_choice(params, "DIRECTION", _directions, default="x")
         mesh_points = self._generate_mesh_points()
         snake = SerpentinePathPlanner(direction)
         path = list(snake.generate_path(mesh_points))
 
-        samples = self._sample_path(path, passes=passes, speed=speed)
-        positions = self.task_executor.run(self._calculate_positions, mesh_points, samples)
+        samples = self._sample_path(path, passes=passes, height=height, speed=speed)
+        positions = self.task_executor.run(self._calculate_positions, mesh_points, samples, height)
 
         self.adapter.apply_mesh(positions, profile)
 
@@ -104,9 +105,9 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
         return mesh
 
     @log_duration("Bed scan")
-    def _sample_path(self, path: list[Point], *, speed: float, passes: int) -> list[Sample]:
-        self.toolhead.move(z=4, speed=5)
-        self.toolhead.move(x=path[0][0], y=path[0][1], speed=speed)
+    def _sample_path(self, path: list[Point], *, speed: float, height: float, passes: int) -> list[Sample]:
+        self.toolhead.move(z=height, speed=5)
+        self._move_probe_to_point(path[0], speed)
         self.toolhead.wait_moves()
 
         with self.probe.scan.start_session() as session:
@@ -140,7 +141,7 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
         self.toolhead.move(x=x, y=y, speed=speed)
 
     @log_duration("Cluster position computation")
-    def _calculate_positions(self, mesh_points: list[Point], samples: list[Sample]) -> list[Position]:
+    def _calculate_positions(self, mesh_points: list[Point], samples: list[Sample], height: float) -> list[Position]:
         nozzle_mesh_points = [self._probe_point_to_nozzle_point(point) for point in mesh_points]
         results = assign_samples_to_grid(nozzle_mesh_points, samples, self.probe.scan.calculate_sample_distance)
 
@@ -158,7 +159,8 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
             if result.sample_count < WARNING_SAMPLE_COUNT:
                 logger.warning("cluster (%.2f,%.2f) has only %d samples", x, y, result.sample_count)
 
-            nozzle_position = self.toolhead.apply_axis_twist_compensation(Position(x=x, y=y, z=result.z))
+            trigger_z = height - result.z
+            nozzle_position = self.toolhead.apply_axis_twist_compensation(Position(x=x, y=y, z=trigger_z))
             px, py = self._nozzle_point_to_probe_point(result.point)
             probe_positions.append(Position(x=px, y=py, z=nozzle_position.z))
 

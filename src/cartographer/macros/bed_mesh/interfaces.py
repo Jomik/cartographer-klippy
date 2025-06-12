@@ -8,7 +8,6 @@ if TYPE_CHECKING:
     from cartographer.interfaces.printer import Position
 
 Point: TypeAlias = "tuple[float, float]"
-HeightMatrix: TypeAlias = "list[Position]"
 
 
 class PathPlanner(Protocol):
@@ -16,4 +15,4 @@ class PathPlanner(Protocol):
 
 
 class BedMeshAdapter(Protocol):
-    def apply_mesh(self, matrix: HeightMatrix, profile_name: str | None = None): ...
+    def apply_mesh(self, mesh_points: list[Position], profile_name: str | None = None): ...

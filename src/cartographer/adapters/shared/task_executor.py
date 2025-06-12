@@ -48,5 +48,5 @@ class KlipperMultiprocessingExecutor(TaskExecutor):
         parent_conn.close()
 
         if is_err:
-            raise RuntimeError("Subprocess failed:\n" + result)
+            raise result
         return result

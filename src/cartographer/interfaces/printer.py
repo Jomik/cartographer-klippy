@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Callable, Literal, NamedTuple, Protocol, overload, runtime_checkable
-from typing_extensions import Self
 
 if TYPE_CHECKING:
     from cartographer.stream import Session
@@ -76,9 +75,13 @@ class Mcu(Protocol):
 class MacroParams(Protocol):
     def get(self, name: str, default: str = ...) -> str: ...
     @overload
-    def get_float(self, name: str, default: float = ..., *, above: float = ..., minval: float = ...) -> float: ...
+    def get_float(
+        self, name: str, default: float = ..., *, above: float = ..., minval: float = ..., maxval: float = ...
+    ) -> float: ...
     @overload
-    def get_float(self, name: str, default: None, *, above: float = ..., minval: float = ...) -> float | None: ...
+    def get_float(
+        self, name: str, default: None, *, above: float = ..., minval: float = ..., maxval: float = ...
+    ) -> float | None: ...
     def get_int(
         self,
         name: str,
