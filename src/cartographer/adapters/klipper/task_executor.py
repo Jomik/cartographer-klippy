@@ -30,8 +30,8 @@ class KlipperMultiprocessingExecutor(TaskExecutor):
             try:
                 result = fn(*args, **kwargs)
                 child_conn.send((False, result))
-            except Exception:
-                child_conn.send((True, traceback.format_exc()))
+            except Exception as e:
+                child_conn.send((True, e))
             finally:
                 child_conn.close()
 
@@ -44,9 +44,9 @@ class KlipperMultiprocessingExecutor(TaskExecutor):
             eventtime = self._reactor.pause(eventtime + WAIT_TIME)
 
         proc.join()
-        is_err, result = parent_conn.recv()
+        is_err, payload = parent_conn.recv()
         parent_conn.close()
 
         if is_err:
-            raise result
-        return result
+            raise payload  # Raise the original exception
+        return payload
