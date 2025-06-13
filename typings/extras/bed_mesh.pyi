@@ -9,8 +9,10 @@ type _Pos = list[float]
 class BedMeshError(Exception): ...
 
 class _Params(TypedDict):
-    mesh_min: tuple[float, float]
-    mesh_max: tuple[float, float]
+    min_x: float
+    min_y: float
+    max_x: float
+    max_y: float
     x_count: int
     y_count: int
     mesh_x_pps: int
@@ -26,6 +28,7 @@ class BedMesh:
     bmc: BedMeshCalibrate
     horizontal_move_z: float
     def set_mesh(self, mesh: ZMesh | None) -> None: ...
+    def save_profile(self, profile_name: str) -> None: ...
 
 class BedMeshCalibrate:
     mesh_config: _Params
