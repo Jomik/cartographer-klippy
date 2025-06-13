@@ -7,7 +7,7 @@ from gcode import CommandError
 from mcu import MCU_endstop
 from typing_extensions import override
 
-from cartographer.adapters.shared.utils import reraise_as
+from cartographer.adapters.utils import reraise_as
 from cartographer.interfaces.printer import HomingAxis, HomingState
 
 if TYPE_CHECKING:
@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from reactor import ReactorCompletion
     from stepper import MCU_stepper
 
-    from cartographer.adapters.shared.mcu import KlipperCartographerMcu
+    from cartographer.adapters.klipper.mcu import KlipperCartographerMcu
     from cartographer.interfaces.printer import Endstop
 
 logger = logging.getLogger(__name__)

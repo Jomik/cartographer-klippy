@@ -3,6 +3,8 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Callable, final
 
+from cartographer.adapters.klipper.mcu import KlipperCartographerMcu
+
 if TYPE_CHECKING:
     from configfile import ConfigWrapper
 
@@ -25,6 +27,9 @@ class PrinterTemperatureCoil:
 
     def _handle_mcu_identify(self) -> None:
         carto = self.printer.lookup_object("cartographer")
+        if not isinstance(carto.mcu, KlipperCartographerMcu):
+            logger.error("Expected cartographer MCU to be of type KlipperCartographerMcu, got %s", type(carto.mcu))
+            return
         carto.mcu.register_callback(self._sample_callback)
 
     def setup_callback(self, temperature_callback: Callable[[float, float], None]) -> None:

@@ -8,19 +8,19 @@ from mcu import MCU_trsync
 from mcu import TriggerDispatch as KlipperTriggerDispatch
 from typing_extensions import override
 
-from cartographer.adapters.shared.mcu.commands import (
+from cartographer.adapters.klipper.mcu.commands import (
     HomeCommand,
     KlipperCartographerCommands,
     ThresholdCommand,
     TriggerMethod,
 )
-from cartographer.adapters.shared.mcu.constants import (
+from cartographer.adapters.klipper.mcu.constants import (
     FREQUENCY_RANGE_PERCENT,
     SHORTED_FREQUENCY_VALUE,
     TRIGGER_HYSTERESIS,
     KlipperCartographerConstants,
 )
-from cartographer.adapters.shared.mcu.stream import KlipperStream, KlipperStreamMcu
+from cartographer.adapters.klipper.mcu.stream import KlipperStream, KlipperStreamMcu
 from cartographer.interfaces.printer import Mcu, Position, Sample
 
 if TYPE_CHECKING:

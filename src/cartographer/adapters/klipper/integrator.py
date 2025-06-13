@@ -5,23 +5,22 @@ from functools import wraps
 from textwrap import dedent
 from typing import TYPE_CHECKING, Callable, final
 
-from gcode import CommandError
+from gcode import CommandError, GCodeCommand
 from typing_extensions import override
 
-from cartographer.adapters.shared.endstop import KlipperEndstop, KlipperHomingState
-from cartographer.adapters.shared.homing import CartographerHomingChip
-from cartographer.adapters.shared.logging import setup_console_logger
-from cartographer.adapters.shared.mcu.mcu import KlipperCartographerMcu
-from cartographer.adapters.shared.printer import KlipperToolhead
-from cartographer.adapters.shared.probe import KlipperCartographerProbe
-from cartographer.adapters.shared.utils import reraise_as
+from cartographer.adapters.klipper.endstop import KlipperEndstop, KlipperHomingState
+from cartographer.adapters.klipper.homing import CartographerHomingChip
+from cartographer.adapters.klipper.logging import setup_console_logger
+from cartographer.adapters.klipper.mcu import KlipperCartographerMcu
+from cartographer.adapters.klipper.probe import KlipperCartographerProbe
+from cartographer.adapters.klipper.toolhead import KlipperToolhead
+from cartographer.adapters.utils import reraise_as
 from cartographer.interfaces.printer import MacroParams, SupportsFallbackMacro
 from cartographer.macros.probe import ProbeMacro, QueryProbeMacro
 from cartographer.runtime.integrator import Integrator
 
 if TYPE_CHECKING:
     from extras.homing import Homing
-    from gcode import GCodeCommand
     from stepper import PrinterRail
 
     from cartographer.adapters.klipper.adapters import KlipperAdapters

@@ -10,7 +10,7 @@ from reactor import Reactor
 from stepper import PrinterRail
 from toolhead import ToolHead
 
-from cartographer.adapters.shared.extra import PrinterCartographer
+from cartographer.core import PrinterCartographer
 from extras.axis_twist_compensation import AxisTwistCompensation
 from extras.bed_mesh import BedMesh
 from extras.heaters import PrinterHeaters

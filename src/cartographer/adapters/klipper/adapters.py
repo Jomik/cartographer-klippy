@@ -5,10 +5,10 @@ from typing import TYPE_CHECKING, final
 
 from cartographer.adapters.klipper.axis_twist_compensation import KlipperAxisTwistCompensationHelper
 from cartographer.adapters.klipper.bed_mesh import KlipperBedMesh
-from cartographer.adapters.shared.configuration import KlipperConfiguration
-from cartographer.adapters.shared.mcu.mcu import KlipperCartographerMcu
-from cartographer.adapters.shared.printer import KlipperToolhead
-from cartographer.adapters.shared.task_executor import KlipperMultiprocessingExecutor
+from cartographer.adapters.klipper.configuration import KlipperConfiguration
+from cartographer.adapters.klipper.mcu import KlipperCartographerMcu
+from cartographer.adapters.klipper.task_executor import KlipperMultiprocessingExecutor
+from cartographer.adapters.klipper.toolhead import KlipperToolhead
 from cartographer.runtime.adapters import Adapters
 
 if TYPE_CHECKING:

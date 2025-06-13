@@ -6,12 +6,12 @@ from extras.probe import PrinterProbe
 from gcode import CommandError
 from typing_extensions import override
 
-from cartographer.adapters.shared.utils import reraise_as
+from cartographer.adapters.utils import reraise_as
 
 if TYPE_CHECKING:
     from gcode import GCodeCommand
 
-    from cartographer.adapters.shared.printer import KlipperToolhead
+    from cartographer.adapters.klipper.toolhead import KlipperToolhead
     from cartographer.interfaces.printer import ProbeMode
     from cartographer.macros.probe import ProbeMacro, QueryProbeMacro
 

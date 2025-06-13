@@ -24,19 +24,19 @@ logger = logging.getLogger(__name__)
 @final
 class PrinterCartographer:
     def __init__(self, adapters: Adapters) -> None:
-        mcu = adapters.mcu
+        self.mcu = adapters.mcu
         toolhead = adapters.toolhead
         config = adapters.config
 
         self.scan_mode = ScanMode(
-            mcu,
+            self.mcu,
             toolhead,
             ScanModeConfiguration.from_config(config),
         )
         if DEFAULT_SCAN_MODEL_NAME in adapters.config.scan.models:
             self.scan_mode.load_model(DEFAULT_SCAN_MODEL_NAME)
 
-        self.touch_mode = TouchMode(mcu, toolhead, TouchModeConfiguration.from_config(config))
+        self.touch_mode = TouchMode(self.mcu, toolhead, TouchModeConfiguration.from_config(config))
         if DEFAULT_TOUCH_MODEL_NAME in adapters.config.touch.models:
             self.touch_mode.load_model(DEFAULT_TOUCH_MODEL_NAME)
 
@@ -47,7 +47,7 @@ class PrinterCartographer:
             ProbeAccuracyMacro(probe, toolhead),
             QueryProbeMacro(probe),
             ZOffsetApplyProbeMacro(probe, toolhead, config),
-            TouchCalibrateMacro(probe, mcu, toolhead, config),
+            TouchCalibrateMacro(probe, self.mcu, toolhead, config),
             TouchMacro(self.touch_mode),
             TouchAccuracyMacro(self.touch_mode, toolhead),
             TouchHomeMacro(self.touch_mode, toolhead, config.bed_mesh.zero_reference_position),
