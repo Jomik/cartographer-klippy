@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import multiprocessing
-import traceback
 from typing import TYPE_CHECKING, Callable, TypeVar, final
 
 from typing_extensions import ParamSpec, override

@@ -24,7 +24,7 @@ class CartographerHomingChip:
 
     def setup_pin(self, pin_type: str, pin_params: _PinParams) -> MCU_endstop:
         if pin_type != "endstop" or pin_params["pin"] != self.pin:
-            msg = "cartographer probe chip is only useful as an endstop pin"
+            msg = f"cartographer '{self.pin}' is only useful as an endstop pin"
             raise pins.error(msg)
         if pin_params["invert"] or pin_params["pullup"]:
             msg = f"can not pullup/invert cartographer {self.pin}"
