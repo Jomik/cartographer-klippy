@@ -8,10 +8,10 @@ from typing import TYPE_CHECKING, Literal, Protocol, final
 import numpy as np
 from typing_extensions import override
 
-from cartographer.printer_interface import Macro, MacroParams, Toolhead
+from cartographer.interfaces.printer import Macro, MacroParams, Toolhead
 
 if TYPE_CHECKING:
-    from cartographer.configuration import Configuration
+    from cartographer.interfaces.configuration import Configuration
     from cartographer.probe import Probe
 
 logger = logging.getLogger(__name__)
@@ -24,39 +24,47 @@ class CalibrationOptions:
     line: float | None
 
 
-class AxisTwistCompensationHelper(Protocol):
+@dataclass
+class CompensationResult:
+    axis: Literal["x", "y"]
+    start: float
+    end: float
+    values: list[float]
+
+
+class AxisTwistCompensationAdapter(Protocol):
     move_height: float
     speed: float
 
     def clear_compensations(self, axis: Literal["x", "y"]) -> None: ...
-    def save_compensations(self, axis: Literal["x", "y"], start: float, end: float, values: list[float]) -> None: ...
+    def apply_compensation(self, result: CompensationResult) -> None: ...
     def get_calibration_options(self, axis: Literal["x", "y"]) -> CalibrationOptions: ...
 
 
 @final
-class AxisTwistCompensationMacro(Macro[MacroParams]):
+class AxisTwistCompensationMacro(Macro):
     name = "TOUCH_AXIS_TWIST_COMPENSATION"
     description = "Scan and touch to calculate axis twist compensation values."
 
     def __init__(
-        self, probe: Probe, toolhead: Toolhead, helper: AxisTwistCompensationHelper, config: Configuration
+        self, probe: Probe, toolhead: Toolhead, adapter: AxisTwistCompensationAdapter, config: Configuration
     ) -> None:
         self.probe = probe
         self.toolhead = toolhead
-        self.helper = helper
+        self.adapter = adapter
         self.config = config
 
     @override
     def run(self, params: MacroParams) -> None:
         axis = params.get("AXIS", default="x").lower()
         if axis not in ("x", "y"):
-            msg = f"invalid axis '{axis}'"
+            msg = f"Invalid axis '{axis}'"
             raise RuntimeError(msg)
         sample_count = params.get_int("SAMPLE_COUNT", default=5)
 
         start_pos, end_pos, line_pos = self._get_calibration_positions(params, axis)
 
-        self.helper.clear_compensations(axis)
+        self.adapter.clear_compensations(axis)
         try:
             self._calibrate(axis, sample_count, start_pos, end_pos, line_pos)
         except RuntimeError:
@@ -72,7 +80,7 @@ class AxisTwistCompensationMacro(Macro[MacroParams]):
         end_pos = params.get_float("END", default=None)
         line_pos = params.get_float("LINE", default=None)
 
-        options = self.helper.get_calibration_options(axis)
+        options = self.adapter.get_calibration_options(axis)
         boundaries = self.probe.touch.boundaries
         if axis == "x":
             if start_pos is None:
@@ -82,10 +90,10 @@ class AxisTwistCompensationMacro(Macro[MacroParams]):
             if line_pos is None:
                 line_pos = options.line or round((boundaries.max_y + boundaries.min_y) / 2, 2)
             if not boundaries.is_within(x=start_pos, y=line_pos):
-                msg = f"start position {start_pos} is outside of touch boundaries"
+                msg = f"Start position {start_pos} is outside of touch boundaries"
                 raise RuntimeError(msg)
             if not boundaries.is_within(x=end_pos, y=line_pos):
-                msg = f"end position {end_pos} is outside of touch boundaries"
+                msg = f"End position {end_pos} is outside of touch boundaries"
                 raise RuntimeError(msg)
 
         elif axis == "y":
@@ -96,10 +104,10 @@ class AxisTwistCompensationMacro(Macro[MacroParams]):
             if line_pos is None:
                 line_pos = options.line or round((boundaries.max_x + boundaries.min_x) / 2, 2)
             if not boundaries.is_within(x=line_pos, y=start_pos):
-                msg = f"start position {start_pos} is outside of touch boundaries"
+                msg = f"Start position {start_pos} is outside of touch boundaries"
                 raise RuntimeError(msg)
             if not boundaries.is_within(x=line_pos, y=end_pos):
-                msg = f"end position {end_pos} is outside of touch boundaries"
+                msg = f"End position {end_pos} is outside of touch boundaries"
                 raise RuntimeError(msg)
 
         return start_pos, end_pos, line_pos
@@ -129,7 +137,7 @@ class AxisTwistCompensationMacro(Macro[MacroParams]):
         avg = float(np.mean(results))
         results = [avg - x for x in results]
 
-        self.helper.save_compensations(axis, start_pos, end_pos, results)
+        self.adapter.apply_compensation(CompensationResult(axis=axis, start=start_pos, end=end_pos, values=results))
         logger.info("""
             AXIS_TWIST_COMPENSATION state has been saved
             for the current session.  The SAVE_CONFIG command will
@@ -143,30 +151,30 @@ class AxisTwistCompensationMacro(Macro[MacroParams]):
         )
 
     def _move_nozzle_to(self, axis: Literal["x", "y"], position: float, line_pos: float) -> None:
-        self.toolhead.move(z=self.helper.move_height, speed=self.helper.speed)
+        self.toolhead.move(z=self.adapter.move_height, speed=self.adapter.speed)
         if axis == "x":
             self.toolhead.move(
                 x=position,
                 y=line_pos,
-                speed=self.helper.speed,
+                speed=self.adapter.speed,
             )
         else:
             self.toolhead.move(
                 x=line_pos,
                 y=position,
-                speed=self.helper.speed,
+                speed=self.adapter.speed,
             )
 
     def _move_probe_to(self, axis: Literal["x", "y"], position: float, calibration_axis: float) -> None:
         if axis == "x":
             self.toolhead.move(
-                x=position - self.config.x_offset,
-                y=calibration_axis - self.config.y_offset,
-                speed=self.helper.speed,
+                x=position - self.config.general.x_offset,
+                y=calibration_axis - self.config.general.y_offset,
+                speed=self.adapter.speed,
             )
         else:
             self.toolhead.move(
-                x=calibration_axis - self.config.x_offset,
-                y=position - self.config.y_offset,
-                speed=self.helper.speed,
+                x=calibration_axis - self.config.general.x_offset,
+                y=position - self.config.general.y_offset,
+                speed=self.adapter.speed,
             )

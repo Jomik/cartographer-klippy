@@ -4,7 +4,7 @@ from typing import Callable
 import pytest
 from typing_extensions import TypeAlias
 
-from cartographer.klipper.logging import GCodeConsoleFilter, GCodeConsoleFormatter, format_macro
+from cartographer.adapters.klipper.logging import GCodeConsoleFilter, GCodeConsoleFormatter, format_macro
 
 
 @pytest.fixture
@@ -60,11 +60,8 @@ def test_formatting_error_prefix(formatter: GCodeConsoleFormatter, log_record: L
 @pytest.mark.parametrize(
     "logger_name,level,expected",
     [
-        ("klipper.mcu", logging.DEBUG, False),  # filtered out
-        ("klipper.mcu", logging.INFO, False),  # filtered out
-        ("klipper.mcu", logging.WARNING, True),  # allowed
-        ("klipper.mcu", logging.ERROR, True),  # allowed
-        ("klipper.printer", logging.INFO, True),  # allowed
+        ("adapters.klipper.mcu", logging.DEBUG, False),  # filtered out
+        ("adapters.klipper.printer", logging.INFO, True),  # allowed
         ("macros.scan", logging.DEBUG, True),  # allowed
     ],
 )

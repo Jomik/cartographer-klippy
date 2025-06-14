@@ -4,14 +4,7 @@ import itertools
 import logging
 from typing import TYPE_CHECKING, cast
 
-import pytest
 from pytest_bdd import given, parsers, scenarios, then, when
-from typing_extensions import TypeAlias
-
-import cartographer.probe.scan_mode as scan_mode
-import cartographer.probe.touch_mode as touch_mode
-from cartographer.printer_interface import Sample
-from cartographer.probe import Probe
 
 if TYPE_CHECKING:
     from unittest.mock import Mock
@@ -19,43 +12,28 @@ if TYPE_CHECKING:
     from pytest import LogCaptureFixture
     from pytest_mock import MockerFixture
 
-    from cartographer.printer_interface import MacroParams, Toolhead
+    from cartographer.interfaces.printer import MacroParams, Toolhead
+    from cartographer.probe import Probe
 
 
 scenarios("../../features/probe.feature")
 
-ScanMode: TypeAlias = scan_mode.ScanMode[object, Sample]
-TouchMode: TypeAlias = touch_mode.TouchMode[object]
-
-
-@pytest.fixture
-def scan(mocker: MockerFixture):
-    return mocker.MagicMock(spec=ScanMode, instance=True, autospec=True)
-
-
-@pytest.fixture
-def touch(mocker: MockerFixture):
-    return mocker.MagicMock(spec=TouchMode, instance=True, autospec=True)
-
-
-@given("a probe", target_fixture="probe")
-def given_probe(scan: ScanMode, touch: TouchMode) -> Probe:
-    return Probe(scan, touch)
-
 
 @given("the probe measures:")
-def given_probe_measurements(mocker: MockerFixture, scan: ScanMode, datatable: list[list[str]]):
-    scan.perform_probe = mocker.Mock(side_effect=itertools.cycle(map(float, itertools.chain.from_iterable(datatable))))
+def given_probe_measurements(mocker: MockerFixture, probe: Probe, datatable: list[list[str]]):
+    probe.scan.perform_probe = mocker.Mock(
+        side_effect=itertools.cycle(map(float, itertools.chain.from_iterable(datatable)))
+    )
 
 
 @given("the probe is triggered")
-def given_probe_triggered(mocker: MockerFixture, scan: ScanMode):
-    scan.query_is_triggered = mocker.Mock(return_value=True)
+def given_probe_triggered(mocker: MockerFixture, probe: Probe):
+    probe.scan.query_is_triggered = mocker.Mock(return_value=True)
 
 
 @given("the probe is not triggered")
-def given_probe_not_triggered(mocker: MockerFixture, scan: ScanMode):
-    scan.query_is_triggered = mocker.Mock(return_value=False)
+def given_probe_not_triggered(mocker: MockerFixture, probe: Probe):
+    probe.scan.query_is_triggered = mocker.Mock(return_value=False)
 
 
 @when("I run the PROBE macro")
@@ -86,5 +64,5 @@ def when_run_query_probe_macro(params: MacroParams, caplog: LogCaptureFixture, p
 
 
 @then(parsers.parse("it should probe {count:d} times"))
-def then_probe_count(scan: ScanMode, count: int):
-    assert cast("Mock", scan.perform_probe).call_count == count
+def then_probe_count(probe: Probe, count: int):
+    assert cast("Mock", probe.scan.perform_probe).call_count == count

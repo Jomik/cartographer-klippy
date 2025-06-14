@@ -1,21 +1,24 @@
 from __future__ import annotations
 
 import sys
-from typing import TYPE_CHECKING, Callable, TypeVar
+from typing import TYPE_CHECKING
 
 import pytest
-from typing_extensions import ParamSpec, override
 
-from cartographer.interfaces import TaskExecutor
-from cartographer.printer_interface import MacroParams, Mcu, Position, Sample, Toolhead
+from cartographer.interfaces.printer import HomingState, MacroParams, Mcu, Position, Sample, TemperatureStatus, Toolhead
+from cartographer.probe.probe import Probe
+from cartographer.probe.scan_mode import ScanMode, ScanModeConfiguration
+from cartographer.probe.touch_mode import TouchMode, TouchModeConfiguration
 from cartographer.stream import Session
+from tests.mocks.config import MockConfiguration
+from tests.mocks.params import MockParams
+from tests.mocks.task_executor import InlineTaskExecutor
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
-P = ParamSpec("P")
-R = TypeVar("R")
-
+    from cartographer.interfaces.configuration import Configuration
+    from cartographer.interfaces.multiprocessing import TaskExecutor
 
 collect_ignore: list[str] = []
 if sys.version_info < (3, 9):
@@ -33,8 +36,12 @@ def toolhead(mocker: MockerFixture) -> Toolhead:
     def apply_axis_twist_compensation(position: Position) -> Position:
         return position
 
+    def get_extruder_temperature() -> TemperatureStatus:
+        return TemperatureStatus(30, 30)
+
     mock.get_position = get_position
     mock.apply_axis_twist_compensation = apply_axis_twist_compensation
+    mock.get_extruder_temperature = get_extruder_temperature
 
     return mock
 
@@ -45,23 +52,34 @@ def session(mocker: MockerFixture) -> Session[Sample]:
 
 
 @pytest.fixture
-def mcu(mocker: MockerFixture, session: Session[Sample]) -> Mcu[object, Sample]:
+def mcu(mocker: MockerFixture, session: Session[Sample]) -> Mcu:
     mock = mocker.MagicMock(spec=Mcu, autospec=True, instance=True)
     mock.start_session = mocker.Mock(return_value=session)
     return mock
 
 
 @pytest.fixture
-def params(mocker: MockerFixture) -> MacroParams:
-    return mocker.MagicMock(spec=MacroParams, autospec=True, instance=True)
+def params() -> MacroParams:
+    return MockParams()
 
 
-class InlineTaskExecutor(TaskExecutor):
-    @override
-    def run(self, fn: Callable[P, R], *args: P.args, **kwargs: P.kwargs) -> R:
-        return fn(*args, **kwargs)
+@pytest.fixture
+def config() -> Configuration:
+    return MockConfiguration()
+
+
+@pytest.fixture
+def probe(mcu: Mcu, toolhead: Toolhead, config: Configuration) -> Probe:
+    scan = ScanMode(mcu, toolhead, ScanModeConfiguration.from_config(config))
+    touch = TouchMode(mcu, toolhead, TouchModeConfiguration.from_config(config))
+    return Probe(scan, touch)
 
 
 @pytest.fixture
 def task_executor() -> TaskExecutor:
     return InlineTaskExecutor()
+
+
+@pytest.fixture
+def homing_state(mocker: MockerFixture) -> HomingState:
+    return mocker.Mock(spec=HomingState, autospec=True)

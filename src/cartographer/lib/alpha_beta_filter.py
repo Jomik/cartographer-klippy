@@ -11,7 +11,7 @@ MIN_DT = 1e-4
 class AlphaBetaFilter:
     def __init__(self, alpha: float = 0.5, beta: float = 1e-6):
         if not (0 <= alpha <= 1 and 0 <= beta <= 1):
-            msg = "alpha and beta must be between 0 and 1"
+            msg = "Alpha and beta must be between 0 and 1"
             raise ValueError(msg)
 
         self.alpha = alpha

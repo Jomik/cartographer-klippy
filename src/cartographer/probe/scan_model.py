@@ -3,14 +3,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, cast
 
 from numpy.polynomial import Polynomial
+from typing_extensions import override
 
-from cartographer.configuration import ScanModelFit
+from cartographer.interfaces.configuration import ScanModelConfiguration
+from cartographer.probe.model import ModelSelectorMixin
 
 if TYPE_CHECKING:
     from collections.abc import Sequence
 
-    from cartographer.configuration import ScanModelConfiguration
-    from cartographer.printer_interface import Sample
+    from cartographer.interfaces.printer import Sample
 
 
 MAX_TOLERANCE = 1e-8
@@ -20,7 +21,6 @@ DEGREES = 9
 
 # TODO: Temperature compensation
 class ScanModel:
-    config: ScanModelConfiguration
     _poly: Polynomial | None = None
 
     @property
@@ -31,33 +31,33 @@ class ScanModel:
     def z_offset(self) -> float:
         return self.config.z_offset
 
-    def save_z_offset(self, new_offset: float) -> None:
-        self.config.save_z_offset(new_offset)
-
     @property
     def poly(self) -> Polynomial:
         if self._poly is None:
-            self._poly = Polynomial(self.config.coefficients, self.config.domain)
+            self._poly = Polynomial(self.config.coefficients, domain=self.config.domain)
         return self._poly
 
     def __init__(self, config: ScanModelConfiguration) -> None:
-        self.config = config
+        self.config: ScanModelConfiguration = config
 
     @staticmethod
-    def fit(samples: Sequence[Sample]) -> ScanModelFit:
+    def fit(name: str, samples: Sequence[Sample], z_offset: float) -> ScanModelConfiguration:
         positions = [sample.position for sample in samples]
         # TODO: Can we ignore missing positions?
         if not all(positions):
-            msg = "not all samples are valid, try again"
+            msg = "Not all samples are valid, try again"
             raise RuntimeError(msg)
         z_offsets = [pos.z for pos in positions if pos is not None]
         inverse_frequencies = [1 / sample.frequency for sample in samples]
 
         poly = cast("Polynomial", Polynomial.fit(inverse_frequencies, z_offsets, DEGREES))
+        converted = cast("Polynomial", poly.convert(domain=poly.domain))
 
-        return ScanModelFit(
-            coefficients=poly.coef,
-            domain=poly.domain,
+        return ScanModelConfiguration(
+            name=name,
+            coefficients=converted.coef,
+            domain=converted.domain,
+            z_offset=z_offset,
         )
 
     def frequency_to_distance(self, frequency: float) -> float:
@@ -77,7 +77,7 @@ class ScanModel:
         distance -= self.config.z_offset
         min_z, max_z = self._get_z_range()
         if distance < min_z or distance > max_z:
-            msg = f"attempted to map out-of-range distance {distance:.3f}, valid range [{min_z:.3f}, {max_z:.3f}]"
+            msg = f"Attempted to map out-of-range distance {distance:.3f}, valid range [{min_z:.3f}, {max_z:.3f}]"
             raise RuntimeError(msg)
 
         lower_bound, upper_bound = self.config.domain
@@ -93,7 +93,7 @@ class ScanModel:
             else:
                 upper_bound = midpoint
 
-        msg = "model convergence error"
+        msg = "Model convergence error"
         raise RuntimeError(msg)
 
     _z_range: tuple[float, float] | None = None
@@ -106,3 +106,9 @@ class ScanModel:
 
     def _eval(self, x: float) -> float:
         return float(self.poly(x))  # pyright: ignore[reportUnknownArgumentType]
+
+
+class ScanModelSelectorMixin(ModelSelectorMixin[ScanModel, ScanModelConfiguration]):
+    @override
+    def _create_model(self, config: ScanModelConfiguration) -> ScanModel:
+        return ScanModel(config)
