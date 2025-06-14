@@ -5,7 +5,10 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from cartographer.interfaces.printer import MacroParams, Mcu, Position, Sample, Toolhead
+from cartographer.interfaces.printer import MacroParams, Mcu, Position, Sample, TemperatureStatus, Toolhead
+from cartographer.probe.probe import Probe
+from cartographer.probe.scan_mode import ScanMode, ScanModeConfiguration
+from cartographer.probe.touch_mode import TouchMode, TouchModeConfiguration
 from cartographer.stream import Session
 from tests.mocks.config import MockConfiguration
 from tests.mocks.params import MockParams
@@ -33,8 +36,12 @@ def toolhead(mocker: MockerFixture) -> Toolhead:
     def apply_axis_twist_compensation(position: Position) -> Position:
         return position
 
+    def get_extruder_temperature() -> TemperatureStatus:
+        return TemperatureStatus(30, 30)
+
     mock.get_position = get_position
     mock.apply_axis_twist_compensation = apply_axis_twist_compensation
+    mock.get_extruder_temperature = get_extruder_temperature
 
     return mock
 
@@ -59,6 +66,13 @@ def params() -> MacroParams:
 @pytest.fixture
 def config() -> Configuration:
     return MockConfiguration()
+
+
+@pytest.fixture
+def probe(mcu: Mcu, toolhead: Toolhead, config: Configuration) -> Probe:
+    scan = ScanMode(mcu, toolhead, ScanModeConfiguration.from_config(config))
+    touch = TouchMode(mcu, toolhead, TouchModeConfiguration.from_config(config))
+    return Probe(scan, touch)
 
 
 @pytest.fixture

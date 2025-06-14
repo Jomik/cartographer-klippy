@@ -47,11 +47,9 @@ def then_log_result(caplog: LogCaptureFixture, output: str):
     assert output in caplog.text
 
 
-@given("a probe", target_fixture="probe")
-def given_probe(mcu: Mcu, toolhead: Toolhead, config: Configuration) -> Probe:
-    scan = ScanMode(mcu, toolhead, ScanModeConfiguration.from_config(config))
-    touch = TouchMode(mcu, toolhead, TouchModeConfiguration.from_config(config))
-    return Probe(scan, touch)
+@given("a probe")
+def given_probe() -> None:
+    pass
 
 
 @given("the probe has scan calibrated")

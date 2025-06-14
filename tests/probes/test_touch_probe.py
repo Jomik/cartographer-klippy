@@ -4,12 +4,19 @@ from typing import TYPE_CHECKING
 
 import pytest
 
+from cartographer.interfaces.configuration import Configuration, TouchModelConfiguration
 from cartographer.interfaces.printer import HomingState, Mcu, Position, TemperatureStatus, Toolhead
 
 if TYPE_CHECKING:
     from pytest_mock import MockerFixture
 
     from cartographer.probe.probe import Probe
+
+
+@pytest.fixture(autouse=True)
+def configure_probe(probe: Probe, config: Configuration) -> None:
+    config.save_touch_model(TouchModelConfiguration(name="test_touch", speed=3, threshold=1000, z_offset=0))
+    probe.touch.load_model("test_touch")
 
 
 @pytest.fixture
@@ -47,7 +54,7 @@ def test_does_not_move_above_5(mocker: MockerFixture, toolhead: Toolhead, probe:
 
 
 def test_probe_standard_deviation_failure(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
-    toolhead.z_homing_move = mocker.Mock(side_effect=[1.000, 1.002, 1.1, 1.016, 1.018])
+    toolhead.z_homing_move = mocker.Mock(side_effect=[1 + i * 0.1 for i in range(20)])
     toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 1))
 
     with pytest.raises(RuntimeError, match="unable to find"):
@@ -104,14 +111,14 @@ def test_abort_if_current_extruder_target_too_hot(mocker: MockerFixture, toolhea
 
 
 def test_nozzle_outside_bounds(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
-    toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 1))
+    toolhead.get_position = mocker.Mock(return_value=Position(-10, 0, 1))
 
     with pytest.raises(RuntimeError, match="outside .* boundaries"):
         _ = probe.touch.home_start(0)
 
 
 def test_probe_outside_bounds(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
-    toolhead.get_position = mocker.Mock(return_value=Position(95, 95, 1))
+    toolhead.get_position = mocker.Mock(return_value=Position(295, 95, 1))
 
     with pytest.raises(RuntimeError, match="outside .* boundaries"):
         _ = probe.touch.home_start(0)
