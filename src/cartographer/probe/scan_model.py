@@ -34,7 +34,7 @@ class ScanModel:
     @property
     def poly(self) -> Polynomial:
         if self._poly is None:
-            self._poly = Polynomial(self.config.coefficients, self.config.domain)
+            self._poly = Polynomial(self.config.coefficients, domain=self.config.domain)
         return self._poly
 
     def __init__(self, config: ScanModelConfiguration) -> None:
@@ -51,11 +51,12 @@ class ScanModel:
         inverse_frequencies = [1 / sample.frequency for sample in samples]
 
         poly = cast("Polynomial", Polynomial.fit(inverse_frequencies, z_offsets, DEGREES))
+        converted = cast("Polynomial", poly.convert(domain=poly.domain))
 
         return ScanModelConfiguration(
             name=name,
-            coefficients=poly.coef,
-            domain=poly.domain,
+            coefficients=converted.coef,
+            domain=converted.domain,
             z_offset=z_offset,
         )
 

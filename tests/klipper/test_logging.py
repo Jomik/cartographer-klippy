@@ -4,7 +4,7 @@ from typing import Callable
 import pytest
 from typing_extensions import TypeAlias
 
-from cartographer.adapters.shared.logging import GCodeConsoleFilter, GCodeConsoleFormatter, format_macro
+from cartographer.adapters.klipper.logging import GCodeConsoleFilter, GCodeConsoleFormatter, format_macro
 
 
 @pytest.fixture
