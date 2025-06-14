@@ -19,13 +19,6 @@ def configure_probe(probe: Probe, config: Configuration) -> None:
     probe.touch.load_model("test_touch")
 
 
-@pytest.fixture
-def homing_state(mocker: MockerFixture, probe: Probe) -> HomingState:
-    mock = mocker.Mock(spec=HomingState, autospec=True)
-    mock.endstops = [probe.touch]
-    return mock
-
-
 def test_probe_success(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
     toolhead.z_homing_move = mocker.Mock(return_value=0.5)
     toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 1))

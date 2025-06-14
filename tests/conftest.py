@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from cartographer.interfaces.printer import MacroParams, Mcu, Position, Sample, TemperatureStatus, Toolhead
+from cartographer.interfaces.printer import HomingState, MacroParams, Mcu, Position, Sample, TemperatureStatus, Toolhead
 from cartographer.probe.probe import Probe
 from cartographer.probe.scan_mode import ScanMode, ScanModeConfiguration
 from cartographer.probe.touch_mode import TouchMode, TouchModeConfiguration
@@ -78,3 +78,8 @@ def probe(mcu: Mcu, toolhead: Toolhead, config: Configuration) -> Probe:
 @pytest.fixture
 def task_executor() -> TaskExecutor:
     return InlineTaskExecutor()
+
+
+@pytest.fixture
+def homing_state(mocker: MockerFixture) -> HomingState:
+    return mocker.Mock(spec=HomingState, autospec=True)

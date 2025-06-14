@@ -18,7 +18,7 @@ ScanModelFactory: TypeAlias = Callable[[float], ScanModel]
 def model_factory() -> ScanModelFactory:
     def factory(z_offset: float) -> ScanModel:
         poly = Polynomial([0, 1])
-        poly = cast("Polynomial", poly.convert(domain=[0.1, 5.5]))
+        poly = cast("Polynomial", poly.convert(domain=[1 / 5.5, 10]))
         config = ScanModelConfiguration("test", poly.coef, poly.domain, z_offset)
 
         model = ScanModel(config)
@@ -40,7 +40,7 @@ def test_fit() -> None:
 
 def test_frequency_to_distance(model_factory: ScanModelFactory) -> None:
     model = model_factory(0.0)
-    frequency = 1 / 3.0
+    frequency = 3.0
     distance = model.frequency_to_distance(frequency)
     assert isinstance(distance, float)
     assert distance != math.inf and distance != -math.inf
@@ -80,8 +80,8 @@ def test_distance_to_frequency_applies_offset(model_factory: ScanModelFactory) -
 
 def test_frequency_to_distance_out_of_range(model_factory: ScanModelFactory) -> None:
     model = model_factory(0)
+    low_frequency_dist = model.frequency_to_distance(1 / 500)  # Out of z_range
     high_frequency_dist = model.frequency_to_distance(1000000)  # Out of z_range
-    low_frequency_dist = model.frequency_to_distance(0.1)  # Out of z_range
 
     assert low_frequency_dist == float("inf")
     assert high_frequency_dist == float("-inf")
