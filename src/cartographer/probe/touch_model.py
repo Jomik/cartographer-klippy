@@ -9,23 +9,23 @@ from cartographer.probe.model import ModelSelectorMixin
 @final
 class TouchModel:
     def __init__(self, config: TouchModelConfiguration) -> None:
-        self._config = config
+        self.config = config
 
     @property
     def name(self) -> str:
-        return self._config.name
+        return self.config.name
 
     @property
     def z_offset(self) -> float:
-        return self._config.z_offset
+        return self.config.z_offset
 
     @property
     def speed(self) -> float:
-        return self._config.speed
+        return self.config.speed
 
     @property
     def threshold(self) -> int:
-        return self._config.threshold
+        return self.config.threshold
 
 
 class TouchModelSelectorMixin(ModelSelectorMixin[TouchModel, TouchModelConfiguration]):

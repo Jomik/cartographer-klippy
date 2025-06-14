@@ -25,20 +25,20 @@ class ScanModel:
 
     @property
     def name(self) -> str:
-        return self._config.name
+        return self.config.name
 
     @property
     def z_offset(self) -> float:
-        return self._config.z_offset
+        return self.config.z_offset
 
     @property
     def poly(self) -> Polynomial:
         if self._poly is None:
-            self._poly = Polynomial(self._config.coefficients, self._config.domain)
+            self._poly = Polynomial(self.config.coefficients, self.config.domain)
         return self._poly
 
     def __init__(self, config: ScanModelConfiguration) -> None:
-        self._config: ScanModelConfiguration = config
+        self.config: ScanModelConfiguration = config
 
     @staticmethod
     def fit(name: str, samples: Sequence[Sample], z_offset: float) -> ScanModelConfiguration:
@@ -60,7 +60,7 @@ class ScanModel:
         )
 
     def frequency_to_distance(self, frequency: float) -> float:
-        lower_bound, upper_bound = self._config.domain
+        lower_bound, upper_bound = self.config.domain
         inverse_frequency = 1 / frequency
 
         if inverse_frequency > upper_bound:
@@ -68,18 +68,18 @@ class ScanModel:
         elif inverse_frequency < lower_bound:
             return float("-inf")
 
-        return self._eval(inverse_frequency) + self._config.z_offset
+        return self._eval(inverse_frequency) + self.config.z_offset
 
     def distance_to_frequency(self, distance: float) -> float:
         # PERF: We can use brentq if scipy is available
         # https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.brentq.html#scipy.optimize.brentq
-        distance -= self._config.z_offset
+        distance -= self.config.z_offset
         min_z, max_z = self._get_z_range()
         if distance < min_z or distance > max_z:
             msg = f"attempted to map out-of-range distance {distance:.3f}, valid range [{min_z:.3f}, {max_z:.3f}]"
             raise RuntimeError(msg)
 
-        lower_bound, upper_bound = self._config.domain
+        lower_bound, upper_bound = self.config.domain
 
         for _ in range(ITERATIONS):
             midpoint = (upper_bound + lower_bound) / 2
@@ -99,7 +99,7 @@ class ScanModel:
 
     def _get_z_range(self) -> tuple[float, float]:
         if self._z_range is None:
-            min, max = self._config.domain
+            min, max = self.config.domain
             self._z_range = (self._eval(min), self._eval(max))
         return self._z_range
 

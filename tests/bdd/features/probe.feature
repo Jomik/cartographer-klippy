@@ -1,16 +1,17 @@
 Feature: Probe macros
   The Klipper set of macros to interface with the probe.
 
-  Scenario: Probing the bed
+  Background:
     Given a probe
-    And the probe measures:
+
+  Scenario: Probing the bed
+    Given the probe measures:
       | 2 |
     When I run the PROBE macro
     Then it should log "Result is z=2"
 
   Scenario: Checking probe accuracy samples parameter
-    Given a probe
-    And the probe measures:
+    Given the probe measures:
       | 10 |
     And macro parameters:
       | SAMPLES | 2 |
@@ -18,8 +19,7 @@ Feature: Probe macros
     Then it should probe 2 times
 
   Scenario: Checking probe accuracy
-    Given a probe
-    And the probe measures:
+    Given the probe measures:
       | 10 | 20 |
     When I run the PROBE_ACCURACY macro
     Then it should log "probe accuracy results"
@@ -30,13 +30,11 @@ Feature: Probe macros
     * it should log "standard deviation 5"
 
   Scenario: Query probe is triggered
-    Given a probe
-    And the probe is triggered
+    Given the probe is triggered
     When I run the QUERY_PROBE macro
     Then it should log "probe: TRIGGERED"
 
   Scenario: Query probe is not triggered
-    Given a probe
-    And the probe is not triggered
+    Given the probe is not triggered
     When I run the QUERY_PROBE macro
     Then it should log "probe: open"

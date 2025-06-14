@@ -7,10 +7,11 @@ from typing import TYPE_CHECKING, final
 import numpy as np
 from typing_extensions import override
 
-from cartographer.interfaces.configuration import Configuration, ScanModelConfiguration, TouchModelConfiguration
 from cartographer.interfaces.printer import Macro, MacroParams
+from cartographer.probe.scan_model import ScanModel
 
 if TYPE_CHECKING:
+    from cartographer.interfaces.configuration import Configuration
     from cartographer.interfaces.printer import Toolhead
     from cartographer.probe import Probe
 
@@ -124,6 +125,14 @@ class ZOffsetApplyProbeMacro(Macro):
         model = probe_mode.get_model()
         new_offset = probe_mode.offset.z - additional_offset
 
+        if isinstance(model, ScanModel):
+            self._config.save_scan_model(replace(model.config, z_offset=new_offset))
+        else:
+            if new_offset > 0:
+                msg = f"Cannot set a positive z-offset ({new_offset:.3f}) for {model.name} in {probe_mode_str} mode."
+                raise ValueError(msg)
+            self._config.save_touch_model(replace(model.config, z_offset=new_offset))
+
         logger.info(
             """cartographer: %s %s z_offset: %.3f
             The SAVE_CONFIG command will update the printer config file
@@ -132,8 +141,3 @@ class ZOffsetApplyProbeMacro(Macro):
             model.name,
             new_offset,
         )
-
-        if isinstance(model, ScanModelConfiguration):
-            self._config.save_scan_model(replace(model, z_offset=new_offset))
-        elif isinstance(model, TouchModelConfiguration):
-            self._config.save_touch_model(replace(model, z_offset=new_offset))
