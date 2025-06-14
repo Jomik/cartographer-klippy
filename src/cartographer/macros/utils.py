@@ -17,7 +17,7 @@ def get_enum_choice(params: MacroParams, option: str, enum_type: type[T], defaul
     lower_mapping = {str(v.value).lower(): v for v in enum_type}
 
     if lower_choice not in lower_mapping:
-        msg = f"invalid choice '{choice}' for option '{option}'"
+        msg = f"Invalid choice '{choice}' for option '{option}'"
         raise RuntimeError(msg)
 
     return lower_mapping[lower_choice]

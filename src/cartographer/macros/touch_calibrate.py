@@ -155,7 +155,7 @@ class TouchCalibrateMacro(Macro):
         strategy = STRATEGY_MAP[strategy_type]()
 
         if not self._toolhead.is_homed("x") or not self._toolhead.is_homed("y"):
-            msg = "must home x and y before calibration"
+            msg = "Must home x and y before calibration"
             raise RuntimeError(msg)
 
         self._toolhead.move(

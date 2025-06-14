@@ -23,7 +23,7 @@ class ParseConfigWrapper(Protocol):
 
 def list_to_tuple(lst: list[float]) -> tuple[float, float]:
     if len(lst) != 2:
-        msg = f"expected a list of length 2, got {len(lst)}"
+        msg = f"Expected a list of length 2, got {len(lst)}"
         raise ValueError(msg)
     return (lst[0], lst[1])
 

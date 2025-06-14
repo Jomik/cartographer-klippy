@@ -91,7 +91,7 @@ class ScanMode(ScanModelSelectorMixin, ProbeMode, Endstop):
     @override
     def perform_probe(self) -> float:
         if not self._toolhead.is_homed("z"):
-            msg = "z axis must be homed before probing"
+            msg = "Z axis must be homed before probing"
             raise RuntimeError(msg)
         self._toolhead.move(z=self.probe_height, speed=self._config.travel_speed)
         self._toolhead.wait_moves()
@@ -102,7 +102,7 @@ class ScanMode(ScanModelSelectorMixin, ProbeMode, Endstop):
         dist = toolhead_pos.z + delta
 
         if math.isinf(dist):
-            msg = "toolhead stopped outside model range"
+            msg = "Toolhead stopped outside model range"
             raise RuntimeError(msg)
 
         pos = self._toolhead.apply_axis_twist_compensation(Position(toolhead_pos.x, toolhead_pos.y, dist))
@@ -149,7 +149,7 @@ class ScanMode(ScanModelSelectorMixin, ProbeMode, Endstop):
             return
         distance = self.measure_distance()
         if math.isinf(distance):
-            msg = "toolhead stopped outside model range"
+            msg = "Toolhead stopped outside model range"
             raise RuntimeError(msg)
 
         homing_state.set_z_homed_position(distance)

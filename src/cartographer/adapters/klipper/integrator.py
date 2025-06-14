@@ -33,8 +33,8 @@ logger = logging.getLogger(__name__)
 @final
 class KlipperIntegrator(Integrator):
     def __init__(self, adapters: KlipperAdapters) -> None:
-        assert isinstance(adapters.mcu, KlipperCartographerMcu), "Invalid MCU type for KlipperIntegrator"
-        assert isinstance(adapters.toolhead, KlipperToolhead), "Invalid toolhead type for KlipperIntegrator"
+        assert isinstance(adapters.mcu, KlipperCartographerMcu), "invalid MCU type for KlipperIntegrator"
+        assert isinstance(adapters.toolhead, KlipperToolhead), "invalid toolhead type for KlipperIntegrator"
         self._adapters = adapters
         self._printer = adapters.printer
         self._mcu = adapters.mcu
@@ -69,7 +69,7 @@ class KlipperIntegrator(Integrator):
     @override
     def register_endstop_pin(self, chip_name: str, pin: str, endstop: Endstop) -> None:
         mcu_endstop = KlipperEndstop(self._mcu, endstop)
-        chip = CartographerHomingChip(self._printer, mcu_endstop, pin)
+        chip = CartographerHomingChip(mcu_endstop, pin)
         self._printer.lookup_object("pins").register_chip(chip_name, chip)
 
     @override

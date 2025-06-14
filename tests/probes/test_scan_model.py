@@ -56,7 +56,7 @@ def test_distance_to_frequency(model_factory: ScanModelFactory) -> None:
 
 def test_distance_to_frequency_out_of_range(model_factory: ScanModelFactory) -> None:
     model = model_factory(0)
-    with pytest.raises(RuntimeError, match="attempted to map out-of-range distance"):
+    with pytest.raises(RuntimeError, match="Attempted to map out-of-range distance"):
         _ = model.distance_to_frequency(11)  # Out of z_range
 
 

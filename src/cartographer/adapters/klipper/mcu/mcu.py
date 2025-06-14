@@ -46,14 +46,14 @@ class KlipperCartographerMcu(Mcu, KlipperStreamMcu):
     @property
     def constants(self) -> KlipperCartographerConstants:
         if self._constants is None:
-            msg = "mcu not initialized"
+            msg = "Mcu not initialized"
             raise RuntimeError(msg)
         return self._constants
 
     @property
     def commands(self) -> KlipperCartographerCommands:
         if self._commands is None:
-            msg = "mcu not initialized"
+            msg = "Mcu not initialized"
             raise RuntimeError(msg)
         return self._commands
 
@@ -116,7 +116,7 @@ class KlipperCartographerMcu(Mcu, KlipperStreamMcu):
         self.commands.send_stop_home()
         result = self.dispatch.stop()
         if result >= MCU_trsync.REASON_COMMS_TIMEOUT:
-            msg = "communication timeout during homing"
+            msg = "Communication timeout during homing"
             raise RuntimeError(msg)
         if result != MCU_trsync.REASON_ENDSTOP_HIT:
             return 0.0
@@ -193,7 +193,7 @@ class KlipperCartographerMcu(Mcu, KlipperStreamMcu):
     def get_requested_position(self, time: float) -> tuple[Position | None, float | None]:
         trapq = self.motion_report.trapqs.get("toolhead")
         if trapq is None:
-            msg = "no dump trapq for toolhead"
+            msg = "No dump trapq for toolhead"
             raise RuntimeError(msg)
         position, velocity = trapq.get_trapq_position(time)
         if position is None:

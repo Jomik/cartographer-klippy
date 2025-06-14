@@ -47,5 +47,5 @@ class KlipperMultiprocessingExecutor(TaskExecutor):
         parent_conn.close()
 
         if is_err:
-            raise payload  # Raise the original exception
+            raise payload from None  # Raise the original exception
         return payload

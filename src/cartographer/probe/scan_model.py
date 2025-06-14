@@ -45,7 +45,7 @@ class ScanModel:
         positions = [sample.position for sample in samples]
         # TODO: Can we ignore missing positions?
         if not all(positions):
-            msg = "not all samples are valid, try again"
+            msg = "Not all samples are valid, try again"
             raise RuntimeError(msg)
         z_offsets = [pos.z for pos in positions if pos is not None]
         inverse_frequencies = [1 / sample.frequency for sample in samples]
@@ -77,7 +77,7 @@ class ScanModel:
         distance -= self.config.z_offset
         min_z, max_z = self._get_z_range()
         if distance < min_z or distance > max_z:
-            msg = f"attempted to map out-of-range distance {distance:.3f}, valid range [{min_z:.3f}, {max_z:.3f}]"
+            msg = f"Attempted to map out-of-range distance {distance:.3f}, valid range [{min_z:.3f}, {max_z:.3f}]"
             raise RuntimeError(msg)
 
         lower_bound, upper_bound = self.config.domain
@@ -93,7 +93,7 @@ class ScanModel:
             else:
                 upper_bound = midpoint
 
-        msg = "model convergence error"
+        msg = "Model convergence error"
         raise RuntimeError(msg)
 
     _z_range: tuple[float, float] | None = None

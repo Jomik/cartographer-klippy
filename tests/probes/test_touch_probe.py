@@ -50,7 +50,7 @@ def test_probe_standard_deviation_failure(mocker: MockerFixture, toolhead: Toolh
     toolhead.z_homing_move = mocker.Mock(side_effect=[1 + i * 0.1 for i in range(20)])
     toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 1))
 
-    with pytest.raises(RuntimeError, match="unable to find"):
+    with pytest.raises(RuntimeError, match="Unable to find"):
         _ = probe.touch.perform_probe()
 
 
@@ -71,7 +71,7 @@ def test_probe_suceeds_on_spread_samples(mocker: MockerFixture, toolhead: Toolhe
 def test_probe_unhomed_z(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
     toolhead.is_homed = mocker.Mock(return_value=False)
 
-    with pytest.raises(RuntimeError, match="z axis must be homed"):
+    with pytest.raises(RuntimeError, match="Z axis must be homed"):
         _ = probe.touch.perform_probe()
 
 
@@ -92,14 +92,14 @@ def test_on_home_end(mocker: MockerFixture, probe: Probe, homing_state: HomingSt
 def test_abort_if_current_extruder_too_hot(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
     toolhead.get_extruder_temperature = mocker.Mock(return_value=TemperatureStatus(156, 0))
 
-    with pytest.raises(RuntimeError, match="nozzle temperature must be below 150C"):
+    with pytest.raises(RuntimeError, match="Nozzle temperature must be below 150C"):
         _ = probe.touch.home_start(print_time=0.0)
 
 
 def test_abort_if_current_extruder_target_too_hot(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
     toolhead.get_extruder_temperature = mocker.Mock(return_value=TemperatureStatus(0, 156))
 
-    with pytest.raises(RuntimeError, match="nozzle temperature must be below 150C"):
+    with pytest.raises(RuntimeError, match="Nozzle temperature must be below 150C"):
         _ = probe.touch.home_start(print_time=0.0)
 
 

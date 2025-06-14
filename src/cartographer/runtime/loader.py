@@ -17,7 +17,7 @@ def init_adapter(config: object) -> Adapters:
 
         return KlipperAdapters(cast("KlipperConfigWrapper", config))
 
-    msg = f"unsupported environment: {env}"
+    msg = f"Unsupported environment: {env}"
     raise RuntimeError(msg)
 
 

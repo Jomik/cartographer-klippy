@@ -58,7 +58,7 @@ class AxisTwistCompensationMacro(Macro):
     def run(self, params: MacroParams) -> None:
         axis = params.get("AXIS", default="x").lower()
         if axis not in ("x", "y"):
-            msg = f"invalid axis '{axis}'"
+            msg = f"Invalid axis '{axis}'"
             raise RuntimeError(msg)
         sample_count = params.get_int("SAMPLE_COUNT", default=5)
 
@@ -90,10 +90,10 @@ class AxisTwistCompensationMacro(Macro):
             if line_pos is None:
                 line_pos = options.line or round((boundaries.max_y + boundaries.min_y) / 2, 2)
             if not boundaries.is_within(x=start_pos, y=line_pos):
-                msg = f"start position {start_pos} is outside of touch boundaries"
+                msg = f"Start position {start_pos} is outside of touch boundaries"
                 raise RuntimeError(msg)
             if not boundaries.is_within(x=end_pos, y=line_pos):
-                msg = f"end position {end_pos} is outside of touch boundaries"
+                msg = f"End position {end_pos} is outside of touch boundaries"
                 raise RuntimeError(msg)
 
         elif axis == "y":
@@ -104,10 +104,10 @@ class AxisTwistCompensationMacro(Macro):
             if line_pos is None:
                 line_pos = options.line or round((boundaries.max_x + boundaries.min_x) / 2, 2)
             if not boundaries.is_within(x=line_pos, y=start_pos):
-                msg = f"start position {start_pos} is outside of touch boundaries"
+                msg = f"Start position {start_pos} is outside of touch boundaries"
                 raise RuntimeError(msg)
             if not boundaries.is_within(x=line_pos, y=end_pos):
-                msg = f"end position {end_pos} is outside of touch boundaries"
+                msg = f"End position {end_pos} is outside of touch boundaries"
                 raise RuntimeError(msg)
 
         return start_pos, end_pos, line_pos

@@ -110,7 +110,7 @@ class TouchHomeMacro(Macro):
     @override
     def run(self, params: MacroParams) -> None:
         if not self._toolhead.is_homed("x") or not self._toolhead.is_homed("y"):
-            msg = "must home x and y before touch homing"
+            msg = "Must home x and y before touch homing"
             raise RuntimeError(msg)
 
         self._toolhead.move(

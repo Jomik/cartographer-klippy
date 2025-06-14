@@ -66,7 +66,7 @@ class KlipperCartographerConstants:
         f_count, adc_count = struct.unpack("<IH", base_data["bytes"])
 
         if f_count >= UINT32_MAX or adc_count >= UINT16_MAX:
-            msg = "invalid f_count or adc_count"
+            msg = "Invalid f_count or adc_count"
             raise self._mcu.error(msg)
 
         self.minimum_adc_count = adc_count

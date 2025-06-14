@@ -42,7 +42,7 @@ class ScanCalibrateMacro(Macro):
         method = get_enum_choice(params, "METHOD", ScanCalibrateMethod, default=ScanCalibrateMethod.MANUAL)
 
         if not self._toolhead.is_homed("x") or not self._toolhead.is_homed("y"):
-            msg = "must home x and y before calibration"
+            msg = "Must home x and y before calibration"
             raise RuntimeError(msg)
 
         self._toolhead.move(

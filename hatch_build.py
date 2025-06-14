@@ -54,7 +54,7 @@ class CustomBuildHook(BuildHookInterface[BuilderConfig]):
     def initialize(self, version: str, build_data: dict[str, Any]) -> None:  # pyright: ignore[reportExplicitAny]
         project: Project | None = self.metadata.config.get("project")  # pyright: ignore[reportUnknownMemberType]
         if project is None:
-            msg = "project not found in metadata"
+            msg = "Project not found in metadata"
             raise ValueError(msg)
 
         build_time = datetime.now(timezone.utc)

@@ -149,15 +149,15 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
         for result in results:
             x, y = result.point
             if not math.isfinite(result.z):
-                msg = f"cluster ({x:.2f},{y:.2f}) has no valid samples"
+                msg = f"Cluster ({x:.2f},{y:.2f}) has no valid samples"
                 raise RuntimeError(msg)
 
             if result.sample_count < MINIMUM_SAMPLE_COUNT:
-                msg = f"cluster ({x:.2f},{y:.2f}) has less than {MINIMUM_SAMPLE_COUNT} samples, slow down"
+                msg = f"Cluster ({x:.2f},{y:.2f}) has less than {MINIMUM_SAMPLE_COUNT} samples, slow down"
                 raise RuntimeError(msg)
 
             if result.sample_count < WARNING_SAMPLE_COUNT:
-                logger.warning("cluster (%.2f,%.2f) has only %d samples", x, y, result.sample_count)
+                logger.warning("Cluster (%.2f,%.2f) has only %d samples", x, y, result.sample_count)
 
             trigger_z = height - result.z
             nozzle_position = self.toolhead.apply_axis_twist_compensation(Position(x=x, y=y, z=trigger_z))

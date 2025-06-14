@@ -125,7 +125,7 @@ class TouchMode(TouchModelSelectorMixin, ProbeMode, Endstop):
     @override
     def perform_probe(self) -> float:
         if not self._toolhead.is_homed("z"):
-            msg = "z axis must be homed before probing"
+            msg = "Z axis must be homed before probing"
             raise RuntimeError(msg)
 
         if self._toolhead.get_position().z < 5:
@@ -158,7 +158,7 @@ class TouchMode(TouchModelSelectorMixin, ProbeMode, Endstop):
             return float(np.median(valid_combo) if len(valid_combo) > 3 else np.mean(valid_combo))
 
         self._log_sample_stats("No valid touch combination found in samples", collected)
-        msg = f"unable to find {touch_samples} samples within tolerance after {touch_max_samples} touches"
+        msg = f"Unable to find {touch_samples} samples within tolerance after {touch_max_samples} touches"
         raise TouchError(msg)
 
     def _find_valid_combination(self, samples: list[float], size: int) -> tuple[float, ...] | None:
@@ -188,17 +188,17 @@ class TouchMode(TouchModelSelectorMixin, ProbeMode, Endstop):
     def home_start(self, print_time: float) -> object:
         model = self.get_model()
         if model.threshold <= 0:
-            msg = "threshold must positive"
+            msg = "Threshold must positive"
             raise RuntimeError(msg)
 
         pos = self._toolhead.get_position()
         if not self.is_within_boundaries(x=pos.x, y=pos.y):
-            msg = f"position ({pos.x:.2f},{pos.y:.2f}) is outside of the touch boundaries"
+            msg = f"Position ({pos.x:.2f},{pos.y:.2f}) is outside of the touch boundaries"
             raise RuntimeError(msg)
 
         nozzle = self._toolhead.get_extruder_temperature()
         if nozzle.current > MAX_TOUCH_TEMPERATURE or nozzle.target > MAX_TOUCH_TEMPERATURE:
-            msg = f"nozzle temperature must be below {MAX_TOUCH_TEMPERATURE - 5:d}C"
+            msg = f"Nozzle temperature must be below {MAX_TOUCH_TEMPERATURE - 5:d}C"
             raise RuntimeError(msg)
         return self._mcu.start_homing_touch(print_time, model.threshold)
 

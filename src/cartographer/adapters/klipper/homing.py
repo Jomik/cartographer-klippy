@@ -5,7 +5,6 @@ from typing import TYPE_CHECKING, TypedDict, final
 import pins
 
 if TYPE_CHECKING:
-    from klippy import Printer
     from mcu import MCU_endstop
 
 
@@ -18,16 +17,16 @@ class _PinParams(TypedDict):
 
 @final
 class CartographerHomingChip:
-    def __init__(self, printer: Printer, endstop: MCU_endstop, pin: str) -> None:
+    def __init__(self, endstop: MCU_endstop, pin: str) -> None:
         self.endstop = endstop
         self.pin = pin
 
     def setup_pin(self, pin_type: str, pin_params: _PinParams) -> MCU_endstop:
         if pin_type != "endstop" or pin_params["pin"] != self.pin:
-            msg = f"cartographer '{self.pin}' is only useful as an endstop pin"
+            msg = f"Cartographer '{self.pin}' is only useful as an endstop pin"
             raise pins.error(msg)
         if pin_params["invert"] or pin_params["pullup"]:
-            msg = f"can not pullup/invert cartographer {self.pin}"
+            msg = f"Can not pullup/invert cartographer {self.pin}"
             raise pins.error(msg)
 
         return self.endstop

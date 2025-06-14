@@ -44,7 +44,7 @@ class KlipperCartographerCommands:
 
     def _ensure_initialized(self, command: CommandWrapper | None, name: str) -> CommandWrapper:
         if command is None:
-            msg = f"command {name} has not been initialized"
+            msg = f"Command {name} has not been initialized"
             raise RuntimeError(msg)
         return command
 
