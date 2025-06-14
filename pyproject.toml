@@ -3,8 +3,7 @@ name = "cartographer3d-plugin"
 requires-python = "~= 3.8"
 license = { file = "LICENSE" }
 dependencies = [
-  "numpy~=1.16; python_version ~= '3.10'",
-  "numpy>=1.16,<1.26; python_version < '3.10'",
+  "numpy~=1.16",
   "typing-extensions~=4.12",
 ]
 keywords = ["klipper", "3D printing", "cartographer"]

@@ -10,7 +10,7 @@ wait_for = ["install:*"]
 run = "rsync -azqP --delete --filter=':- .gitignore' '{{ config_root }}/' '{{ vars.printer_host }}:~/{{ vars.project_name }}/'"
 
 [tasks."install:pip"]
-run = "ssh {{ vars.printer_host }} '$HOME/klippy-env/bin/pip install --disable-pip-version-check -qU $HOME/{{ vars.project_name }}'"
+run = "ssh {{ vars.printer_host }} '$HOME/klippy-env/bin/pip install --upgrade --disable-pip-version-check -qU $HOME/{{ vars.project_name }}'"
 wait_for = ["install:copy"]
 
 [tasks.install]
