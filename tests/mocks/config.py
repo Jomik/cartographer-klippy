@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import final
 
 from typing_extensions import override
@@ -18,7 +19,7 @@ default_general_config = GeneralConfig(
     x_offset=0.0,
     y_offset=0.0,
     travel_speed=300.0,
-    backlash_compensation=0,
+    z_backlash=0,
     verbose=False,
 )
 default_scan_config = ScanConfig(
@@ -62,3 +63,7 @@ class MockConfiguration(Configuration):
     @override
     def save_touch_model(self, config: TouchModelConfiguration) -> None:
         self.touch.models[config.name] = config
+
+    @override
+    def save_z_backlash(self, backlash: float) -> None:
+        self.general = replace(self.general, z_backlash=backlash)

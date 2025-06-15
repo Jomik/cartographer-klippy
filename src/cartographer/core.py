@@ -13,6 +13,7 @@ from cartographer.macros.touch_calibrate import DEFAULT_TOUCH_MODEL_NAME, TouchC
 from cartographer.probe.probe import Probe
 from cartographer.probe.scan_mode import ScanMode, ScanModeConfiguration
 from cartographer.probe.touch_mode import TouchMode, TouchModeConfiguration
+from cartographer.toolhead import BacklashCompensatingToolhead
 
 if TYPE_CHECKING:
     from cartographer.interfaces.printer import Macro
@@ -25,8 +26,12 @@ logger = logging.getLogger(__name__)
 class PrinterCartographer:
     def __init__(self, adapters: Adapters) -> None:
         self.mcu = adapters.mcu
-        toolhead = adapters.toolhead
         config = adapters.config
+        toolhead = (
+            BacklashCompensatingToolhead(adapters.toolhead, config.general.z_backlash)
+            if config.general.z_backlash > 0
+            else adapters.toolhead
+        )
 
         self.scan_mode = ScanMode(
             self.mcu,
@@ -59,7 +64,7 @@ class PrinterCartographer:
                 BedMeshCalibrateConfiguration.from_config(config),
             ),
             ScanCalibrateMacro(probe, toolhead, config),
-            EstimateBacklashMacro(toolhead, self.scan_mode),
+            EstimateBacklashMacro(toolhead, self.scan_mode, config),
         ]
 
         if adapters.axis_twist_compensation:

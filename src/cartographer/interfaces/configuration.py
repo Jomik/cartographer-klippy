@@ -8,7 +8,7 @@ from typing import Protocol
 class GeneralConfig:
     x_offset: float
     y_offset: float
-    backlash_compensation: float
+    z_backlash: float
     travel_speed: float
     verbose: bool
 
@@ -60,3 +60,4 @@ class Configuration(Protocol):
 
     def save_scan_model(self, config: ScanModelConfiguration) -> None: ...
     def save_touch_model(self, config: TouchModelConfiguration) -> None: ...
+    def save_z_backlash(self, backlash: float) -> None: ...
