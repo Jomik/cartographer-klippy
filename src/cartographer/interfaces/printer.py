@@ -73,7 +73,10 @@ class Mcu(Protocol):
 
 
 class MacroParams(Protocol):
+    @overload
     def get(self, name: str, default: str = ...) -> str: ...
+    @overload
+    def get(self, name: str, default: None) -> str | None: ...
     @overload
     def get_float(
         self, name: str, default: float = ..., *, above: float = ..., minval: float = ..., maxval: float = ...
@@ -131,7 +134,7 @@ class Toolhead(Protocol):
         """Get the currently commanded position of the toolhead."""
         ...
 
-    def move(self, *, x: float = ..., y: float = ..., z: float = ..., speed: float) -> None:
+    def move(self, *, x: float | None = None, y: float | None = None, z: float | None = None, speed: float) -> None:
         """Move to requested position."""
         ...
 

@@ -60,26 +60,26 @@ class KlipperConfiguration(Configuration):
     def __init__(self, config: ConfigWrapper) -> None:
         self._config = config.get_printer().lookup_object("configfile")
 
-        name = config.get_name()
+        self.name = config.get_name()
 
         self.general = parse_general_config(KlipperConfigWrapper(config))
         self.bed_mesh = parse_bed_mesh_config(KlipperConfigWrapper(config.getsection("bed_mesh")))
 
-        self.scan_model_prefix = f"{name} scan_model"
+        self.scan_model_prefix = f"{self.name} scan_model"
         scan_models = {
             cfg.get_name(): parse_scan_model_config(cfg)
             for cfg in (KlipperConfigWrapper(wrapper) for wrapper in config.get_prefix_sections(self.scan_model_prefix))
         }
-        self.scan = parse_scan_config(KlipperConfigWrapper(config.getsection(f"{name} scan")), scan_models)
+        self.scan = parse_scan_config(KlipperConfigWrapper(config.getsection(f"{self.name} scan")), scan_models)
 
-        self.touch_model_prefix = f"{name} touch_model"
+        self.touch_model_prefix = f"{self.name} touch_model"
         touch_models = {
             cfg.get_name(): parse_touch_model_config(cfg)
             for cfg in (
                 KlipperConfigWrapper(wrapper) for wrapper in config.get_prefix_sections(self.touch_model_prefix)
             )
         }
-        self.touch = parse_touch_config(KlipperConfigWrapper(config.getsection(f"{name} touch")), touch_models)
+        self.touch = parse_touch_config(KlipperConfigWrapper(config.getsection(f"{self.name} touch")), touch_models)
 
     @override
     def save_scan_model(self, config: ScanModelConfiguration) -> None:
@@ -96,3 +96,7 @@ class KlipperConfiguration(Configuration):
         save("speed", config.speed)
         save("z_offset", config.z_offset)
         self.touch.models[config.name] = config
+
+    @override
+    def save_z_backlash(self, backlash: float) -> None:
+        self._config.set(self.name, "z_backlash", backlash)

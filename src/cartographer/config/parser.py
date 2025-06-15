@@ -32,7 +32,7 @@ def parse_general_config(wrapper: ParseConfigWrapper) -> GeneralConfig:
     return GeneralConfig(
         x_offset=wrapper.get_required_float("x_offset"),
         y_offset=wrapper.get_required_float("y_offset"),
-        backlash_compensation=wrapper.get_float("backlash_compensation", default=0.05),
+        z_backlash=wrapper.get_float("z_backlash", default=0.05, minimum=0),
         travel_speed=wrapper.get_float("travel_speed", default=50, minimum=1),
         verbose=wrapper.get_bool("verbose", default=False),
     )

@@ -1,13 +1,17 @@
+from __future__ import annotations
+
 import logging
 from typing import Literal, final
 
 import numpy as np
-from typing_extensions import override
+from typing_extensions import TypeAlias, override
 
 from cartographer.interfaces.printer import Macro, MacroParams, Toolhead
 from cartographer.probe.scan_mode import ScanMode
 
 logger = logging.getLogger(__name__)
+
+NOISE_THRESHOLD = 0.005  # mm, threshold for noise in backlash measurement
 
 
 @final
@@ -15,18 +19,25 @@ class EstimateBacklashMacro(Macro):
     name = "ESTIMATE_BACKLASH"
     description = "Do a series of moves to estimate backlash on the Z axis."
 
-    def __init__(self, toolhead: Toolhead, scan: ScanMode) -> None:
+    def __init__(self, toolhead: Toolhead, scan: ScanMode, config: Configuration) -> None:
         self._scan = scan
         self._toolhead = toolhead
+        self._config = config
 
     @override
     def run(self, params: MacroParams) -> None:
+        calibrate = params.get("CALIBRATE", None) is not None
         iterations = params.get_int("ITERATIONS", 10, minval=1)
         speed = 5
         height = 2
         delta = 0.2  # Smaller delta is better for detecting subtle backlash
 
         self._toolhead.move(z=height, speed=speed)
+        if calibrate:
+            x, y = self._config.bed_mesh.zero_reference_position
+            self._toolhead.move(x=x, y=y, speed=speed)
+        self._toolhead.wait_moves()
+
         samples: dict[Literal["up", "down"], list[float]] = {"up": [], "down": []}
 
         with self._scan.start_session():
@@ -45,7 +56,9 @@ class EstimateBacklashMacro(Macro):
         mean_down = np.mean(samples["down"]) - global_mean
         std_up = np.std(samples["up"])
         std_down = np.std(samples["down"])
-        backlash = mean_down - mean_up  # Positive = down sits lower than up
+        backlash = float(mean_down - mean_up)  # Positive = down sits lower than up
+
+        t_stat, df = welchs_ttest(samples["down"], samples["up"])
 
         logger.info(
             """
@@ -55,6 +68,7 @@ class EstimateBacklashMacro(Macro):
             Std dev moving upwards: %.5f mm
             Std dev moving downwards: %.5f mm
             Estimated backlash: %.5f mm
+            Welch's t-test: t=%.5f, df=%.2f
             """,
             iterations,
             mean_up,
@@ -62,13 +76,58 @@ class EstimateBacklashMacro(Macro):
             std_up,
             std_down,
             backlash,
+            t_stat,
+            df,
         )
+        if abs(t_stat) < 2.0:
+            backlash = 0.0
+            logger.info(
+                "Backlash difference not statistically significant (|t|=%.2f < 2.0). Treating backlash as zero.",
+                abs(t_stat),
+            )
+
         if backlash < 0:
             logger.warning(
                 """
                 Backlash is negative, which is unexpected.
-                This means the position after moving UP was measured as higher (or further)
-                than the position after moving DOWN.
+                This means the position after moving up was measured as higher (or further)
+                than the position after moving down.
                 Please check your printer's mechanical components (e.g., for slop, binding).
                 """
             )
+            return
+
+        if calibrate:
+            self._config.save_z_backlash(backlash)
+            logger.info(
+                """
+                Required backlash compensation is %.3fmm.
+                The SAVE_CONFIG command will update the printer config file
+                with the above and restart the printer.
+                """,
+                backlash,
+            )
+
+
+_np_float_list: TypeAlias = np.ndarray[Literal[1], np.dtype[np.float64]]
+
+
+def welchs_ttest(a_in: list[float], b_in: list[float]) -> tuple[float, float]:
+    a: _np_float_list = np.array(a_in, dtype=float)
+    b: _np_float_list = np.array(b_in, dtype=float)
+
+    mean_a = np.mean(a)
+    mean_b = np.mean(b)
+    var_a = np.var(a, ddof=1)
+    var_b = np.var(b, ddof=1)
+    n_a = len(a)
+    n_b = len(b)
+
+    t_stat = (mean_a - mean_b) / np.sqrt(var_a / n_a + var_b / n_b)
+
+    # Degrees of freedom (Welch–Satterthwaite equation)
+    numerator = (var_a / n_a + var_b / n_b) ** 2
+    denominator = ((var_a / n_a) ** 2) / (n_a - 1) + ((var_b / n_b) ** 2) / (n_b - 1)
+    df = numerator / denominator
+
+    return float(t_stat), float(df)

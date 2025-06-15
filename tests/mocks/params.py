@@ -11,9 +11,15 @@ class MockParams(MacroParams):
     def __init__(self) -> None:
         self.params: dict[str, str] = {}
 
+    @overload
+    def get(self, name: str, default: str = ...) -> str: ...
+    @overload
+    def get(self, name: str, default: None) -> str | None: ...
+
     @override
-    def get(self, name: str, default: str = ...) -> str:
-        return str(self.params.get(name, default))
+    def get(self, name: str, default: str | None = ...) -> str | None:
+        opt = self.params.get(name, default)
+        return str(opt) if opt is not None else None
 
     @overload
     def get_float(
