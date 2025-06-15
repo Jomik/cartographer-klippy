@@ -84,8 +84,8 @@ class KlipperConfiguration(Configuration):
     @override
     def save_scan_model(self, config: ScanModelConfiguration) -> None:
         save = partial(self._config.set, f"{self.scan_model_prefix} {config.name}")
-        save("coefficients", config.coefficients)
-        save("domain", config.domain)
+        save("coefficients", ",".join(map(str, config.coefficients)))
+        save("domain", ",".join(map(str, config.domain)))
         save("z_offset", config.z_offset)
         self.scan.models[config.name] = config
 
