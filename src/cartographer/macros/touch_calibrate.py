@@ -209,10 +209,18 @@ class TouchCalibrateMacro(Macro):
             )
             return
 
-        logger.info("Successfully calibrated with %s strategy (threshold %d)", strategy_type, threshold)
+        logger.info(
+            "Successfully calibrated with %s strategy (threshold %d, speed %.1f)", strategy_type, threshold, speed
+        )
         model = TouchModelConfiguration(name, threshold, speed, 0)
         self._config.save_touch_model(model)
-        logger.info("Saved touch model '%s'", name)
+        logger.info(
+            """
+            Touch model %s has been saved for the current session.
+            The SAVE_CONFIG command will update the printer config file and restart the printer.
+            """,
+            name,
+        )
 
     def _find_acceptable_threshold(
         self, calibration_mode: CalibrationTouchMode, threshold_start: int, threshold_max: int
