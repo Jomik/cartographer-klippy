@@ -105,7 +105,7 @@ def _catch_macro_errors(func: Callable[[GCodeCommand], None]) -> Callable[[GCode
         try:
             func(gcmd)
         except (RuntimeError, ValueError) as e:
-            msg = dedent(str(e)).replace("\n", " ").strip()
+            msg = dedent(str(e)).replace("\n", " ").replace("  ", "\n").strip()
             raise gcmd.error(msg) from e
 
     return wrapper

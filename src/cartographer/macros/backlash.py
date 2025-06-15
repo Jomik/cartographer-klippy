@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 import logging
-from typing import Literal, final
+from typing import TYPE_CHECKING, Literal, final
 
 import numpy as np
 from typing_extensions import TypeAlias, override
 
 from cartographer.interfaces.printer import Macro, MacroParams, Toolhead
-from cartographer.probe.scan_mode import ScanMode
+
+if TYPE_CHECKING:
+    from cartographer.interfaces.configuration import Configuration
+    from cartographer.probe.scan_mode import ScanMode
 
 logger = logging.getLogger(__name__)
 
@@ -62,12 +65,12 @@ class EstimateBacklashMacro(Macro):
 
         logger.info(
             """
-            Backlash estimation results over %d iterations:
-            Mean moving upwards: %.5f mm
-            Mean moving down: %.5f mm
-            Std dev moving upwards: %.5f mm
-            Std dev moving downwards: %.5f mm
-            Estimated backlash: %.5f mm
+            Backlash estimation results over %d iterations:\n
+            Mean moving upwards: %.5f mm\n
+            Mean moving down: %.5f mm\n
+            Std dev moving upwards: %.5f mm\n
+            Std dev moving downwards: %.5f mm\n
+            Estimated backlash: %.5f mm\n
             Welch's t-test: t=%.5f, df=%.2f
             """,
             iterations,

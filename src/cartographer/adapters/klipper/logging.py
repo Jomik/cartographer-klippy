@@ -41,7 +41,7 @@ class GCodeConsoleFormatter(logging.Formatter):
     @override
     def format(self, record: logging.LogRecord) -> str:
         prefix = "!! " if record.levelno >= logging.ERROR else ""
-        message = dedent(super().format(record)).replace("\n", " ").strip()
+        message = dedent(super().format(record)).replace("\n", " ").replace("  ", "\n").strip()
         return prefix + MACRO_PATTERN.sub(lambda m: format_macro(m.group(0)), message)
 
 

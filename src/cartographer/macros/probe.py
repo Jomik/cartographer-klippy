@@ -78,7 +78,8 @@ class ProbeAccuracyMacro(Macro):
 
         logger.info(
             """
-            probe accuracy results: maximum %.6f, minimum %.6f, range %.6f,
+            probe accuracy results:\n
+            maximum %.6f, minimum %.6f, range %.6f,
             average %.6f, median %.6f, standard deviation %.6f
             """,
             max_value,
