@@ -16,6 +16,10 @@ def init_adapter(config: object) -> Adapters:
         from cartographer.adapters.klipper.adapters import KlipperAdapters
 
         return KlipperAdapters(cast("KlipperConfigWrapper", config))
+    if env == Environment.Kalico:
+        from cartographer.adapters.klipper.adapters import KlipperAdapters
+
+        return KlipperAdapters(cast("KlipperConfigWrapper", config))
 
     msg = f"Unsupported environment: {env}"
     raise RuntimeError(msg)
