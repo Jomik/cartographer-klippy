@@ -28,8 +28,8 @@ class ProbeParams(TypedDict):
 
 
 # TODO: Get the values from some configuration?
-DEFAULT_LIFT_SPEED = 10
-DEFAULT_PROBE_SPEED = 3
+DEFAULT_LIFT_SPEED = 5
+DEFAULT_PROBE_SPEED = 5
 
 
 class KlipperProbeSession:
@@ -51,7 +51,7 @@ class KlipperProbeSession:
         return result
 
     def end_probe_session(self) -> None:
-        pass
+        self._results = []
 
 
 class KlipperCartographerProbe(PrinterProbe):

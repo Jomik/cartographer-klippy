@@ -16,7 +16,7 @@ class _PinParams(TypedDict):
 
 
 @final
-class CartographerHomingChip:
+class KlipperHomingChip:
     def __init__(self, endstop: MCU_endstop, pin: str) -> None:
         self.endstop = endstop
         self.pin = pin
