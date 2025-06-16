@@ -12,6 +12,7 @@ from typing_extensions import override
 from cartographer.adapters.klipper.endstop import KlipperEndstop, KlipperHomingState
 from cartographer.adapters.klipper.homing import KlipperHomingChip
 from cartographer.adapters.klipper.logging import setup_console_logger
+from cartographer.adapters.klipper.temperature import PrinterTemperatureCoil
 from cartographer.adapters.utils import reraise_as
 from cartographer.interfaces.printer import MacroParams, SupportsFallbackMacro
 from cartographer.runtime.integrator import Integrator
@@ -24,7 +25,6 @@ if TYPE_CHECKING:
     from cartographer.adapters.klipper.configuration import KlipperConfiguration
     from cartographer.adapters.klipper.mcu import KlipperCartographerMcu
     from cartographer.adapters.klipper.toolhead import KlipperToolhead
-    from cartographer.interfaces.configuration import Configuration
     from cartographer.interfaces.printer import Endstop, Macro
 
 logger = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ class KlipperLikeAdapters(Protocol):
 
 class KlipperLikeIntegrator(Integrator, ABC):
     def __init__(self, adapters: KlipperLikeAdapters) -> None:
-        self._config: Configuration = adapters.config
+        self._config: KlipperConfiguration = adapters.config
         self._printer: Printer = adapters.printer
         self._mcu: KlipperCartographerMcu = adapters.mcu
         self._toolhead: KlipperToolhead = adapters.toolhead
@@ -67,6 +67,12 @@ class KlipperLikeIntegrator(Integrator, ABC):
                 logger.warning("No original macro found to fallback to for '%s'", macro.name)
 
         self._gcode.register_command(macro.name, _catch_macro_errors(macro.run), desc=macro.description)
+
+    @override
+    def register_temperature_sensor_factories(self) -> None:
+        self._printer.load_object(self._config.wrapper, "heaters").add_sensor_factory(
+            "cartographer_coil", PrinterTemperatureCoil
+        )
 
     @reraise_as(CommandError)
     def _handle_home_rails_end(self, homing: Homing, rails: list[PrinterRail]) -> None:

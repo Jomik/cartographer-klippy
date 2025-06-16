@@ -64,6 +64,7 @@ class KlipperConfigWrapper(ParseConfigWrapper):
 @final
 class KlipperConfiguration(Configuration):
     def __init__(self, config: ConfigWrapper) -> None:
+        self.wrapper = config
         self._config = config.get_printer().lookup_object("configfile")
 
         self.name = config.get_name()
