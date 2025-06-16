@@ -131,6 +131,8 @@ class ScanMode(ScanModelSelectorMixin, ProbeMode, Endstop):
 
     @override
     def query_is_triggered(self, print_time: float) -> bool:
+        if not self.has_model():
+            return True  # No model loaded, assume triggered
         distance = self.measure_distance(time=print_time)
         return distance <= self.get_endstop_position()
 
