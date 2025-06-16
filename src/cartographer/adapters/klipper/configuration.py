@@ -57,6 +57,10 @@ class KlipperConfigWrapper(ParseConfigWrapper):
         return self._config.getint(option, default=default)
 
     @override
+    def get_required_int_list(self, option: str, count: int | None = None) -> list[int]:
+        return self._config.getintlist(option, count=count)
+
+    @override
     def get_bool(self, option: str, default: bool) -> bool:
         return self._config.getboolean(option, default=default)
 

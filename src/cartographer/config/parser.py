@@ -36,10 +36,14 @@ class ParseConfigWrapper(Protocol):
     def get_required_float(self, option: str) -> float: ...
     def get_required_float_list(self, option: str, count: int | None = None) -> list[float]: ...
     def get_int(self, option: str, default: int) -> int: ...
+    def get_required_int_list(self, option: str, count: int | None = None) -> list[int]: ...
     def get_bool(self, option: str, default: bool) -> bool: ...
 
 
-def list_to_tuple(lst: list[float]) -> tuple[float, float]:
+T = TypeVar("T")
+
+
+def list_to_tuple(lst: list[T]) -> tuple[T, T]:
     if len(lst) != 2:
         msg = f"Expected a list of length 2, got {len(lst)}"
         raise ValueError(msg)
@@ -82,6 +86,7 @@ def parse_bed_mesh_config(wrapper: ParseConfigWrapper) -> BedMeshConfig:
     return BedMeshConfig(
         mesh_min=list_to_tuple(wrapper.get_required_float_list("mesh_min", count=2)),
         mesh_max=list_to_tuple(wrapper.get_required_float_list("mesh_max", count=2)),
+        mesh_points=list_to_tuple(wrapper.get_required_int_list("probe_count", count=2)),
         speed=wrapper.get_float("speed", default=50, minimum=1),
         horizontal_move_z=wrapper.get_float("horizontal_move_z", default=4, minimum=1),
         zero_reference_position=list_to_tuple(wrapper.get_required_float_list("zero_reference_position", count=2)),
