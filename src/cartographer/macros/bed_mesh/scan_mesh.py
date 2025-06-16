@@ -50,8 +50,6 @@ class BedMeshCalibrateConfiguration:
 
 
 _directions: list[Literal["x", "y"]] = ["x", "y"]
-MINIMUM_SAMPLE_COUNT = 3
-WARNING_SAMPLE_COUNT = 5
 
 
 @final
@@ -160,13 +158,6 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
             if not math.isfinite(result.z):
                 msg = f"Cluster ({x:.2f},{y:.2f}) has no valid samples"
                 raise RuntimeError(msg)
-
-            if result.sample_count < MINIMUM_SAMPLE_COUNT:
-                msg = f"Cluster ({x:.2f},{y:.2f}) has less than {MINIMUM_SAMPLE_COUNT} samples, slow down"
-                raise RuntimeError(msg)
-
-            if result.sample_count < WARNING_SAMPLE_COUNT:
-                logger.warning("Cluster (%.2f,%.2f) has only %d samples", x, y, result.sample_count)
 
             trigger_z = height - result.z
             nozzle_position = self.toolhead.apply_axis_twist_compensation(Position(x=x, y=y, z=trigger_z))
