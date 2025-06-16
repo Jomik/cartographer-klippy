@@ -37,6 +37,7 @@ default_touch_config = TouchConfig(
 default_bed_mesh_config = BedMeshConfig(
     mesh_min=(0.0, 0.0),
     mesh_max=(200.0, 200.0),
+    mesh_points=(10, 10),
     speed=100,
     horizontal_move_z=3,
     zero_reference_position=(100, 100),

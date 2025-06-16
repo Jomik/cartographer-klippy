@@ -27,6 +27,7 @@ logger = logging.getLogger(__name__)
 class BedMeshCalibrateConfiguration:
     mesh_min: tuple[float, float]
     mesh_max: tuple[float, float]
+    mesh_points: tuple[int, int]
     speed: float
     zero_reference_position: Point
 
@@ -39,6 +40,7 @@ class BedMeshCalibrateConfiguration:
         return BedMeshCalibrateConfiguration(
             mesh_min=config.bed_mesh.mesh_min,
             mesh_max=config.bed_mesh.mesh_max,
+            mesh_points=config.bed_mesh.mesh_points,
             speed=config.bed_mesh.speed,
             zero_reference_position=config.bed_mesh.zero_reference_position,
             runs=config.scan.mesh_runs,
@@ -103,7 +105,7 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
     def _generate_mesh_points(self) -> list[Point]:
         x_min, y_min = self.config.mesh_min
         x_max, y_max = self.config.mesh_max
-        x_res, y_res = 10, 10
+        x_res, y_res = self.config.mesh_points
 
         x_points = np.linspace(x_min, x_max, x_res)
         y_points = np.linspace(y_min, y_max, y_res)
