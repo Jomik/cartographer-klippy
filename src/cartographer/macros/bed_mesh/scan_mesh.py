@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class BedMeshCalibrateConfiguration:
     mesh_min: tuple[float, float]
     mesh_max: tuple[float, float]
-    travel_speed: float
+    speed: float
     zero_reference_position: Point
 
     runs: int
@@ -39,7 +39,7 @@ class BedMeshCalibrateConfiguration:
         return BedMeshCalibrateConfiguration(
             mesh_min=config.bed_mesh.mesh_min,
             mesh_max=config.bed_mesh.mesh_max,
-            travel_speed=config.general.travel_speed,
+            speed=config.bed_mesh.speed,
             zero_reference_position=config.bed_mesh.zero_reference_position,
             runs=config.scan.mesh_runs,
             direction=config.scan.mesh_direction,
@@ -87,7 +87,7 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
             return self._fallback.run(params)
 
         profile = params.get("PROFILE", "default")
-        speed = params.get_float("SPEED", default=self.config.travel_speed, minval=50)
+        speed = params.get_float("SPEED", default=self.config.speed, minval=50)
         runs = params.get_int("RUNS", default=self.config.runs, minval=1)
         height = params.get_float("HEIGHT", default=self.config.height, minval=0.5, maxval=5)
         direction: Literal["x", "y"] = get_choice(params, "DIRECTION", _directions, default=self.config.direction)

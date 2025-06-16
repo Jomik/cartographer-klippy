@@ -30,10 +30,10 @@ class EstimateBacklashMacro(Macro):
     @override
     def run(self, params: MacroParams) -> None:
         calibrate = params.get("CALIBRATE", None) is not None
-        iterations = params.get_int("ITERATIONS", 10, minval=1)
+        iterations = params.get_int("ITERATIONS", default=10, minval=1)
+        delta = params.get_float("DELTA", default=0.2, minval=0.2, maxval=1)
         speed = 5
         height = 2
-        delta = 0.2  # Smaller delta is better for detecting subtle backlash
 
         self._toolhead.move(z=height, speed=speed)
         if calibrate:
