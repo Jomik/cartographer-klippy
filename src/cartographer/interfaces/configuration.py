@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Literal, Protocol
 
 
 @dataclass(frozen=True)
@@ -16,8 +16,10 @@ class GeneralConfig:
 @dataclass(frozen=True)
 class ScanConfig:
     samples: int
-    mesh_runs: int
     models: dict[str, ScanModelConfiguration]
+    mesh_runs: int
+    mesh_direction: Literal["x", "y"]
+    mesh_height: float
 
 
 @dataclass(frozen=True)

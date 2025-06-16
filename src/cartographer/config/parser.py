@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Protocol
+from typing import Iterable, Literal, Protocol, TypeVar
 
 from cartographer.interfaces.configuration import (
     BedMeshConfig,
@@ -11,10 +11,28 @@ from cartographer.interfaces.configuration import (
     TouchModelConfiguration,
 )
 
+K = TypeVar("K", bound=str)
+
+
+def get_choice(params: ParseConfigWrapper, option: str, choices: Iterable[K], default: K) -> K:
+    choice = params.get_str(option, default=default)
+    choice_str = choice.lower()
+
+    for k in choices:
+        if k.lower() == choice_str:
+            return k
+
+    valid_choices = ", ".join(f"'{k.lower()}'" for k in choices)
+    msg = f"Invalid choice '{choice}' for option '{option}'. Valid choices are: {valid_choices}"
+    raise RuntimeError(msg)
+
 
 class ParseConfigWrapper(Protocol):
     def get_name(self) -> str: ...
-    def get_float(self, option: str, default: float, minimum: float | None = None) -> float: ...
+    def get_str(self, option: str, default: str) -> str: ...
+    def get_float(
+        self, option: str, default: float, minimum: float | None = None, maximum: float | None = None
+    ) -> float: ...
     def get_required_float(self, option: str) -> float: ...
     def get_required_float_list(self, option: str, count: int | None = None) -> list[float]: ...
     def get_int(self, option: str, default: int) -> int: ...
@@ -38,11 +56,16 @@ def parse_general_config(wrapper: ParseConfigWrapper) -> GeneralConfig:
     )
 
 
+_directions: list[Literal["x", "y"]] = ["x", "y"]
+
+
 def parse_scan_config(wrapper: ParseConfigWrapper, models: dict[str, ScanModelConfiguration]) -> ScanConfig:
     return ScanConfig(
         samples=20,
-        mesh_runs=wrapper.get_int("mesh_runs", default=1),
         models=models,
+        mesh_runs=wrapper.get_int("mesh_runs", default=1),
+        mesh_direction=get_choice(wrapper, "mesh_direction", _directions, default="x"),
+        mesh_height=wrapper.get_float("mesh_height", default=4, minimum=1),
     )
 
 

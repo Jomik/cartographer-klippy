@@ -24,8 +24,10 @@ default_general_config = GeneralConfig(
 )
 default_scan_config = ScanConfig(
     samples=20,
-    mesh_runs=1,
     models={},
+    mesh_runs=1,
+    mesh_direction="x",
+    mesh_height=4.0,
 )
 default_touch_config = TouchConfig(
     samples=5,

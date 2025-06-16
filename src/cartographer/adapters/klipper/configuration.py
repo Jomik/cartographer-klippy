@@ -35,8 +35,14 @@ class KlipperConfigWrapper(ParseConfigWrapper):
         return self._config.get_name().split(" ")[-1]
 
     @override
-    def get_float(self, option: str, default: float, minimum: float | None = None) -> float:
-        return self._config.getfloat(option, default=default, minval=minimum)
+    def get_str(self, option: str, default: str) -> str:
+        return self._config.get(option, default=default)
+
+    @override
+    def get_float(
+        self, option: str, default: float, minimum: float | None = None, maximum: float | None = None
+    ) -> float:
+        return self._config.getfloat(option, default=default, minval=minimum, maxval=maximum)
 
     @override
     def get_required_float(self, option: str) -> float:
