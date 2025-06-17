@@ -21,7 +21,6 @@ logger = logging.getLogger(__name__)
 
 
 MAD_TOLERANCE = 0.0054  # Statistically equivalent to 0.008mm stddev
-SAFE_TRIGGER_MIN_HEIGHT = -0.2  # Initial home too far
 RETRACT_DISTANCE = 2.0
 MAX_TOUCH_TEMPERATURE = 155
 
@@ -176,12 +175,6 @@ class TouchMode(TouchModelSelectorMixin, ProbeMode, Endstop):
         trigger_pos = self._toolhead.z_homing_move(self, bottom=-2.0, speed=model.speed)
         pos = self._toolhead.get_position()
         self._toolhead.move(z=max(pos.z + RETRACT_DISTANCE, RETRACT_DISTANCE), speed=5)
-        if trigger_pos < SAFE_TRIGGER_MIN_HEIGHT:
-            msg = f"""
-                Probe triggered too low at {pos:.3f}mm.
-                Ensure Z is homed within {SAFE_TRIGGER_MIN_HEIGHT:.1f}mm of bed.
-                """
-            raise RuntimeError(msg)
         return trigger_pos
 
     @override
