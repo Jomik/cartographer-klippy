@@ -11,6 +11,7 @@ from typing_extensions import override
 
 from cartographer.interfaces.printer import Macro, MacroParams, Position, Sample, SupportsFallbackMacro, Toolhead
 from cartographer.lib.log import log_duration
+from cartographer.macros.bed_mesh.alternating_snake import AlternatingSnakePathGenerator
 from cartographer.macros.bed_mesh.mesh_utils import assign_samples_to_grid
 from cartographer.macros.bed_mesh.snake_path import SnakePathPlanner
 from cartographer.macros.bed_mesh.spiral_path import SpiralPathPlanner
@@ -36,7 +37,7 @@ class BedMeshCalibrateConfiguration:
     runs: int
     direction: Literal["x", "y"]
     height: float
-    path: Literal["snake", "spiral"]
+    path: Literal["snake", "alternating_snake", "spiral"]
 
     @staticmethod
     def from_config(config: Configuration):
@@ -65,6 +66,7 @@ class PathStrategy(ABC):
 
 PATH_STRATEGY_MAP = {
     "snake": SnakePathPlanner,
+    "alternating_snake": AlternatingSnakePathPlanner,
     "spiral": SpiralPathPlanner,
 }
 

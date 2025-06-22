@@ -20,7 +20,7 @@ class ScanConfig:
     mesh_runs: int
     mesh_height: float
     mesh_direction: Literal["x", "y"]
-    mesh_path: Literal["snake", "spiral"]
+    mesh_path: Literal["snake", "alternating_snake", "spiral"]
 
 
 @dataclass(frozen=True)
