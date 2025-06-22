@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import math
-from typing import TYPE_CHECKING, Iterator, final
+from typing import TYPE_CHECKING, Iterator, Literal, final
 
 import numpy as np
 
@@ -14,7 +14,8 @@ if TYPE_CHECKING:
 
 @final
 class SpiralPathPlanner:
-    def __init__(self, corner_radius: float = 5.0):
+    def __init__(self, direction: Literal["x", "y"], corner_radius: float = 5.0):
+        del direction
         self.corner_radius = corner_radius
 
     def generate_path(self, points: list[Point]) -> Iterator[Point]:

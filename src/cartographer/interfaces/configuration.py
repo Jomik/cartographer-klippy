@@ -18,8 +18,9 @@ class ScanConfig:
     samples: int
     models: dict[str, ScanModelConfiguration]
     mesh_runs: int
-    mesh_direction: Literal["x", "y"]
     mesh_height: float
+    mesh_direction: Literal["x", "y"]
+    mesh_path: Literal["snake", "spiral"]
 
 
 @dataclass(frozen=True)
