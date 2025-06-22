@@ -12,7 +12,7 @@ from typing_extensions import override
 from cartographer.interfaces.printer import Macro, MacroParams, Position, Sample, SupportsFallbackMacro, Toolhead
 from cartographer.lib.log import log_duration
 from cartographer.macros.bed_mesh.mesh_utils import assign_samples_to_grid
-from cartographer.macros.bed_mesh.serpentine_path import SerpentinePathPlanner
+from cartographer.macros.bed_mesh.snake_path import SnakePathPlanner
 from cartographer.macros.bed_mesh.spiral_path import SpiralPathPlanner
 from cartographer.macros.utils import get_choice
 
@@ -64,7 +64,7 @@ class PathStrategy(ABC):
 
 
 PATH_STRATEGY_MAP = {
-    "snake": SerpentinePathPlanner,
+    "snake": SnakePathPlanner,
     "spiral": SpiralPathPlanner,
 }
 
