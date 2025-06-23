@@ -15,7 +15,7 @@ from cartographer.macros.bed_mesh.alternating_snake import AlternatingSnakePathG
 from cartographer.macros.bed_mesh.mesh_utils import assign_samples_to_grid
 from cartographer.macros.bed_mesh.snake_path import SnakePathGenerator
 from cartographer.macros.bed_mesh.spiral_path import SpiralPathGenerator
-from cartographer.macros.utils import get_choice
+from cartographer.macros.utils import get_choice, get_float_tuple, get_int_tuple
 
 if TYPE_CHECKING:
     from cartographer.interfaces.configuration import Configuration
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 class BedMeshCalibrateConfiguration:
     mesh_min: tuple[float, float]
     mesh_max: tuple[float, float]
-    mesh_points: tuple[int, int]
+    probe_count: tuple[int, int]
     speed: float
     zero_reference_position: Point
 
@@ -44,7 +44,7 @@ class BedMeshCalibrateConfiguration:
         return BedMeshCalibrateConfiguration(
             mesh_min=config.bed_mesh.mesh_min,
             mesh_max=config.bed_mesh.mesh_max,
-            mesh_points=config.bed_mesh.mesh_points,
+            probe_count=config.bed_mesh.probe_count,
             speed=config.bed_mesh.speed,
             zero_reference_position=config.bed_mesh.zero_reference_position,
             runs=config.scan.mesh_runs,
@@ -107,13 +107,16 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
 
         profile = params.get("PROFILE", "default")
         speed = params.get_float("SPEED", default=self.config.speed, minval=50)
+        mesh_min = get_float_tuple(params, "MESH_MIN", default=self.config.mesh_min)
+        mesh_max = get_float_tuple(params, "MESH_MAX", default=self.config.mesh_max)
+        probe_count = get_int_tuple(params, "PROBE_COUNT", default=self.config.probe_count)
         runs = params.get_int("RUNS", default=self.config.runs, minval=1)
         height = params.get_float("HEIGHT", default=self.config.height, minval=0.5, maxval=5)
         direction: Literal["x", "y"] = get_choice(params, "DIRECTION", _directions, default=self.config.direction)
         path_strategy_type = get_choice(params, "PATH", default=self.config.path, choices=PATH_STRATEGY_MAP.keys())
         path_strategy = PATH_STRATEGY_MAP[path_strategy_type](direction)
 
-        mesh_points = self._generate_mesh_points()
+        mesh_points = self._generate_mesh_points(mesh_min, mesh_max, probe_count)
         path = list(path_strategy.generate_path(mesh_points))
 
         samples = self._sample_path(path, runs=runs, height=height, speed=speed)
@@ -121,10 +124,12 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
 
         self.adapter.apply_mesh(positions, profile)
 
-    def _generate_mesh_points(self) -> list[Point]:
-        x_min, y_min = self.config.mesh_min
-        x_max, y_max = self.config.mesh_max
-        x_res, y_res = self.config.mesh_points
+    def _generate_mesh_points(
+        self, mesh_min: tuple[float, float], mesh_max: tuple[float, float], probe_count: tuple[int, int]
+    ) -> list[Point]:
+        x_min, y_min = mesh_min
+        x_max, y_max = mesh_max
+        x_res, y_res = probe_count
 
         x_points = np.linspace(x_min, x_max, x_res)
         y_points = np.linspace(y_min, y_max, y_res)

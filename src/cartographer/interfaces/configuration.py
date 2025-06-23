@@ -34,7 +34,7 @@ class TouchConfig:
 class BedMeshConfig:
     mesh_min: tuple[float, float]
     mesh_max: tuple[float, float]
-    mesh_points: tuple[int, int]
+    probe_count: tuple[int, int]
     speed: float
     horizontal_move_z: float
     zero_reference_position: tuple[float, float]
