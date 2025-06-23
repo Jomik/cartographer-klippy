@@ -110,5 +110,5 @@ def parse_touch_model_config(wrapper: ParseConfigWrapper) -> TouchModelConfigura
         name=wrapper.get_name(),
         threshold=wrapper.get_int("threshold", default=100),
         speed=wrapper.get_float("speed", default=50, minimum=1),
-        z_offset=wrapper.get_float("z_offset", default=0),
+        z_offset=wrapper.get_float("z_offset", default=0, maximum=0),
     )
