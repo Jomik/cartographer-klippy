@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import math
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Literal, TypeVar, final
 
@@ -10,8 +11,10 @@ from typing_extensions import override
 
 from cartographer.interfaces.printer import Macro, MacroParams, Position, Sample, SupportsFallbackMacro, Toolhead
 from cartographer.lib.log import log_duration
+from cartographer.macros.bed_mesh.alternating_snake import AlternatingSnakePathGenerator
 from cartographer.macros.bed_mesh.mesh_utils import assign_samples_to_grid
-from cartographer.macros.bed_mesh.serpentine_path import SerpentinePathPlanner
+from cartographer.macros.bed_mesh.snake_path import SnakePathGenerator
+from cartographer.macros.bed_mesh.spiral_path import SpiralPathGenerator
 from cartographer.macros.utils import get_choice
 
 if TYPE_CHECKING:
@@ -34,6 +37,7 @@ class BedMeshCalibrateConfiguration:
     runs: int
     direction: Literal["x", "y"]
     height: float
+    path: Literal["snake", "alternating_snake", "spiral"]
 
     @staticmethod
     def from_config(config: Configuration):
@@ -46,10 +50,25 @@ class BedMeshCalibrateConfiguration:
             runs=config.scan.mesh_runs,
             direction=config.scan.mesh_direction,
             height=config.scan.mesh_height,
+            path=config.scan.mesh_path,
         )
 
 
 _directions: list[Literal["x", "y"]] = ["x", "y"]
+
+
+class PathStrategy(ABC):
+    @abstractmethod
+    def __init__(self, main_direction: Literal["x", "y"] = "x", corner_radius: float = 5.0) -> None: ...
+    @abstractmethod
+    def generate_path(self, mesh_points: list[Point]) -> list[Point]: ...
+
+
+PATH_STRATEGY_MAP = {
+    "snake": SnakePathGenerator,
+    "alternating_snake": AlternatingSnakePathGenerator,
+    "spiral": SpiralPathGenerator,
+}
 
 
 @final
@@ -91,9 +110,11 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
         runs = params.get_int("RUNS", default=self.config.runs, minval=1)
         height = params.get_float("HEIGHT", default=self.config.height, minval=0.5, maxval=5)
         direction: Literal["x", "y"] = get_choice(params, "DIRECTION", _directions, default=self.config.direction)
+        path_strategy_type = get_choice(params, "PATH", default=self.config.path, choices=PATH_STRATEGY_MAP.keys())
+        path_strategy = PATH_STRATEGY_MAP[path_strategy_type](direction)
+
         mesh_points = self._generate_mesh_points()
-        snake = SerpentinePathPlanner(direction)
-        path = list(snake.generate_path(mesh_points))
+        path = list(path_strategy.generate_path(mesh_points))
 
         samples = self._sample_path(path, runs=runs, height=height, speed=speed)
         positions = self.task_executor.run(self._calculate_positions, mesh_points, samples, height)

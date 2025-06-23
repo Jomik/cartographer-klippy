@@ -61,6 +61,7 @@ def parse_general_config(wrapper: ParseConfigWrapper) -> GeneralConfig:
 
 
 _directions: list[Literal["x", "y"]] = ["x", "y"]
+_paths: list[Literal["snake", "alternating_snake", "spiral"]] = ["snake", "alternating_snake", "spiral"]
 
 
 def parse_scan_config(wrapper: ParseConfigWrapper, models: dict[str, ScanModelConfiguration]) -> ScanConfig:
@@ -70,6 +71,7 @@ def parse_scan_config(wrapper: ParseConfigWrapper, models: dict[str, ScanModelCo
         mesh_runs=wrapper.get_int("mesh_runs", default=1),
         mesh_direction=get_choice(wrapper, "mesh_direction", _directions, default="x"),
         mesh_height=wrapper.get_float("mesh_height", default=4, minimum=1),
+        mesh_path=get_choice(wrapper, "mesh_path", _paths, default="snake"),
     )
 
 

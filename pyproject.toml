@@ -2,10 +2,7 @@
 name = "cartographer3d-plugin"
 requires-python = "~= 3.8"
 license = { file = "LICENSE" }
-dependencies = [
-  "numpy~=1.16",
-  "typing-extensions~=4.12",
-]
+dependencies = ["numpy~=1.16", "typing-extensions~=4.12"]
 keywords = ["klipper", "3D printing", "cartographer"]
 classifiers = [
   "Development Status :: 3 - Alpha",
@@ -37,6 +34,8 @@ typecheck = [
   "hatchling~=1.27",
   "scipy-stubs~=1.15 ; python_version~='3.10'",
 ]
+dev = []
+scripts = ["matplotlib>=3.7.5"]
 
 [tool.pyright]
 pythonVersion = "3.8"
@@ -52,7 +51,7 @@ addopts = ["--import-mode=importlib"]
 testpaths = ["tests"]
 
 [tool.uv]
-default-groups = ["test", "lint", "typecheck"]
+default-groups = ["test", "lint", "typecheck", "scripts"]
 
 [tool.hatch.version]
 source = "vcs"

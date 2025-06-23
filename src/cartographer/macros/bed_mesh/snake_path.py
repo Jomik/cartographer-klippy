@@ -3,7 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Iterator, Literal, final
 
 import numpy as np
+from typing_extensions import override
 
+from cartographer.macros.bed_mesh.interfaces import PathGenerator
 from cartographer.macros.bed_mesh.mesh_utils import cluster_points
 from cartographer.macros.bed_mesh.pathing_utils import (
     Vec,
@@ -19,11 +21,12 @@ if TYPE_CHECKING:
 
 
 @final
-class SerpentinePathPlanner:
+class SnakePathGenerator(PathGenerator):
     def __init__(self, main_direction: Literal["x", "y"], corner_radius: float = 5.0):
         self.main_direction: Literal["x", "y"] = main_direction
         self.corner_radius = corner_radius
 
+    @override
     def generate_path(self, points: list[Point]) -> Iterator[Point]:
         rows = cluster_points(points, self.main_direction)
 
