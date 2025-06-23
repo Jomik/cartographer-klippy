@@ -40,8 +40,9 @@ class SnakePathGenerator(PathGenerator):
             if i > 0:
                 # Create U-turn arc between previous end and current start
                 prev_last = prev_row[-1]
+                print(f"prev_last: {prev_last}, row: {row}, prev_row: {prev_row}")
                 curr_first = row[0]
-                entry_dir = row_direction(prev_row[:-2])
+                entry_dir = row_direction(prev_row[-2:])
 
                 yield from u_turn(prev_last, curr_first, entry_dir, self.corner_radius)
 
