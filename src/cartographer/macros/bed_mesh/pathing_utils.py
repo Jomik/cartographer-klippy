@@ -9,7 +9,7 @@ from typing_extensions import TypeAlias
 if TYPE_CHECKING:
     from cartographer.macros.bed_mesh.interfaces import Point
 
-Vec: TypeAlias = np.ndarray[Literal[2], np.dtype[np.float64]]
+Vec: TypeAlias = "np.ndarray[Literal[2], np.dtype[np.float64]]"
 
 
 def arc_points(

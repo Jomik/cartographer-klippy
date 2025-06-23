@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class SpiralPathGenerator(PathGenerator):
     def __init__(self, main_direction: Literal["x", "y"], corner_radius: float = 5.0):
         del main_direction
-        self.corner_radius = corner_radius
+        self.corner_radius = corner_radius if corner_radius > 0.5 else 0.5
 
     @override
     def generate_path(self, points: list[Point]) -> Iterator[Point]:
