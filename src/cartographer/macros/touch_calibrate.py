@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 MIN_ALLOWED_STEP = 75
 MAX_ALLOWED_STEP = 500
 DEFAULT_TOUCH_MODEL_NAME = "default"
+DEFAULT_Z_OFFSET = -0.05
 
 
 class CalibrationStrategy(ABC):
@@ -212,7 +213,7 @@ class TouchCalibrateMacro(Macro):
         logger.info(
             "Successfully calibrated with %s strategy (threshold %d, speed %.1f)", strategy_type, threshold, speed
         )
-        model = TouchModelConfiguration(name, threshold, speed, 0)
+        model = TouchModelConfiguration(name, threshold, speed, DEFAULT_Z_OFFSET)
         self._config.save_touch_model(model)
         logger.info(
             """
