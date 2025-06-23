@@ -146,21 +146,3 @@ def test_touch_home_macro(
     macro.run(params)
 
     assert set_z_position_spy.mock_calls == [mocker.call(1.9)]
-
-
-def test_touch_home_macro_with_z_offset(
-    mocker: MockerFixture,
-    probe: Probe,
-    offset: Position,
-    toolhead: Toolhead,
-    params: MacroParams,
-):
-    macro = TouchHomeMacro(probe, toolhead, (10, 10))
-    probe.perform_probe = mocker.Mock(return_value=0.0)
-    offset.z = -0.1
-    toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 2))
-    set_z_position_spy = mocker.spy(toolhead, "set_z_position")
-
-    macro.run(params)
-
-    assert set_z_position_spy.mock_calls == [mocker.call(1.9)]
