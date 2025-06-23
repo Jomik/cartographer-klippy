@@ -63,15 +63,15 @@ class EstimateBacklashMacro(Macro):
 
         t_stat, df = welchs_ttest(samples["down"], samples["up"])
 
-        logger.info(
+        logger.debug(
             """
-            Backlash estimation results over %d iterations:\n
-            Mean moving upwards: %.5f mm\n
-            Mean moving down: %.5f mm\n
-            Std dev moving upwards: %.5f mm\n
-            Std dev moving downwards: %.5f mm\n
-            Estimated backlash: %.5f mm\n
-            Welch's t-test: t=%.5f, df=%.2f
+            Backlash estimation details (%d iterations):\n
+            Mean after moving up:     %.5f mm\n
+            Mean after moving down:   %.5f mm\n
+            Std dev (up):             %.5f mm\n
+            Std dev (down):           %.5f mm\n
+            Estimated raw backlash:   %.5f mm\n
+            Welch's t-test: t=%.5f, df=%.2f"
             """,
             iterations,
             mean_up,
@@ -82,34 +82,54 @@ class EstimateBacklashMacro(Macro):
             t_stat,
             df,
         )
+
         if abs(t_stat) < 2.0:
             backlash = 0.0
             logger.info(
-                "Backlash difference not statistically significant (|t|=%.2f < 2.0). Treating backlash as zero.",
+                """
+                Backlash test over %d samples found no significant difference (|t|=%.2f).
+                """,
+                iterations,
                 abs(t_stat),
+            )
+        else:
+            logger.info(
+                """
+                Backlash test over %d samples detected a consistent %.3f mm difference.
+                """,
+                iterations,
+                backlash,
             )
 
         if backlash < 0:
             logger.warning(
                 """
-                Backlash is negative, which is unexpected.
-                This means the position after moving up was measured as higher (or further)
-                than the position after moving down.
-                Please check your printer's mechanical components (e.g., for slop, binding).
-                """
+                Estimated backlash is negative (%.5f mm), which is unexpected.
+                This suggests up moves measured higher than down moves.
+                Check for looseness or mechanical slop. Ignoring result.
+                """,
+                backlash,
             )
             return
 
         if calibrate:
             self._config.save_z_backlash(backlash)
-            logger.info(
-                """
-                Required backlash compensation is %.3fmm.
-                The SAVE_CONFIG command will update the printer config file
-                with the above and restart the printer.
-                """,
-                backlash,
-            )
+            if backlash == 0.0:
+                logger.info(
+                    """
+                    Backlash calibration complete: no compensation required.
+                    Your printer appears mechanically tight.
+                    The SAVE_CONFIG command will update your config and restart the printer.
+                    """
+                )
+            else:
+                logger.info(
+                    """
+                    Backlash calibration complete: %.3f mm compensation will be used.
+                    The SAVE_CONFIG command will update your config and restart the printer.
+                    """,
+                    backlash,
+                )
 
 
 _np_float_list: TypeAlias = np.ndarray[Literal[1], np.dtype[np.float64]]
