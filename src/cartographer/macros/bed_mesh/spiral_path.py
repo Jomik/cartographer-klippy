@@ -4,7 +4,9 @@ import math
 from typing import TYPE_CHECKING, Iterator, Literal, final
 
 import numpy as np
+from typing_extensions import override
 
+from cartographer.macros.bed_mesh.interfaces import PathGenerator
 from cartographer.macros.bed_mesh.mesh_utils import cluster_points
 from cartographer.macros.bed_mesh.pathing_utils import Vec, angle_deg, arc_points, normalize, perpendicular
 
@@ -13,11 +15,12 @@ if TYPE_CHECKING:
 
 
 @final
-class SpiralPathPlanner:
-    def __init__(self, direction: Literal["x", "y"], corner_radius: float = 5.0):
-        del direction
+class SpiralPathGenerator(PathGenerator):
+    def __init__(self, main_direction: Literal["x", "y"], corner_radius: float = 5.0):
+        del main_direction
         self.corner_radius = corner_radius
 
+    @override
     def generate_path(self, points: list[Point]) -> Iterator[Point]:
         grid = cluster_points(points, "x")
         """Generate points in a spiral pattern from outer layers inward"""

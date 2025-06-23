@@ -13,8 +13,8 @@ from cartographer.interfaces.printer import Macro, MacroParams, Position, Sample
 from cartographer.lib.log import log_duration
 from cartographer.macros.bed_mesh.alternating_snake import AlternatingSnakePathGenerator
 from cartographer.macros.bed_mesh.mesh_utils import assign_samples_to_grid
-from cartographer.macros.bed_mesh.snake_path import SnakePathPlanner
-from cartographer.macros.bed_mesh.spiral_path import SpiralPathPlanner
+from cartographer.macros.bed_mesh.snake_path import SnakePathGenerator
+from cartographer.macros.bed_mesh.spiral_path import SpiralPathGenerator
 from cartographer.macros.utils import get_choice
 
 if TYPE_CHECKING:
@@ -65,9 +65,9 @@ class PathStrategy(ABC):
 
 
 PATH_STRATEGY_MAP = {
-    "snake": SnakePathPlanner,
-    "alternating_snake": AlternatingSnakePathPlanner,
-    "spiral": SpiralPathPlanner,
+    "snake": SnakePathGenerator,
+    "alternating_snake": AlternatingSnakePathGenerator,
+    "spiral": SpiralPathGenerator,
 }
 
 

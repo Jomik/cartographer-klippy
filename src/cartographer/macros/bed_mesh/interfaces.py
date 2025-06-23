@@ -10,7 +10,7 @@ if TYPE_CHECKING:
 Point: TypeAlias = "tuple[float, float]"
 
 
-class PathPlanner(Protocol):
+class PathGenerator(Protocol):
     def generate_path(self, points: list[Point]) -> Iterator[Point]: ...
 
 
