@@ -99,8 +99,8 @@ if __name__ == "__main__":
     generator = path_strategy("x", 2)
 
     grid_shapes = [
+        (3, 3),
         (4, 4),
-        (5, 5),
         (5, 3),
         (6, 4),
         (10, 11),
