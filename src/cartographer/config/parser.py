@@ -88,7 +88,7 @@ def parse_bed_mesh_config(wrapper: ParseConfigWrapper) -> BedMeshConfig:
     return BedMeshConfig(
         mesh_min=list_to_tuple(wrapper.get_required_float_list("mesh_min", count=2)),
         mesh_max=list_to_tuple(wrapper.get_required_float_list("mesh_max", count=2)),
-        mesh_points=list_to_tuple(wrapper.get_required_int_list("probe_count", count=2)),
+        probe_count=list_to_tuple(wrapper.get_required_int_list("probe_count", count=2)),
         speed=wrapper.get_float("speed", default=50, minimum=1),
         horizontal_move_z=wrapper.get_float("horizontal_move_z", default=4, minimum=1),
         zero_reference_position=list_to_tuple(wrapper.get_required_float_list("zero_reference_position", count=2)),

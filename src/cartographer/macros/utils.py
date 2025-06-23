@@ -37,3 +37,27 @@ def get_choice(params: MacroParams, option: str, choices: Iterable[K], default: 
     valid_choices = ", ".join(f"'{k.lower()}'" for k in choices)
     msg = f"Invalid choice '{choice}' for option '{option}'. Valid choices are: {valid_choices}"
     raise RuntimeError(msg)
+
+
+def get_int_tuple(params: MacroParams, option: str, default: tuple[int, int]) -> tuple[int, int]:
+    param = params.get(option, default=None)
+    if param is None:
+        return default
+    parts = param.split(",")
+    if len(parts) != 2:
+        msg = f"Expected two int values for '{option}', got {len(parts)}: {param}"
+        raise ValueError(msg)
+
+    return (int(parts[0]), int(parts[1]))
+
+
+def get_float_tuple(params: MacroParams, option: str, default: tuple[float, float]) -> tuple[float, float]:
+    param = params.get(option, default=None)
+    if param is None:
+        return default
+    parts = param.split(",")
+    if len(parts) != 2:
+        msg = f"Expected two float values for '{option}', got {len(parts)}: {param}"
+        raise ValueError(msg)
+
+    return (float(parts[0]), float(parts[1]))
