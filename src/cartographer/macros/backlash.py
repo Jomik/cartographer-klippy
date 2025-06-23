@@ -132,7 +132,7 @@ class EstimateBacklashMacro(Macro):
                 )
 
 
-_np_float_list: TypeAlias = np.ndarray[Literal[1], np.dtype[np.float64]]
+_np_float_list: TypeAlias = "np.ndarray[Literal[1], np.dtype[np.float64]]"
 
 
 def welchs_ttest(a_in: list[float], b_in: list[float]) -> tuple[float, float]:

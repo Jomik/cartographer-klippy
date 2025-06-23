@@ -12,7 +12,7 @@ def formatter() -> GCodeConsoleFormatter:
     return GCodeConsoleFormatter()
 
 
-LogRecordFactory: TypeAlias = Callable[[int, str], logging.LogRecord]
+LogRecordFactory: TypeAlias = "Callable[[int, str], logging.LogRecord]"
 
 
 @pytest.fixture
