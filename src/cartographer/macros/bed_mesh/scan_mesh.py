@@ -37,6 +37,7 @@ class BedMeshCalibrateConfiguration:
     runs: int
     direction: Literal["x", "y"]
     height: float
+    corner_radius: float
     path: Literal["snake", "alternating_snake", "spiral"]
 
     @staticmethod
@@ -50,6 +51,7 @@ class BedMeshCalibrateConfiguration:
             runs=config.scan.mesh_runs,
             direction=config.scan.mesh_direction,
             height=config.scan.mesh_height,
+            corner_radius=config.scan.mesh_corner_radius,
             path=config.scan.mesh_path,
         )
 
@@ -112,9 +114,10 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
         probe_count = get_int_tuple(params, "PROBE_COUNT", default=self.config.probe_count)
         runs = params.get_int("RUNS", default=self.config.runs, minval=1)
         height = params.get_float("HEIGHT", default=self.config.height, minval=0.5, maxval=5)
+        corner_radius = params.get_float("CORNER_RADIUS", default=self.config.corner_radius, minval=0)
         direction: Literal["x", "y"] = get_choice(params, "DIRECTION", _directions, default=self.config.direction)
         path_strategy_type = get_choice(params, "PATH", default=self.config.path, choices=PATH_STRATEGY_MAP.keys())
-        path_strategy = PATH_STRATEGY_MAP[path_strategy_type](direction)
+        path_strategy = PATH_STRATEGY_MAP[path_strategy_type](direction, corner_radius)
 
         mesh_points = self._generate_mesh_points(mesh_min, mesh_max, probe_count)
         path = list(path_strategy.generate_path(mesh_points))
