@@ -114,18 +114,24 @@ class TouchHomeMacro(Macro):
             msg = "Must home x and y before touch homing"
             raise RuntimeError(msg)
 
+        forced_z = False
+        if not self._toolhead.is_homed("z"):
+            forced_z = True
+            _, z_max = self._toolhead.get_z_axis_limits()
+            self._toolhead.set_z_position(z=z_max - 10)
+
+        pos = self._toolhead.get_position()
+        # TODO: Get rid of magic constants
+        self._toolhead.move(
+            z=pos.z + 2,
+            speed=5,
+        )
         self._toolhead.move(
             x=self._home_position[0],
             y=self._home_position[1],
             speed=50,
         )
         self._toolhead.wait_moves()
-
-        forced_z = False
-        if not self._toolhead.is_homed("z"):
-            forced_z = True
-            _, z_max = self._toolhead.get_z_axis_limits()
-            self._toolhead.set_z_position(z=z_max - 10)
 
         try:
             trigger_pos = self._probe.perform_probe()
