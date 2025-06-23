@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import math
 from typing import TYPE_CHECKING, Iterator, Literal, final
 
 import numpy as np
@@ -22,23 +21,50 @@ class SpiralPathGenerator(PathGenerator):
 
     @override
     def generate_path(self, points: list[Point]) -> Iterator[Point]:
-        grid = cluster_points(points, "x")
-        """Generate points in a spiral pattern from outer layers inward"""
+        grid = cluster_points(points, axis="x")  # Bottom row is index 0
+        rows = len(grid)
+        cols = len(grid[0]) if rows else 0
         offset = 0
 
-        # TODO: Remove unnecessary lines and corners
+        while offset < (rows + 1) // 2 and offset < (cols + 1) // 2:
+            bottom = grid[offset][offset : cols - offset]
+            right = [grid[i][cols - offset - 1] for i in range(offset + 1, rows - offset)]
+            top = grid[rows - offset - 1][offset : cols - offset - 1][::-1] if rows - offset - 1 != offset else []
+            left = (
+                [grid[i][offset] for i in range(rows - offset - 2, offset, -1)] if cols - offset - 1 != offset else []
+            )
 
-        while offset < math.floor(len(grid) / 2) and offset < math.floor(len(grid[0]) / 2):
-            yield from grid[offset][offset : -offset - 1]
+            # === Bottom row (→)
+            if right or top or left:
+                yield from bottom[:-1]
+                yield from corner(bottom[-1], (1.0, 0.0), self.corner_radius)
+            else:
+                yield from bottom  # Last leg, include final point
 
-            yield from corner(grid[offset][-offset - 1], (1, 0), self.corner_radius)
-            for i in range(offset + 1, len(grid) - offset):
-                yield grid[i][-offset - 1]
+            # === Right column (↑)
+            if top or left:
+                yield from right[:-1]
+                yield from corner(right[-1], (0.0, 1.0), self.corner_radius)
+            else:
+                yield from right
 
-            yield from corner(grid[-offset - 1][-offset - 1], (0, 1), self.corner_radius)
-            yield from grid[-offset - 1][-offset - 2 : offset : -1]
-            for i in range(len(grid) - offset - 1, offset, -1):
-                yield grid[i][offset]
+            # === Top row (←)
+            if left:
+                yield from top[:-1]
+                yield from corner(top[-1], (-1.0, 0.0), self.corner_radius)
+            else:
+                yield from top
+
+            # === Left column (↓)
+            if left:
+                if offset + 1 < (rows + 1) // 2 and offset + 1 < (cols + 1) // 2:
+                    # There will be another ring → add corner
+                    if left:
+                        yield from left[:-1]
+                        yield from corner(left[-1], (0.0, -1.0), self.corner_radius)
+                else:
+                    # Final leg
+                    yield from left
 
             offset += 1
 
