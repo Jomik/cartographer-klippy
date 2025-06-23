@@ -82,7 +82,8 @@ class KlipperBedMesh(BedMeshAdapter):
 
         mesh = bed_mesh.ZMesh(mesh_params, profile_name)
         try:
-            mesh.build_mesh(matrix.tolist())
+            native_matrix = [[float(z) for z in row] for row in matrix.tolist()]
+            mesh.build_mesh(native_matrix)
         except bed_mesh.BedMeshError as e:
             raise RuntimeError(str(e)) from e
 
