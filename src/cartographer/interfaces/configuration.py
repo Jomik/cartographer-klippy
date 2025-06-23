@@ -19,6 +19,7 @@ class ScanConfig:
     models: dict[str, ScanModelConfiguration]
     mesh_runs: int
     mesh_height: float
+    mesh_corner_radius: float
     mesh_direction: Literal["x", "y"]
     mesh_path: Literal["snake", "alternating_snake", "spiral"]
 
