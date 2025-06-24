@@ -42,6 +42,7 @@ default_bed_mesh_config = BedMeshConfig(
     probe_count=(10, 10),
     speed=100,
     horizontal_move_z=3,
+    adaptive_margin=2,
     zero_reference_position=(100, 100),
 )
 

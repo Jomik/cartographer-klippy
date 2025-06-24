@@ -38,6 +38,7 @@ class BedMeshConfig:
     probe_count: tuple[int, int]
     speed: float
     horizontal_move_z: float
+    adaptive_margin: float
     zero_reference_position: tuple[float, float]
 
 

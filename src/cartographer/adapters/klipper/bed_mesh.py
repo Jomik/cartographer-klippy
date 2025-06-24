@@ -6,7 +6,7 @@ import numpy as np
 from extras import bed_mesh
 from typing_extensions import override
 
-from cartographer.macros.bed_mesh.interfaces import BedMeshAdapter
+from cartographer.macros.bed_mesh.interfaces import BedMeshAdapter, Polygon
 
 if TYPE_CHECKING:
     from configfile import ConfigWrapper
@@ -22,6 +22,23 @@ class KlipperBedMesh(BedMeshAdapter):
     def __init__(self, config: ConfigWrapper) -> None:
         self.config = config.getsection("bed_mesh")
         self.bed_mesh = config.get_printer().load_object(self.config, "bed_mesh")
+        self.printer = config.get_printer()
+
+    @override
+    def get_objects(self) -> list[list[tuple[float, float]]]:
+        exclude_object = self.printer.lookup_object("exclude_object", None)
+        if not exclude_object:
+            return []
+
+        objects = exclude_object.get_status().get("objects", [])
+        polygons: list[Polygon] = []
+
+        for obj in objects:
+            polygon = obj.get("polygon", [])
+            points = [(x, y) for x, y in polygon]
+            polygons.append(points)
+
+        return polygons
 
     @override
     def apply_mesh(self, mesh_points: list[Position], profile_name: str | None = None) -> None:
