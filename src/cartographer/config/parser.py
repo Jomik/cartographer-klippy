@@ -61,7 +61,12 @@ def parse_general_config(wrapper: ParseConfigWrapper) -> GeneralConfig:
 
 
 _directions: list[Literal["x", "y"]] = ["x", "y"]
-_paths: list[Literal["snake", "alternating_snake", "spiral"]] = ["snake", "alternating_snake", "spiral"]
+_paths: list[Literal["snake", "alternating_snake", "spiral", "fentanyl"]] = [
+    "snake",
+    "alternating_snake",
+    "spiral",
+    "fentanyl",
+]
 
 
 def parse_scan_config(wrapper: ParseConfigWrapper, models: dict[str, ScanModelConfiguration]) -> ScanConfig:
