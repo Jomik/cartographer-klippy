@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import logging
 import math
-from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from itertools import chain
 from typing import TYPE_CHECKING, Literal, final
@@ -21,7 +20,7 @@ from cartographer.macros.utils import get_choice, get_float_tuple, get_int_tuple
 if TYPE_CHECKING:
     from cartographer.interfaces.configuration import Configuration
     from cartographer.interfaces.multiprocessing import TaskExecutor
-    from cartographer.macros.bed_mesh.interfaces import BedMeshAdapter, Point
+    from cartographer.macros.bed_mesh.interfaces import BedMeshAdapter, PathGenerator, Point
     from cartographer.probe import Probe
 
 logger = logging.getLogger(__name__)
@@ -61,19 +60,50 @@ class BedMeshCalibrateConfiguration:
 
 _directions: list[Literal["x", "y"]] = ["x", "y"]
 
-
-class PathStrategy(ABC):
-    @abstractmethod
-    def __init__(self, main_direction: Literal["x", "y"] = "x", corner_radius: float = 5.0) -> None: ...
-    @abstractmethod
-    def generate_path(self, mesh_points: list[Point]) -> list[Point]: ...
-
-
-PATH_STRATEGY_MAP = {
+PATH_GENERATOR_MAP = {
     "snake": SnakePathGenerator,
     "alternating_snake": AlternatingSnakePathGenerator,
     "spiral": SpiralPathGenerator,
 }
+
+
+@dataclass
+class BedMeshParams:
+    mesh_min: tuple[float, float]
+    mesh_max: tuple[float, float]
+    adaptive_margin: float
+    speed: float
+    runs: int
+    height: float
+    corner_radius: float
+    direction: Literal["x", "y"]
+    path_generator: PathGenerator
+    adaptive: bool
+    probe_count: tuple[int, int]
+    profile: str | None
+
+    @staticmethod
+    def from_macro_params(params: MacroParams, config: BedMeshCalibrateConfiguration) -> BedMeshParams:
+        direction: Literal["x", "y"] = get_choice(params, "DIRECTION", _directions, default=config.direction)
+        corner_radius = params.get_float("CORNER_RADIUS", default=config.corner_radius, minval=0)
+        path_type = get_choice(params, "PATH", default=config.path, choices=PATH_GENERATOR_MAP.keys())
+        path_generator = PATH_GENERATOR_MAP[path_type](direction, corner_radius)
+        adaptive = params.get_int("ADAPTIVE", default=0) != 0
+
+        return BedMeshParams(
+            mesh_min=get_float_tuple(params, "MESH_MIN", default=config.mesh_min),
+            mesh_max=get_float_tuple(params, "MESH_MAX", default=config.mesh_max),
+            adaptive_margin=params.get_float("ADAPTIVE_MARGIN", config.adaptive_margin, minval=0),
+            speed=params.get_float("SPEED", default=config.speed, minval=50),
+            runs=params.get_int("RUNS", default=config.runs, minval=1),
+            height=params.get_float("HEIGHT", default=config.height, minval=0.5, maxval=5),
+            corner_radius=corner_radius,
+            direction=direction,
+            path_generator=path_generator,
+            adaptive=adaptive,
+            probe_count=get_int_tuple(params, "PROBE_COUNT", default=config.probe_count),
+            profile=params.get("PROFILE", default="default" if not adaptive else None),
+        )
 
 
 @final
@@ -110,56 +140,24 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
                 raise RuntimeError(msg)
             return self._fallback.run(params)
 
-        speed = params.get_float("SPEED", default=self.config.speed, minval=50)
-        runs = params.get_int("RUNS", default=self.config.runs, minval=1)
-        height = params.get_float("HEIGHT", default=self.config.height, minval=0.5, maxval=5)
-        corner_radius = params.get_float("CORNER_RADIUS", default=self.config.corner_radius, minval=0)
-        direction: Literal["x", "y"] = get_choice(params, "DIRECTION", _directions, default=self.config.direction)
-        path_strategy_type = get_choice(params, "PATH", default=self.config.path, choices=PATH_STRATEGY_MAP.keys())
-        path_strategy = PATH_STRATEGY_MAP[path_strategy_type](direction, corner_radius)
+        parsed_params = BedMeshParams.from_macro_params(params, self.config)
 
-        adaptive = params.get_int("ADAPTIVE", default=0) != 0
-        probe_count = get_int_tuple(params, "PROBE_COUNT", default=self.config.probe_count)
+        mesh_points = self._generate_mesh_points(parsed_params)
+        path = list(parsed_params.path_generator.generate_path(mesh_points))
 
-        mesh_min, mesh_max = self._calculate_mesh_bounds(params, adaptive)
-        mesh_points = self._generate_mesh_points(mesh_min, mesh_max, probe_count)
-        path = list(path_strategy.generate_path(mesh_points))
+        samples = self._sample_path(parsed_params, path)
+        positions = self.task_executor.run(self.assign_positions_to_points, mesh_points, samples, parsed_params.height)
 
-        samples = self._sample_path(path, runs=runs, height=height, speed=speed)
-        positions = self.task_executor.run(self._calculate_positions, mesh_points, samples, height)
-
-        profile = params.get("PROFILE", default="default" if not adaptive else None)
-        self.adapter.apply_mesh(positions, profile)
-
-    def _calculate_mesh_bounds(self, params: MacroParams, adaptive: bool) -> tuple[Point, Point]:
-        mesh_min = get_float_tuple(params, "MESH_MIN", default=self.config.mesh_min)
-        mesh_max = get_float_tuple(params, "MESH_MAX", default=self.config.mesh_max)
-        margin = params.get_float("ADAPTIVE_MARGIN", self.config.adaptive_margin, minval=0)
-
-        if not adaptive:
-            return mesh_min, mesh_max
-
-        points = list(chain.from_iterable(self.adapter.get_objects()))
-        if not points:
-            return mesh_min, mesh_max
-
-        xs: tuple[float, ...]
-        ys: tuple[float, ...]
-        xs, ys = zip(*points)
-
-        obj_min_x = max(min(xs) - margin, mesh_min[0])
-        obj_max_x = min(max(xs) + margin, mesh_max[0])
-        obj_min_y = max(min(ys) - margin, mesh_min[1])
-        obj_max_y = min(max(ys) + margin, mesh_max[1])
-
-        return (obj_min_x, obj_min_y), (obj_max_x, obj_max_y)
+        self.adapter.apply_mesh(positions, parsed_params.profile)
 
     def _generate_mesh_points(
-        self, mesh_min: tuple[float, float], mesh_max: tuple[float, float], probe_count: tuple[int, int]
+        self,
+        params: BedMeshParams,
     ) -> list[Point]:
+        mesh_min, mesh_max = self._calculate_mesh_bounds(params)
         x_min, y_min = mesh_min
         x_max, y_max = mesh_max
-        x_res, y_res = probe_count
+        x_res, y_res = params.probe_count
 
         x_points = np.linspace(x_min, x_max, x_res)
         y_points = np.linspace(y_min, y_max, y_res)
@@ -167,8 +165,37 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
         mesh = [(x, y) for x in x_points for y in y_points]  # shape: [y][x]
         return mesh
 
+    def _calculate_mesh_bounds(self, params: BedMeshParams) -> tuple[Point, Point]:
+        mesh_min = params.mesh_min
+        mesh_max = params.mesh_max
+
+        if not params.adaptive:
+            return mesh_min, mesh_max
+
+        points = list(chain.from_iterable(self.adapter.get_objects()))
+        if not points:
+            return mesh_min, mesh_max
+
+        margin = params.adaptive_margin
+
+        min_x = min(x for (x, _) in points)
+        max_x = max(x for (x, _) in points)
+        min_y = min(y for (_, y) in points)
+        max_y = max(y for (_, y) in points)
+
+        obj_min_x = max(min_x - margin, mesh_min[0])
+        obj_max_x = min(max_x + margin, mesh_max[0])
+        obj_min_y = max(min_y - margin, mesh_min[1])
+        obj_max_y = min(max_y + margin, mesh_max[1])
+
+        return (obj_min_x, obj_min_y), (obj_max_x, obj_max_y)
+
     @log_duration("Bed scan")
-    def _sample_path(self, path: list[Point], *, speed: float, height: float, runs: int) -> list[Sample]:
+    def _sample_path(self, params: BedMeshParams, path: list[Point]) -> list[Sample]:
+        runs = params.runs
+        height = params.height
+        speed = params.speed
+
         self.toolhead.move(z=height, speed=5)
         self._move_probe_to_point(path[0], speed)
         self.toolhead.wait_moves()
@@ -176,7 +203,8 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
         with self.probe.scan.start_session() as session:
             session.wait_for(lambda samples: len(samples) >= 10)
             for i in range(runs):
-                for point in path if i % 2 == 0 else reversed(path):
+                sequence = path if i % 2 == 0 else reversed(path)
+                for point in sequence:
                     self._move_probe_to_point(point, speed)
                 self.toolhead.dwell(0.250)
                 self.toolhead.wait_moves()
@@ -204,20 +232,22 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
         self.toolhead.move(x=x, y=y, speed=speed)
 
     @log_duration("Cluster position computation")
-    def _calculate_positions(self, mesh_points: list[Point], samples: list[Sample], height: float) -> list[Position]:
-        nozzle_mesh_points = [self._probe_point_to_nozzle_point(point) for point in mesh_points]
-        results = assign_samples_to_grid(nozzle_mesh_points, samples, self.probe.scan.calculate_sample_distance)
+    def assign_positions_to_points(
+        self, mesh_points: list[Point], samples: list[Sample], height: float
+    ) -> list[Position]:
+        nozzle_points = [self._probe_point_to_nozzle_point(p) for p in mesh_points]
+        results = assign_samples_to_grid(nozzle_points, samples, self.probe.scan.calculate_sample_distance)
 
-        probe_positions: list[Position] = []
+        positions: list[Position] = []
         for result in results:
-            x, y = result.point
+            rx, ry = result.point
             if not math.isfinite(result.z):
-                msg = f"Cluster ({x:.2f},{y:.2f}) has no valid samples"
+                msg = f"Cluster ({rx:.2f},{ry:.2f}) has no valid samples"
                 raise RuntimeError(msg)
 
-            trigger_z = height - result.z
-            nozzle_position = self.toolhead.apply_axis_twist_compensation(Position(x=x, y=y, z=trigger_z))
+            z = height - result.z
+            compensated = self.toolhead.apply_axis_twist_compensation(Position(x=rx, y=ry, z=z))
             px, py = self._nozzle_point_to_probe_point(result.point)
-            probe_positions.append(Position(x=px, y=py, z=nozzle_position.z))
+            positions.append(Position(x=px, y=py, z=compensated.z))
 
-        return probe_positions
+        return positions
