@@ -26,7 +26,9 @@ GridFixture: TypeAlias = "tuple[str, list[Point]]"
     params=[
         ("Snake X", lambda: SnakePathGenerator(main_direction="x", corner_radius=0)),
         ("Snake Y", lambda: SnakePathGenerator(main_direction="y", corner_radius=0)),
+        ("Snake X cornering", lambda: SnakePathGenerator(main_direction="x", corner_radius=5)),
         ("Spiral", lambda: SpiralPathGenerator(main_direction="x", corner_radius=0)),
+        ("Spiral cornering", lambda: SpiralPathGenerator(main_direction="x", corner_radius=5)),
         ("Random", lambda: RandomPathGenerator(main_direction="x", corner_radius=0)),
     ]
 )

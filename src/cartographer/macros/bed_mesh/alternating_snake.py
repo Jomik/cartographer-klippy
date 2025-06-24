@@ -13,7 +13,7 @@ if TYPE_CHECKING:
 
 @final
 class AlternatingSnakePathGenerator(PathGenerator):
-    def __init__(self, main_direction: Literal["x", "y"], corner_radius: float = 5.0):
+    def __init__(self, main_direction: Literal["x", "y"], corner_radius: float):
         self.main_direction: Literal["x", "y"] = main_direction
         self.corner_radius = corner_radius
 
