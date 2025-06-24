@@ -13,6 +13,7 @@ from cartographer.interfaces.printer import Macro, MacroParams, Position, Sample
 from cartographer.lib.log import log_duration
 from cartographer.macros.bed_mesh.alternating_snake import AlternatingSnakePathGenerator
 from cartographer.macros.bed_mesh.mesh_utils import assign_samples_to_grid
+from cartographer.macros.bed_mesh.random_path import RandomPathGenerator
 from cartographer.macros.bed_mesh.snake_path import SnakePathGenerator
 from cartographer.macros.bed_mesh.spiral_path import SpiralPathGenerator
 from cartographer.macros.utils import get_choice, get_float_tuple, get_int_tuple
@@ -39,7 +40,7 @@ class BedMeshCalibrateConfiguration:
     direction: Literal["x", "y"]
     height: float
     corner_radius: float
-    path: Literal["snake", "alternating_snake", "spiral"]
+    path: Literal["snake", "alternating_snake", "spiral", "fentanyl"]
 
     @staticmethod
     def from_config(config: Configuration):
@@ -64,6 +65,7 @@ PATH_GENERATOR_MAP = {
     "snake": SnakePathGenerator,
     "alternating_snake": AlternatingSnakePathGenerator,
     "spiral": SpiralPathGenerator,
+    "fentanyl": RandomPathGenerator,
 }
 
 
