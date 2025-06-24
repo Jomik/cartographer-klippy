@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import logging
-import math
 from dataclasses import dataclass
 from itertools import chain
+from math import ceil, isfinite
 from typing import TYPE_CHECKING, Literal, final
 
 import numpy as np
@@ -108,6 +108,9 @@ class BedMeshParams:
         )
 
 
+MIN_POINTS = 3
+
+
 @final
 class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
     name = "BED_MESH_CALIBRATE"
@@ -156,13 +159,11 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
         self,
         params: BedMeshParams,
     ) -> list[Point]:
-        mesh_min, mesh_max = self._calculate_mesh_bounds(params)
-        x_min, y_min = mesh_min
-        x_max, y_max = mesh_max
-        x_res, y_res = params.probe_count
+        adapted_min, adapted_max = self._calculate_mesh_bounds(params)
+        x_res, y_res = self._compute_adaptive_resolution(params, adapted_min, adapted_max)
 
-        x_points = np.linspace(x_min, x_max, x_res)
-        y_points = np.linspace(y_min, y_max, y_res)
+        x_points = np.round(np.linspace(adapted_min[0], adapted_max[0], x_res), 2)
+        y_points = np.round(np.linspace(adapted_min[1], adapted_max[1], y_res), 2)
 
         mesh = [(x, y) for x in x_points for y in y_points]  # shape: [y][x]
         return mesh
@@ -191,6 +192,26 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
         obj_max_y = min(max_y + margin, mesh_max[1])
 
         return (obj_min_x, obj_min_y), (obj_max_x, obj_max_y)
+
+    def _compute_adaptive_resolution(
+        self, params: BedMeshParams, adapted_min: Point, adapted_max: Point
+    ) -> tuple[int, int]:
+        orig_min = params.mesh_min
+        orig_max = params.mesh_max
+        orig_x_res, orig_y_res = params.probe_count
+
+        orig_width = orig_max[0] - orig_min[0]
+        orig_height = orig_max[1] - orig_min[1]
+        x_density = (orig_x_res - 1) / orig_width if orig_width else 0
+        y_density = (orig_y_res - 1) / orig_height if orig_height else 0
+
+        adapted_width = adapted_max[0] - adapted_min[0]
+        adapted_height = adapted_max[1] - adapted_min[1]
+
+        x_res = max(MIN_POINTS, ceil(adapted_width * x_density) + 1)
+        y_res = max(MIN_POINTS, ceil(adapted_height * y_density) + 1)
+
+        return x_res, y_res
 
     @log_duration("Bed scan")
     def _sample_path(self, params: BedMeshParams, path: list[Point]) -> list[Sample]:
@@ -243,7 +264,7 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
         positions: list[Position] = []
         for result in results:
             rx, ry = result.point
-            if not math.isfinite(result.z):
+            if not isfinite(result.z):
                 msg = f"Cluster ({rx:.2f},{ry:.2f}) has no valid samples"
                 raise RuntimeError(msg)
 
