@@ -13,6 +13,7 @@ from toolhead import ToolHead
 from cartographer.core import PrinterCartographer
 from extras.axis_twist_compensation import AxisTwistCompensation
 from extras.bed_mesh import BedMesh
+from extras.exclude_object import ExcludeObject
 from extras.heaters import PrinterHeaters
 from extras.homing import Homing, HomingMove, PrinterHoming
 from extras.motion_report import PrinterMotionReport
@@ -84,6 +85,8 @@ class Printer:
         event: Literal["homing:homing_move_end"],
         callback: Callable[[HomingMove], None],
     ) -> None: ...
+    @overload
+    def lookup_object(self, name: Literal["exclude_object"], default: None) -> ExcludeObject | None: ...
     @overload
     def lookup_object(self, name: Literal["bed_mesh"]) -> BedMesh: ...
     @overload

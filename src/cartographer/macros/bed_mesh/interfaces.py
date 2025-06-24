@@ -8,6 +8,7 @@ if TYPE_CHECKING:
     from cartographer.interfaces.printer import Position
 
 Point: TypeAlias = "tuple[float, float]"
+Polygon: TypeAlias = "list[Point]"
 
 
 class PathGenerator(Protocol):
@@ -16,3 +17,4 @@ class PathGenerator(Protocol):
 
 class BedMeshAdapter(Protocol):
     def apply_mesh(self, mesh_points: list[Position], profile_name: str | None = None): ...
+    def get_objects(self) -> list[Polygon]: ...

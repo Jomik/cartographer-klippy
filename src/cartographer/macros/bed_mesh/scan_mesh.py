@@ -4,7 +4,8 @@ import logging
 import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal, TypeVar, final
+from itertools import chain
+from typing import TYPE_CHECKING, Literal, final
 
 import numpy as np
 from typing_extensions import override
@@ -32,6 +33,7 @@ class BedMeshCalibrateConfiguration:
     mesh_max: tuple[float, float]
     probe_count: tuple[int, int]
     speed: float
+    adaptive_margin: float
     zero_reference_position: Point
 
     runs: int
@@ -47,6 +49,7 @@ class BedMeshCalibrateConfiguration:
             mesh_max=config.bed_mesh.mesh_max,
             probe_count=config.bed_mesh.probe_count,
             speed=config.bed_mesh.speed,
+            adaptive_margin=config.bed_mesh.adaptive_margin,
             zero_reference_position=config.bed_mesh.zero_reference_position,
             runs=config.scan.mesh_runs,
             direction=config.scan.mesh_direction,
@@ -107,11 +110,7 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
                 raise RuntimeError(msg)
             return self._fallback.run(params)
 
-        profile = params.get("PROFILE", "default")
         speed = params.get_float("SPEED", default=self.config.speed, minval=50)
-        mesh_min = get_float_tuple(params, "MESH_MIN", default=self.config.mesh_min)
-        mesh_max = get_float_tuple(params, "MESH_MAX", default=self.config.mesh_max)
-        probe_count = get_int_tuple(params, "PROBE_COUNT", default=self.config.probe_count)
         runs = params.get_int("RUNS", default=self.config.runs, minval=1)
         height = params.get_float("HEIGHT", default=self.config.height, minval=0.5, maxval=5)
         corner_radius = params.get_float("CORNER_RADIUS", default=self.config.corner_radius, minval=0)
@@ -119,13 +118,41 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
         path_strategy_type = get_choice(params, "PATH", default=self.config.path, choices=PATH_STRATEGY_MAP.keys())
         path_strategy = PATH_STRATEGY_MAP[path_strategy_type](direction, corner_radius)
 
+        adaptive = params.get_int("ADAPTIVE", default=0) != 0
+        probe_count = get_int_tuple(params, "PROBE_COUNT", default=self.config.probe_count)
+
+        mesh_min, mesh_max = self._calculate_mesh_bounds(params, adaptive)
         mesh_points = self._generate_mesh_points(mesh_min, mesh_max, probe_count)
         path = list(path_strategy.generate_path(mesh_points))
 
         samples = self._sample_path(path, runs=runs, height=height, speed=speed)
         positions = self.task_executor.run(self._calculate_positions, mesh_points, samples, height)
 
+        profile = params.get("PROFILE", default="default" if not adaptive else None)
         self.adapter.apply_mesh(positions, profile)
+
+    def _calculate_mesh_bounds(self, params: MacroParams, adaptive: bool) -> tuple[Point, Point]:
+        mesh_min = get_float_tuple(params, "MESH_MIN", default=self.config.mesh_min)
+        mesh_max = get_float_tuple(params, "MESH_MAX", default=self.config.mesh_max)
+        margin = params.get_float("ADAPTIVE_MARGIN", self.config.adaptive_margin, minval=0)
+
+        if not adaptive:
+            return mesh_min, mesh_max
+
+        points = list(chain.from_iterable(self.adapter.get_objects()))
+        if not points:
+            return mesh_min, mesh_max
+
+        xs: tuple[float, ...]
+        ys: tuple[float, ...]
+        xs, ys = zip(*points)
+
+        obj_min_x = max(min(xs) - margin, mesh_min[0])
+        obj_max_x = min(max(xs) + margin, mesh_max[0])
+        obj_min_y = max(min(ys) - margin, mesh_min[1])
+        obj_max_y = min(max(ys) + margin, mesh_max[1])
+
+        return (obj_min_x, obj_min_y), (obj_max_x, obj_max_y)
 
     def _generate_mesh_points(
         self, mesh_min: tuple[float, float], mesh_max: tuple[float, float], probe_count: tuple[int, int]
@@ -194,10 +221,3 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
             probe_positions.append(Position(x=px, y=py, z=nozzle_position.z))
 
         return probe_positions
-
-
-T = TypeVar("T")
-
-
-def flatten(xss: list[list[T]]) -> list[T]:
-    return [x for xs in xss for x in xs]
