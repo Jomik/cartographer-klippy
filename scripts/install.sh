@@ -16,6 +16,8 @@ function display_help() {
   echo "  -e, --klippy-env    Set the Klippy virtual environment directory (default: $DEFAULT_KLIPPY_ENV)"
   echo "  --uninstall         Uninstall the package and remove the scaffolding"
   echo "  --help              Show this help message and exit"
+  echo ""
+  echo "The script also removes legacy files 'idm.py' and 'scanner.py' if found."
   exit 0
 }
 
@@ -124,6 +126,30 @@ function uninstall_scaffolding_in_path() {
   fi
 }
 
+function remove_legacy_files() {
+  local legacy_files=("idm.py" "scanner.py")
+  local paths=(
+    "$klipper_dir/klippy/extras"
+    "$klipper_dir/klippy/plugins"
+  )
+
+  for dir in "${paths[@]}"; do
+    for file in "${legacy_files[@]}"; do
+      local full_path="$dir/$file"
+      local rel_path="${dir#"$klipper_dir"/}/$file"
+      if [ -f "$full_path" ]; then
+        rm "$full_path"
+        echo "Removed legacy file '$full_path'."
+
+        local exclude_file="$klipper_dir/.git/info/exclude"
+        if [ -f "$exclude_file" ]; then
+          sed -i "\|^$rel_path\$|d" "$exclude_file" && echo "Removed '$rel_path' from git exclude."
+        fi
+      fi
+    done
+  done
+}
+
 function main() {
   klipper_dir="$DEFAULT_KLIPPER_DIR"
   klippy_env="$DEFAULT_KLIPPY_ENV"
@@ -132,6 +158,9 @@ function main() {
 
   check_directory_exists "$klipper_dir"
   check_virtualenv_exists
+
+  # Remove any old legacy files
+  remove_legacy_files
 
   if [ "$uninstall" = true ]; then
     uninstall_dependencies
