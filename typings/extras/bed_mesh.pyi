@@ -4,8 +4,6 @@ from typing import Literal, TypedDict
 
 from gcode import GCodeCommand
 
-type _Pos = list[float]
-
 class BedMeshError(Exception): ...
 
 class _Params(TypedDict):
@@ -22,7 +20,7 @@ class _Params(TypedDict):
 
 class ZMesh:
     def __init__(self, params: _Params, name: str | None) -> None: ...
-    def build_mesh(self, z_matrix: list[_Pos]) -> None: ...
+    def build_mesh(self, z_matrix: list[list[float]]) -> None: ...
 
 class BedMesh:
     bmc: BedMeshCalibrate
