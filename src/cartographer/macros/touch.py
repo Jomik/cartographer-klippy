@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 
 @final
 class TouchMacro(Macro):
-    name = "TOUCH"
     description = "Touch the bed to get the height offset at the current position."
     last_trigger_position: float | None = None
 
@@ -35,7 +34,6 @@ class TouchMacro(Macro):
 
 @final
 class TouchAccuracyMacro(Macro):
-    name = "TOUCH_ACCURACY"
     description = "Touch the bed multiple times to measure the accuracy of the probe."
 
     def __init__(self, probe: TouchMode, toolhead: Toolhead) -> None:
@@ -95,7 +93,6 @@ class TouchAccuracyMacro(Macro):
 
 @final
 class TouchHomeMacro(Macro):
-    name = "TOUCH_HOME"
     description = "Touch the bed to home Z axis"
 
     def __init__(

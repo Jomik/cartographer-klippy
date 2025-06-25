@@ -101,7 +101,6 @@ class SupportsFallbackMacro(Protocol):
 
 
 class Macro(Protocol):
-    name: str
     description: str
 
     def run(self, params: MacroParams) -> None: ...

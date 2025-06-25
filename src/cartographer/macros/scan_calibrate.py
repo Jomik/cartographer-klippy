@@ -28,7 +28,6 @@ class ScanCalibrateMethod(Enum):
 
 @final
 class ScanCalibrateMacro(Macro):
-    name = "SCAN_CALIBRATE"
     description = "Run the scan calibration"
 
     def __init__(self, probe: Probe, toolhead: Toolhead, config: Configuration) -> None:

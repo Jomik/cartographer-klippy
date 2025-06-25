@@ -4,7 +4,7 @@ import logging
 from abc import ABC
 from functools import wraps
 from textwrap import dedent
-from typing import TYPE_CHECKING, Callable, Protocol
+from typing import TYPE_CHECKING, Callable, Protocol, final
 
 from gcode import CommandError, GCodeCommand, GCodeDispatch
 from typing_extensions import override
@@ -14,7 +14,7 @@ from cartographer.adapters.klipper.homing import KlipperHomingChip
 from cartographer.adapters.klipper.logging import setup_console_logger
 from cartographer.adapters.klipper.temperature import PrinterTemperatureCoil
 from cartographer.adapters.utils import reraise_as
-from cartographer.interfaces.printer import MacroParams, SupportsFallbackMacro
+from cartographer.interfaces.printer import Macro, MacroParams, SupportsFallbackMacro
 from cartographer.runtime.integrator import Integrator
 
 if TYPE_CHECKING:
@@ -25,7 +25,8 @@ if TYPE_CHECKING:
     from cartographer.adapters.klipper.configuration import KlipperConfiguration
     from cartographer.adapters.klipper.mcu import KlipperCartographerMcu
     from cartographer.adapters.klipper.toolhead import KlipperToolhead
-    from cartographer.interfaces.printer import Endstop, Macro
+    from cartographer.core import MacroRegistration
+    from cartographer.interfaces.printer import Endstop
 
 logger = logging.getLogger(__name__)
 
@@ -58,15 +59,17 @@ class KlipperLikeIntegrator(Integrator, ABC):
         self._printer.lookup_object("pins").register_chip(chip_name, chip)
 
     @override
-    def register_macro(self, macro: Macro) -> None:
-        original = self._gcode.register_command(macro.name, None)
+    def register_macro(self, registration: MacroRegistration) -> None:
+        name = registration.name
+        macro = registration.macro
         if isinstance(macro, SupportsFallbackMacro):
+            original = self._gcode.register_command(name, None)
             if original:
-                macro.set_fallback_macro(FallbackMacroAdapter(macro.name, original))
+                macro.set_fallback_macro(FallbackMacroAdapter(name, original))
             else:
-                logger.warning("No original macro found to fallback to for '%s'", macro.name)
+                logger.warning("No original macro found to fallback to for '%s'", name)
 
-        self._gcode.register_command(macro.name, _catch_macro_errors(macro.run), desc=macro.description)
+        self._gcode.register_command(name, _catch_macro_errors(macro.run), desc=macro.description)
 
     @override
     def register_temperature_sensor_factories(self) -> None:
@@ -101,12 +104,14 @@ def _catch_macro_errors(func: Callable[[GCodeCommand], None]) -> Callable[[GCode
     return wrapper
 
 
-class FallbackMacroAdapter:
+@final
+class FallbackMacroAdapter(Macro):
     def __init__(self, name: str, handler: Callable[[GCodeCommand], None]) -> None:
-        self.name: str = name
+        self.name = name
         self.description: str = f"Fallback for {name}"
         self._handler: Callable[[GCodeCommand], None] = handler
 
+    @override
     def run(self, params: MacroParams) -> None:
         assert isinstance(params, GCodeCommand), f"Invalid gcode params type for {self.name}"
         self._handler(params)

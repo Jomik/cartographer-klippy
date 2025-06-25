@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, final
 
 from cartographer.macros.axis_twist_compensation import AxisTwistCompensationMacro
@@ -20,6 +21,12 @@ if TYPE_CHECKING:
     from cartographer.runtime.adapters import Adapters
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class MacroRegistration:
+    name: str
+    macro: Macro
 
 
 @final
@@ -47,28 +54,45 @@ class PrinterCartographer:
 
         probe = Probe(self.scan_mode, self.touch_mode)
 
-        self.macros: list[Macro] = [
-            ProbeMacro(probe),
-            ProbeAccuracyMacro(probe, toolhead),
-            QueryProbeMacro(probe),
-            ZOffsetApplyProbeMacro(probe, toolhead, config),
-            TouchCalibrateMacro(probe, self.mcu, toolhead, config),
-            TouchMacro(self.touch_mode),
-            TouchAccuracyMacro(self.touch_mode, toolhead),
-            TouchHomeMacro(self.touch_mode, toolhead, config.bed_mesh.zero_reference_position),
-            BedMeshCalibrateMacro(
-                probe,
-                toolhead,
-                adapters.bed_mesh,
-                adapters.task_executor,
-                BedMeshCalibrateConfiguration.from_config(config),
+        prefix = config.general.macro_prefix.rstrip("_").upper() + "_" if config.general.macro_prefix else ""
+
+        def reg(name: str, macro: Macro, use_prefix: bool = True) -> MacroRegistration:
+            full_name = f"{prefix}{name}" if use_prefix else name
+            return MacroRegistration(full_name, macro)
+
+        self.probe_macro = ProbeMacro(probe)
+        self.query_probe_macro = QueryProbeMacro(probe)
+        self.macros = [
+            reg("PROBE", self.probe_macro, use_prefix=False),
+            reg("PROBE_ACCURACY", ProbeAccuracyMacro(probe, toolhead), use_prefix=False),
+            reg("QUERY_PROBE", self.query_probe_macro, use_prefix=False),
+            reg("Z_OFFSET_APPLY_PROBE", ZOffsetApplyProbeMacro(probe, toolhead, config), use_prefix=False),
+            reg(
+                "BED_MESH_CALIBRATE",
+                BedMeshCalibrateMacro(
+                    probe,
+                    toolhead,
+                    adapters.bed_mesh,
+                    adapters.task_executor,
+                    BedMeshCalibrateConfiguration.from_config(config),
+                ),
+                use_prefix=False,
             ),
-            ScanCalibrateMacro(probe, toolhead, config),
-            EstimateBacklashMacro(toolhead, self.scan_mode, config),
+            reg("SCAN_CALIBRATE", ScanCalibrateMacro(probe, toolhead, config)),
+            reg("ESTIMATE_BACKLASH", EstimateBacklashMacro(toolhead, self.scan_mode, config)),
+            reg("TOUCH_CALIBRATE", TouchCalibrateMacro(probe, self.mcu, toolhead, config)),
+            reg("TOUCH", TouchMacro(self.touch_mode)),
+            reg("TOUCH_ACCURACY", TouchAccuracyMacro(self.touch_mode, toolhead)),
+            reg("TOUCH_HOME", TouchHomeMacro(self.touch_mode, toolhead, config.bed_mesh.zero_reference_position)),
         ]
 
         if adapters.axis_twist_compensation:
-            self.macros.append(AxisTwistCompensationMacro(probe, toolhead, adapters.axis_twist_compensation, config))
+            self.macros.append(
+                reg(
+                    "AUTO_AXIS_TWIST_COMPENSATION",
+                    AxisTwistCompensationMacro(probe, toolhead, adapters.axis_twist_compensation, config),
+                )
+            )
 
     def get_status(self, eventtime: float) -> object:
         return {

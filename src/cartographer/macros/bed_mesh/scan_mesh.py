@@ -113,7 +113,6 @@ MIN_POINTS = 3
 
 @final
 class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
-    name = "BED_MESH_CALIBRATE"
     description = "Gather samples across the bed to calibrate the bed mesh."
 
     _fallback: Macro | None = None
