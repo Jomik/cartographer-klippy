@@ -11,6 +11,7 @@ class GeneralConfig:
     z_backlash: float
     travel_speed: float
     verbose: bool
+    macro_prefix: str
 
 
 @dataclass(frozen=True)

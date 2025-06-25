@@ -19,7 +19,6 @@ NOISE_THRESHOLD = 0.005  # mm, threshold for noise in backlash measurement
 
 @final
 class EstimateBacklashMacro(Macro):
-    name = "ESTIMATE_BACKLASH"
     description = "Do a series of moves to estimate backlash on the Z axis."
 
     def __init__(self, toolhead: Toolhead, scan: ScanMode, config: Configuration) -> None:

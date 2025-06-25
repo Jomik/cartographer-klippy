@@ -137,7 +137,6 @@ STRATEGY_MAP = {
 
 @final
 class TouchCalibrateMacro(Macro):
-    name = "TOUCH_CALIBRATE"
     description = "Run the touch calibration"
 
     def __init__(self, probe: Probe, mcu: Mcu, toolhead: Toolhead, config: Configuration) -> None:

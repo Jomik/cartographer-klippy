@@ -9,7 +9,6 @@ from cartographer.adapters.kalico.probe import KalicoCartographerProbe
 from cartographer.adapters.klipper.mcu import KlipperCartographerMcu
 from cartographer.adapters.klipper.toolhead import KlipperToolhead
 from cartographer.adapters.klipper_like.integrator import KlipperLikeIntegrator
-from cartographer.macros.probe import ProbeMacro, QueryProbeMacro
 
 if TYPE_CHECKING:
     from cartographer.adapters.kalico.adapters import KalicoAdapters
@@ -27,15 +26,12 @@ class KalicoIntegrator(KlipperLikeIntegrator):
 
     @override
     def register_cartographer(self, cartographer: PrinterCartographer) -> None:
-        probe_macro = next(macro for macro in cartographer.macros if isinstance(macro, ProbeMacro))
-        query_probe_macro = next(macro for macro in cartographer.macros if isinstance(macro, QueryProbeMacro))
-
         self._printer.add_object(
             "probe",
             KalicoCartographerProbe(
                 self._toolhead,
                 cartographer.scan_mode,
-                probe_macro,
-                query_probe_macro,
+                cartographer.probe_macro,
+                cartographer.query_probe_macro,
             ),
         )

@@ -20,6 +20,7 @@ default_general_config = GeneralConfig(
     y_offset=0.0,
     travel_speed=300.0,
     z_backlash=0,
+    macro_prefix="cartographer",
     verbose=False,
 )
 default_scan_config = ScanConfig(
