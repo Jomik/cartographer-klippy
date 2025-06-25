@@ -252,7 +252,7 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
 
     def _move_probe_to_point(self, point: Point, speed: float) -> None:
         x, y = self._probe_point_to_nozzle_point(point)
-        self.toolhead.move(x=x, y=y, speed=speed)
+        self.toolhead.move(x=float(x), y=float(y), speed=speed)
 
     @log_duration("Cluster position computation")
     def assign_positions_to_points(
@@ -269,8 +269,8 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
                 raise RuntimeError(msg)
 
             z = height - result.z
-            compensated = self.toolhead.apply_axis_twist_compensation(Position(x=rx, y=ry, z=z))
+            compensated = self.toolhead.apply_axis_twist_compensation(Position(x=float(rx), y=float(ry), z=z))
             px, py = self._nozzle_point_to_probe_point(result.point)
-            positions.append(Position(x=px, y=py, z=compensated.z))
+            positions.append(Position(x=float(px), y=float(py), z=compensated.z))
 
         return positions

@@ -25,7 +25,7 @@ class KlipperBedMesh(BedMeshAdapter):
         self.printer = config.get_printer()
 
     @override
-    def get_objects(self) -> list[list[tuple[float, float]]]:
+    def get_objects(self) -> list[Polygon]:
         exclude_object = self.printer.lookup_object("exclude_object", None)
         if not exclude_object:
             return []

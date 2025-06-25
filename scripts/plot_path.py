@@ -9,7 +9,6 @@ from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
-from typing_extensions import TypeAlias
 
 from cartographer.macros.bed_mesh.alternating_snake import AlternatingSnakePathGenerator
 from cartographer.macros.bed_mesh.snake_path import SnakePathGenerator
@@ -18,9 +17,7 @@ from cartographer.macros.bed_mesh.spiral_path import SpiralPathGenerator
 if TYPE_CHECKING:
     from matplotlib.text import Annotation
 
-    from cartographer.macros.bed_mesh.interfaces import PathGenerator
-
-Point: TypeAlias = "tuple[float, float]"
+    from cartographer.macros.bed_mesh.interfaces import PathGenerator, Point
 
 
 def make_grid(nx: int, ny: int, spacing: float) -> list[Point]:
@@ -75,8 +72,8 @@ def animate_paths(generator: PathGenerator, grid_shapes: list[tuple[int, int]], 
     def update(frame: int):
         for arrow, path in zip(arrows, all_paths):
             i = frame % len(path)  # Loop through frames
-            arrow.set_position(path[i - 1])
-            arrow.xy = path[i]
+            arrow.set_position(xy=(float(path[i - 1][0]), float(path[i - 1][1])))
+            arrow.xy = (float(path[i][0]), float(path[i][1]))
         return arrows
 
     _ = FuncAnimation(fig, update, interval=interval, blit=True)
