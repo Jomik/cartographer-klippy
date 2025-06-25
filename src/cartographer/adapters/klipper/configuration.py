@@ -39,6 +39,10 @@ class KlipperConfigWrapper(ParseConfigWrapper):
         return self._config.get(option, default=default)
 
     @override
+    def get_optional_str(self, option: str) -> str | None:
+        return self._config.get(option, default=None)
+
+    @override
     def get_float(
         self, option: str, default: float, minimum: float | None = None, maximum: float | None = None
     ) -> float:
