@@ -193,8 +193,8 @@ class KlipperCartographerMcu(Mcu, KlipperStreamMcu):
     def get_requested_position(self, time: float) -> tuple[Position | None, float | None]:
         trapq = self.motion_report.trapqs.get("toolhead")
         if trapq is None:
-            msg = "No dump trapq for toolhead"
-            raise RuntimeError(msg)
+            logger.warning("No dump trapq for toolhead, cannot get position at time %.3f", time)
+            return None, None
         position, velocity = trapq.get_trapq_position(time)
         if position is None:
             return None, velocity
