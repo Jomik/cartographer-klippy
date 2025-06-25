@@ -61,11 +61,11 @@ def parse_general_config(wrapper: ParseConfigWrapper) -> GeneralConfig:
 
 
 _directions: list[Literal["x", "y"]] = ["x", "y"]
-_paths: list[Literal["snake", "alternating_snake", "spiral", "fentanyl"]] = [
+_paths: list[Literal["snake", "alternating_snake", "spiral", "random"]] = [
     "snake",
     "alternating_snake",
     "spiral",
-    "fentanyl",
+    "random",
 ]
 
 
