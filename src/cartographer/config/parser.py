@@ -30,6 +30,7 @@ def get_choice(params: ParseConfigWrapper, option: str, choices: Iterable[K], de
 class ParseConfigWrapper(Protocol):
     def get_name(self) -> str: ...
     def get_str(self, option: str, default: str) -> str: ...
+    def get_optional_str(self, option: str) -> str | None: ...
     def get_float(
         self, option: str, default: float, minimum: float | None = None, maximum: float | None = None
     ) -> float: ...
@@ -56,7 +57,7 @@ def parse_general_config(wrapper: ParseConfigWrapper) -> GeneralConfig:
         y_offset=wrapper.get_required_float("y_offset"),
         z_backlash=wrapper.get_float("z_backlash", default=0.05, minimum=0),
         travel_speed=wrapper.get_float("travel_speed", default=50, minimum=1),
-        macro_prefix=wrapper.get_str("macro_prefix", default="CARTOGRAPHER"),
+        macro_prefix=wrapper.get_optional_str("macro_prefix"),
         verbose=wrapper.get_bool("verbose", default=False),
     )
 
