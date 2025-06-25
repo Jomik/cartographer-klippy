@@ -40,7 +40,7 @@ class BedMeshCalibrateConfiguration:
     direction: Literal["x", "y"]
     height: float
     corner_radius: float
-    path: Literal["snake", "alternating_snake", "spiral", "fentanyl"]
+    path: Literal["snake", "alternating_snake", "spiral", "random"]
 
     @staticmethod
     def from_config(config: Configuration):
@@ -65,7 +65,7 @@ PATH_GENERATOR_MAP = {
     "snake": SnakePathGenerator,
     "alternating_snake": AlternatingSnakePathGenerator,
     "spiral": SpiralPathGenerator,
-    "fentanyl": RandomPathGenerator,
+    "random": RandomPathGenerator,
 }
 
 
