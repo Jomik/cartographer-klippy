@@ -41,6 +41,10 @@ class KlipperBedMesh(BedMeshAdapter):
         return polygons
 
     @override
+    def clear_mesh(self) -> None:
+        self.bed_mesh.set_mesh(None)
+
+    @override
     def apply_mesh(self, mesh_points: list[Position], profile_name: str | None = None) -> None:
         coords = np.array([p.as_tuple() for p in mesh_points])
 
