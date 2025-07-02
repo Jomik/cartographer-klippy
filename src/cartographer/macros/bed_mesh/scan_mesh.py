@@ -149,6 +149,7 @@ class BedMeshCalibrateMacro(Macro, SupportsFallbackMacro):
         mesh_points = self._generate_mesh_points(parsed_params)
         path = list(parsed_params.path_generator.generate_path(mesh_points))
 
+        self.adapter.clear_mesh()
         samples = self._sample_path(parsed_params, path)
         positions = self.task_executor.run(self.assign_positions_to_points, mesh_points, samples, parsed_params.height)
 
