@@ -26,6 +26,7 @@ default_general_config = GeneralConfig(
 default_scan_config = ScanConfig(
     samples=20,
     models={},
+    probe_speed=5.0,
     mesh_runs=1,
     mesh_direction="x",
     mesh_height=4.0,

@@ -37,6 +37,7 @@ class ScanModeConfiguration:
     x_offset: float
     y_offset: float
     travel_speed: float
+    probe_speed: float
 
     samples: int
     models: dict[str, ScanModelConfiguration]
@@ -47,6 +48,7 @@ class ScanModeConfiguration:
             x_offset=config.general.x_offset,
             y_offset=config.general.y_offset,
             travel_speed=config.general.travel_speed,
+            probe_speed=config.scan.probe_speed,
             samples=config.scan.samples,
             models=config.scan.models,
         )
@@ -97,9 +99,9 @@ class ScanMode(ScanModelSelectorMixin, ProbeMode, Endstop):
         dist = self.measure_distance()
         if dist > self.probe_height + 0.5:
             # Safely move downwards
-            _ = self._toolhead.z_homing_move(self, speed=5)
+            _ = self._toolhead.z_homing_move(self, speed=self._config.probe_speed)
         elif self._toolhead.get_position().z < self.probe_height:
-            self._toolhead.move(z=self.probe_height, speed=5)
+            self._toolhead.move(z=self.probe_height, speed=self._config.probe_speed)
             self._toolhead.wait_moves()
 
         delta = self.probe_height - self.measure_distance()
