@@ -145,7 +145,7 @@ class Toolhead(Protocol):
         """Returns currently applied gcode offset for the z axis."""
         ...
 
-    def z_homing_move(self, endstop: Endstop, *, bottom: float, speed: float) -> float:
+    def z_homing_move(self, endstop: Endstop, *, speed: float) -> float:
         """Starts homing move towards the given endstop."""
         ...
 
