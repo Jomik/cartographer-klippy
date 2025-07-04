@@ -138,11 +138,18 @@ def test_touch_home_macro(
     toolhead: Toolhead,
     params: MacroParams,
 ):
+    # We are at 2, and touch the bed at -0.1.
+    height = 2
+    trigger = -0.1
+    # That means that the bed was further away than we thought,
+    # so we need to move the z axis "down".
+    expected = height + trigger
+
     macro = TouchHomeMacro(probe, toolhead, (10, 10))
-    probe.perform_probe = mocker.Mock(return_value=0.1)
-    toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 2))
+    probe.perform_probe = mocker.Mock(return_value=trigger)
+    toolhead.get_position = mocker.Mock(return_value=Position(0, 0, height))
     set_z_position_spy = mocker.spy(toolhead, "set_z_position")
 
     macro.run(params)
 
-    assert set_z_position_spy.mock_calls == [mocker.call(1.9)]
+    assert set_z_position_spy.mock_calls == [mocker.call(expected)]
