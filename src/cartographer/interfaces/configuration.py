@@ -18,6 +18,7 @@ class GeneralConfig:
 class ScanConfig:
     samples: int
     models: dict[str, ScanModelConfiguration]
+    probe_speed: float
     mesh_runs: int
     mesh_height: float
     mesh_corner_radius: float

@@ -75,6 +75,7 @@ def parse_scan_config(wrapper: ParseConfigWrapper, models: dict[str, ScanModelCo
     return ScanConfig(
         samples=20,
         models=models,
+        probe_speed=wrapper.get_float("probe_speed", default=5, minimum=0.1),
         mesh_runs=wrapper.get_int("mesh_runs", default=1),
         mesh_direction=get_choice(wrapper, "mesh_direction", _directions, default="x"),
         mesh_height=wrapper.get_float("mesh_height", default=4, minimum=1),
