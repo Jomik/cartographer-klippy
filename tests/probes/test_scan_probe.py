@@ -135,4 +135,4 @@ def test_probe_does_homing_move(mocker: MockerFixture, probe: Probe, toolhead: T
 
     _ = probe.scan.perform_probe()
 
-    assert toolhead.z_homing_move.mock_calls == [mocker.call(probe.scan, bottom=mocker.ANY, speed=mocker.ANY)]
+    assert toolhead.z_homing_move.mock_calls == [mocker.call(probe.scan, speed=mocker.ANY)]

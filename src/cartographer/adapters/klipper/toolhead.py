@@ -69,12 +69,13 @@ class KlipperToolhead(Toolhead):
         return gcode_move.get_status()["homing_origin"].z
 
     @override
-    def z_homing_move(self, endstop: Endstop, *, bottom: float, speed: float) -> float:
+    def z_homing_move(self, endstop: Endstop, *, speed: float) -> float:
         klipper_endstop = KlipperEndstop(self.mcu, endstop)
         self.wait_moves()
+        z_min, _ = self.get_z_axis_limits()
 
         pos = self.toolhead.get_position()[:]
-        pos[2] = bottom
+        pos[2] = z_min
 
         epos = self.printer.lookup_object("homing").probing_move(klipper_endstop, pos, speed)
         return epos[2]
