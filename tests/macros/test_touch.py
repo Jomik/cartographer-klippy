@@ -6,10 +6,9 @@ from typing import TYPE_CHECKING
 import pytest
 from typing_extensions import TypeAlias
 
-from cartographer.interfaces.configuration import TouchModelConfiguration
 from cartographer.interfaces.printer import MacroParams, Position, Toolhead
 from cartographer.macros.touch import TouchAccuracyMacro, TouchHomeMacro, TouchMacro
-from cartographer.probe.touch_mode import TouchMode
+from cartographer.probe.touch_mode import TouchMode, TouchModeConfiguration
 
 if TYPE_CHECKING:
     from pytest import LogCaptureFixture
@@ -26,7 +25,7 @@ def offset() -> Position:
 @pytest.fixture
 def probe(mocker: MockerFixture, offset: Position) -> Probe:
     mock = mocker.Mock(spec=Probe, autospec=True)
-    mock.config = mocker.Mock(spec=TouchModelConfiguration, autospec=True)
+    mock.config = mocker.Mock(spec=TouchModeConfiguration, autospec=True)
     mock.config.move_speed = 42
     mock.offset = offset
     return mock
@@ -140,10 +139,10 @@ def test_touch_home_macro(
 ):
     # We are at 2, and touch the bed at -0.1.
     height = 2
-    trigger = -0.1
+    trigger = 0.1
     # That means that the bed was further away than we thought,
     # so we need to move the z axis "down".
-    expected = height + trigger
+    expected = height - trigger
 
     macro = TouchHomeMacro(probe, toolhead, (10, 10))
     probe.perform_probe = mocker.Mock(return_value=trigger)

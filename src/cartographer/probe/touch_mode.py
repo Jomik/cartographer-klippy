@@ -175,7 +175,7 @@ class TouchMode(TouchModelSelectorMixin, ProbeMode, Endstop):
         trigger_pos = self._toolhead.z_homing_move(self, speed=model.speed)
         pos = self._toolhead.get_position()
         self._toolhead.move(z=max(pos.z + RETRACT_DISTANCE, RETRACT_DISTANCE), speed=5)
-        return trigger_pos + model.z_offset
+        return trigger_pos - model.z_offset
 
     @override
     def home_start(self, print_time: float) -> object:
