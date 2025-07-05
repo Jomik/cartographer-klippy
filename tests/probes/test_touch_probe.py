@@ -26,6 +26,17 @@ def test_probe_success(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) 
     assert probe.touch.perform_probe() == 0.5
 
 
+def test_probe_includes_z_offset(
+    mocker: MockerFixture, toolhead: Toolhead, config: Configuration, probe: Probe
+) -> None:
+    config.save_touch_model(TouchModelConfiguration(name="test_touch", speed=3, threshold=1000, z_offset=-0.5))
+    probe.touch.load_model("test_touch")
+    toolhead.z_homing_move = mocker.Mock(return_value=-0.5)
+    toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 1))
+
+    assert probe.touch.perform_probe() == 0
+
+
 def test_probe_moves_below_5(mocker: MockerFixture, toolhead: Toolhead, probe: Probe) -> None:
     toolhead.z_homing_move = mocker.Mock(return_value=0.5)
     toolhead.get_position = mocker.Mock(return_value=Position(0, 0, 1))
